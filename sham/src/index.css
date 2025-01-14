@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "yekan";
+  src: url("/fonts/IRANSans_Light.ttf");
+}
+
+body * {
+  font-family: "yekan";
+}
+.slider .slide {
+  padding: 35px !important;
+  opacity: 0.3;
+  transform: scale(0.5);
+  transition: all 0.2s linear;
+}
+.slider .slide.selected {
+  opacity: 1;
+  transform: scale(1);
+}
+.slider .slide.selected > div {
+  box-shadow: 0 10px 15px 2px rgba(0, 0, 0, 0.05);
+}
+.ltr {
+  direction: ltr !important;
+}
+.rtl {
+  direction: rtl !important;
+}
+.carousel.carousel-slider .control-arrow {
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  opacity: 1 !important;
+  background-color: #fff !important;
+  top: 120px !important;
+}
+.carousel .control-next.control-arrow:before {
+  border-left: 8px solid #333 !important;
+}
+.carousel .control-prev.control-arrow:before {
+  border-right: 8px solid #333 !important;
+}
+.carousel.carousel-slider .control-arrow.control-next {
+  right: 15px !important;
+}
+
+.carousel.carousel-slider .control-arrow.control-prev {
+  left: 15px !important;
+}
