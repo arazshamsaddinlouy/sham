@@ -8,7 +8,7 @@ export default function HomeOrderFlow() {
       </div>
       <div className="container mx-auto">
         <div className="flex mb-[60px] gap-[15px]">
-          <div className="flex-1 basis-1/3">
+          <div className="flex-1 basis-1/3 mb-[40px]">
             <div className="flex flex-wrap">
               <div className="w-[100px]">
                 <div className="w-[50px] h-[50px] opacity-[0.4] text-[82px] relative">
@@ -29,7 +29,7 @@ export default function HomeOrderFlow() {
               </div>
             </div>
           </div>
-          <div className="flex-1 basis-1/3">
+          <div className="flex-1 basis-1/3 mb-[40px]">
             <div className="flex flex-wrap">
               <div className="w-[100px]">
                 <div className="w-[50px] h-[50px] opacity-[0.4] text-[82px] relative">
@@ -52,7 +52,7 @@ export default function HomeOrderFlow() {
               </div>
             </div>
           </div>
-          <div className="flex-1 basis-1/3">
+          <div className="flex-1 basis-1/3 mb-[40px]">
             <div className="flex flex-wrap">
               <div className="w-[100px]">
                 <div className="w-[50px] h-[50px] opacity-[0.4] text-[82px] relative">
@@ -77,7 +77,7 @@ export default function HomeOrderFlow() {
           </div>
         </div>
         <div className="flex mb-[60px] gap-[15px]">
-          <div className="flex-1 basis-1/3">
+          <div className="flex-1 basis-1/3 mb-[40px]">
             <div className="flex flex-wrap">
               <div className="w-[100px]">
                 <div className="w-[50px] h-[50px] opacity-[0.4] text-[82px] relative">
@@ -100,7 +100,7 @@ export default function HomeOrderFlow() {
               </div>
             </div>
           </div>
-          <div className="flex-1 basis-1/3">
+          <div className="flex-1 basis-1/3 mb-[40px]">
             <div className="flex flex-wrap">
               <div className="w-[100px]">
                 <div className="w-[50px] h-[50px] opacity-[0.4] text-[82px] relative">
@@ -123,7 +123,7 @@ export default function HomeOrderFlow() {
               </div>
             </div>
           </div>
-          <div className="flex-1 basis-1/3">
+          <div className="flex-1 basis-1/3 mb-[40px]">
             <div className="flex flex-wrap">
               <div className="w-[100px]">
                 <div className="w-[50px] h-[50px] opacity-[0.4] text-[82px] relative">

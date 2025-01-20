@@ -6,7 +6,9 @@
   font-family: "yekan";
   src: url("/fonts/IRANSans_Light.ttf");
 }
-
+body {
+  overflow-x: hidden;
+}
 body * {
   font-family: "yekan";
 }
