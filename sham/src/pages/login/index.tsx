@@ -22,7 +22,10 @@ export default function Login() {
               className="h-[50px] outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box"
             />
             <button
-              onClick={() => navigate("/login/otp")}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/login/otp");
+              }}
               className="w-full h-[42px] leading-[42px] bg-[#4caf50] outline-none mt-[30px] mb-[20px] rounded-[8px] text-[#fff]"
             >
               ارسال پیامک

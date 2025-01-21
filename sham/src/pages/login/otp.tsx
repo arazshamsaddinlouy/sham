@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
+
 export default function LoginOtp() {
+  const navigate = useNavigate();
   return (
     <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-350px)]">
       <div className="w-[1000px] h-[400px] flex rounded-[32px] bg-[#f9f9f9] overflow-hidden">
@@ -57,7 +60,13 @@ export default function LoginOtp() {
             <div className="text-left text-[#222] text-[11px] mt-[20px]">
               زمان باقیمانده : ۲:۰۰
             </div>
-            <button className="w-full h-[42px] leading-[42px] bg-[#4caf50] outline-none mt-[30px] mb-[20px] rounded-[8px] text-[#fff]">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/dashboard");
+              }}
+              className="w-full h-[42px] leading-[42px] bg-[#4caf50] outline-none mt-[30px] mb-[20px] rounded-[8px] text-[#fff]"
+            >
               ورود به سامانه
             </button>
           </form>

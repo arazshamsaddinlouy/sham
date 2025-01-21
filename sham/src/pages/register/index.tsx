@@ -74,7 +74,10 @@ export default function Register() {
               </div>
             </div>
             <button
-              onClick={() => navigate("/login/otp")}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/dashboard");
+              }}
               className="w-full h-[42px] leading-[42px] bg-[#4caf50] outline-none mt-[30px] mb-[20px] rounded-[8px] text-[#fff]"
             >
               ارسال پیامک
