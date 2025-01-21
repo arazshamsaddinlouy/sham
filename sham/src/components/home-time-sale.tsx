@@ -24,7 +24,7 @@ export default function HomeTimeSales() {
               فروشگاه دوستان الکترونیک
             </div>
             <div className="text-[16px] text-[#222]">۸,۰۰۰,۰۰۰ تومان</div>
-            <div className="text-[12px] text-[#f44336] font-bold rounded-[20px] absolute bottom-[0px] left-[0px] p-[4px_10px]">
+            <div className="text-[11px] bg-[#f44336] text-[#fff] font-bold rounded-[5px] absolute bottom-[0px] left-[0px] p-[4px_10px]">
               زمان : ۲۰ ساعت ۱۶ دقیقه و ۱۱ ثانیه
             </div>
           </div>

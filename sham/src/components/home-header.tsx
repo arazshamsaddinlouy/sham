@@ -1,24 +1,193 @@
-export default function HomeHeader() {
-  return (
-    <div className="relative h-[400px] overflow-hidden">
-      <div className="bg-[url('/images/header-pattern-next.jpg')] opacity-[0.08] bg-center bg-[length:80vw] absolute left-[50%] top-[50%] -translate-y-[50%] -translate-x-[50%] w-[400%] h-full" />
-      <div className="container mx-auto">
-        <div className="text-center p-[60px] mt-[15px] mb-[15px] relative overflow-hidden">
-          <div className="relative z-[3]">
-            <h1 className="text-[60px] mb-[20px] font-bold">
-              سامانه خرید و فروش آنلاین
-            </h1>
+import { useNavigate } from "react-router-dom";
 
-            <h2 className="text-[19px] text-[#373737] max-w-[800px] mx-auto mb-[10px] leading-[36px]">
-              <p>
-                شما از طریق این سامانه میتوانید محصولات خود را خرید و فروش
-                نمایید.
-              </p>
-              <p>
-                همچنین روی نقشه میتوانین نزدیک ترین فروشندگان را یافت و بهترین
-                قیمت را پیدا کنید.  
-              </p>
-            </h2>
+export default function HomeHeader() {
+  const navigate = useNavigate();
+  return (
+    <div className="relative h-[550px] overflow-hidden bg-[#444]">
+      <div className="flex">
+        <div className="flex-1 bg-[#f5f5f5]">
+          <div className="text-right p-[0_60px] relative overflow-hidden">
+            <div className="relative z-[3] flex flex-col gap-[10px] h-[550px] justify-center">
+              <h1 className="text-[40px] mb-[20px] text-[#111] font-bold">
+                سامانه خرید و فروش آنلاین
+              </h1>
+
+              <h2 className="text-[16px] text-[#666] mb-[10px] leading-[36px]">
+                <p>
+                  شما از طریق این سامانه میتوانید محصولات خود را خرید و فروش
+                  نمایید.
+                </p>
+                <p>
+                  همچنین روی نقشه میتوانین نزدیک ترین فروشندگان را یافت و بهترین
+                  قیمت را پیدا کنید.  
+                </p>
+              </h2>
+              <div className="w-[490px] mt-[30px] flex gap-[15px]">
+                <div className="flex-1">
+                  <button
+                    onClick={() => navigate("/register")}
+                    type="button"
+                    className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                  >
+                    ثبت نام خریداران
+                    <span aria-hidden="true" className="mr-[5px]">
+                      &larr;
+                    </span>
+                  </button>
+                </div>
+                <div className="w-[300px] flex gap-[5px]">
+                  <button
+                    onClick={() => navigate("/register")}
+                    type="button"
+                    className="bg-white border-[3px] border-[blue-700] text-[blue-700] hover:text-white focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                  >
+                    ثبت نام فروشندگان
+                    <span aria-hidden="true" className="mr-[5px]">
+                      &larr;
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 bg-[#eee] h-[550px] relative overflow-hidden">
+          <div className="absolute w-[150%] h-[150%] left-[-25%] top-[-25%] opacity-[0.04] bg-[url('/images/header-pattern.jpg')] bg-cover bg-center" />
+          <div className="flex flex-col h-[550px] justify-center">
+            <div className="flex">
+              <div className="flex-1">
+                <div className="text-center">
+                  <div className="flex flex-col items-center justify-center p-[10px]">
+                    <div>
+                      <svg
+                        className="size-8 w-[90px] h-[90px] text-gray-600 group-hover:text-indigo-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                        data-slot="icon"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="text-[42px] text-[#333]">
+                      +۴۰ <span className="text-[16px]"> هزار</span>
+                    </div>
+                    <div className="text-[15px] text-[#666]">کاربر فعال</div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="text-center">
+                  <div className="flex flex-col items-center justify-center p-[10px]">
+                    <div>
+                      <svg
+                        className="size-8 w-[90px] h-[90px] text-gray-600 group-hover:text-indigo-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                        data-slot="icon"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="text-[42px] text-[#333]">
+                      +۱۰۰ <span className="text-[16px]"> هزار</span>
+                    </div>
+                    <div className="text-[15px] text-[#666]">
+                      خرید و فروش موفق
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex">
+              <div className="flex-1">
+                <div className="text-center">
+                  <div className="flex flex-col items-center justify-center p-[30px]">
+                    <div>
+                      <svg
+                        className="size-8 w-[90px] h-[90px] text-gray-600 group-hover:text-indigo-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                        data-slot="icon"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="text-[42px] text-[#333]">
+                      +۲۰ <span className="text-[16px]"> هزار</span>
+                    </div>
+                    <div className="text-[15px] text-[#666]">فروشنده</div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="text-center">
+                  <div className="flex flex-col items-center justify-center p-[30px]">
+                    <div>
+                      <svg
+                        className="size-8 w-[90px] h-[90px] text-gray-600 group-hover:text-indigo-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                        data-slot="icon"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="text-[42px] text-[#333]">
+                      +۴۰ <span className="text-[16px]"> هزار</span>
+                    </div>
+                    <div className="text-[15px] text-[#666]">خریدار</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
