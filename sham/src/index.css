@@ -12,6 +12,11 @@ body {
 body * {
   font-family: "yekan";
 }
+.ant-tabs-tab-btn {
+  display: flex;
+  align-items: center;
+  font-size: 18px !important;
+}
 .slider .slide {
   padding: 35px !important;
   opacity: 0.3;

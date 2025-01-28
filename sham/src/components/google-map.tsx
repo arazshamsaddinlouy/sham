@@ -17,7 +17,7 @@ export default function MapComponent() {
     <>
       <div
         ref={ref as any}
-        style={{ height: "180px", width: "700px", minHeight: "700px" }}
+        style={{ height: "180px", width: "100%", minHeight: "700px" }}
       ></div>
     </>
   );

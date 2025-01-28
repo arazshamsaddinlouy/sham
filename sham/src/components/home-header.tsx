@@ -22,26 +22,14 @@ export default function HomeHeader() {
                   قیمت را پیدا کنید.  
                 </p>
               </h2>
-              <div className="w-[490px] mt-[30px] flex gap-[15px]">
-                <div className="flex-1">
+              <div>
+                <div className="rounded-full border-[10px] inline-block border-[rgba(33,150,243,0.3)]">
                   <button
-                    onClick={() => navigate("/register")}
+                    onClick={() => navigate("/dashboard/request-price")}
                     type="button"
-                    className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                    className="bg-blue-600 p-[25px_45px] rounded-full text-[22px] text-white p-[5px_40px]"
                   >
-                    ثبت نام خریداران
-                    <span aria-hidden="true" className="mr-[5px]">
-                      &larr;
-                    </span>
-                  </button>
-                </div>
-                <div className="w-[300px] flex gap-[5px]">
-                  <button
-                    onClick={() => navigate("/register")}
-                    type="button"
-                    className="bg-white border-[3px] border-[blue-700] text-[blue-700] hover:text-white focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                  >
-                    ثبت نام فروشندگان
+                    استعلام قیمت
                     <span aria-hidden="true" className="mr-[5px]">
                       &larr;
                     </span>
