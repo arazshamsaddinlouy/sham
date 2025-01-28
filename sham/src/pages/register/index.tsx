@@ -1,9 +1,41 @@
-import { useNavigate } from "react-router-dom";
+import { Modal } from "antd";
 import { Status, Wrapper } from "@googlemaps/react-wrapper";
 import MapComponent from "../../components/google-map";
+import { useState } from "react";
+import { Flex, Input, Typography } from "antd";
+import type { GetProps } from "antd";
+
+type OTPProps = GetProps<typeof Input.OTP>;
+
+const { Title } = Typography;
+
 export default function Register() {
-  const navigate = useNavigate();
   const render = (status: Status) => <h1>{status}</h1>;
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const onChange: OTPProps["onChange"] = (text) => {
+    console.log("onChange:", text);
+  };
+
+  const onInput: OTPProps["onInput"] = (value) => {
+    console.log("onInput:", value);
+  };
+
+  const sharedProps: OTPProps = {
+    onChange,
+    onInput,
+  };
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleOk = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
   return (
     <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-350px)]">
       <div className="w-[1000px] h-[700px] flex rounded-[32px] bg-[#f9f9f9] overflow-hidden">
@@ -131,7 +163,7 @@ export default function Register() {
             <button
               onClick={(e) => {
                 e.preventDefault();
-                navigate("/dashboard");
+                showModal();
               }}
               className="w-full h-[42px] leading-[42px] bg-[#4caf50] outline-none mt-[30px] mb-[20px] rounded-[8px] text-[#fff]"
             >
@@ -140,6 +172,28 @@ export default function Register() {
           </form>
         </div>
       </div>
+      <Modal open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
+        <div className="flex gap-[15px] mb-[15px] overflow-hidden">
+          <div className="flex-1">
+            <label className="text-[13px] text-[#444] block mb-[10px]">
+              پیامک وارد شده را وارد نمایید
+            </label>
+            <div>
+              <Flex
+                gap="middle"
+                className="w-full flex-reverse"
+                align="flex-start"
+                vertical
+              >
+                <Input.OTP
+                  formatter={(str) => str.toUpperCase()}
+                  {...sharedProps}
+                />
+              </Flex>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

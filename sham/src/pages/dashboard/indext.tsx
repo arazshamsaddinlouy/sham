@@ -1,3 +1,4 @@
+import { Badge } from "antd";
 import { Link, Outlet } from "react-router-dom";
 
 export default function Dashboard() {
@@ -9,7 +10,16 @@ export default function Dashboard() {
           <div className="h-[100%] w-[100%] bg-[url('/images/login-wallpaper.jpg')] bg-cover bg-center absolute left-[0px] top-[0px]" />
           <ul className="list-none mt-[30px] !p-[10px_30px] relative z-[10]">
             <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
-              <Link to={"/dashboard/my-requests"}>استعلام های من</Link>
+              <Link
+                to={"/dashboard/my-requests"}
+                className="flex gap-[20px] items-center"
+              >
+                <div>استعلام های من</div>
+                <Badge
+                  count={109}
+                  style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+                />
+              </Link>
             </li>
             <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
               <Link to={"/dashboard/request-price"}>استعلام قیمت</Link>

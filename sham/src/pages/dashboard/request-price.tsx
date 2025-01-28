@@ -3,10 +3,15 @@ import TextArea from "antd/es/input/TextArea";
 import MapComponent from "../../components/google-map";
 import { BiSend } from "react-icons/bi";
 import { Status, Wrapper } from "@googlemaps/react-wrapper";
+import type { InputNumberProps } from "antd";
+import { InputNumber, Space } from "antd";
 
 export default function RequestPrice() {
-  const onChange = () => {};
   const render = (status: Status) => <h1>{status}</h1>;
+  const onChange: InputNumberProps["onChange"] = (value) => {
+    console.log("changed", value);
+  };
+
   return (
     <>
       <div className="text-[26px] pb-[15px] mb-[30px] border-b-[1px] border-b-[#ccc]">
@@ -30,12 +35,28 @@ export default function RequestPrice() {
           className="flex-1"
           showCount
           maxLength={300}
-          onChange={onChange}
           style={{ height: 80, resize: "none" }}
         ></TextArea>
       </div>
       <div className="text-[12px] mt-[5px] mb-[5px] text-[#999]">
         مشخصات کالای خود از جمله رنگ مدل و غیره را به صورت دقیق وارد نمایید.
+      </div>
+      <div className="flex gap-[15px] mb-[15px] overflow-hidden">
+        <div className="flex-1">
+          <div className="text-[14px] mb-[10px] mt-[20px]">
+            تعداد کالای خود را انتخاب نمایید
+          </div>
+          <Space wrap className="flex w-full">
+            <InputNumber
+              className="w-full flex-1"
+              size="large"
+              min={1}
+              max={100000}
+              defaultValue={3}
+              onChange={onChange}
+            />
+          </Space>
+        </div>
       </div>
       <div className="flex gap-[15px] mb-[15px] h-[400px] overflow-hidden">
         <div className="flex-1">

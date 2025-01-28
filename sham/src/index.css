@@ -17,6 +17,17 @@ body * {
   align-items: center;
   font-size: 18px !important;
 }
+.ant-space-item {
+  width: 100%;
+}
+.ant-otp {
+  width: 100%;
+  flex-direction: row-reverse;
+  gap: 20px;
+}
+.ant-otp .ant-input {
+  height: 45px !important;
+}
 .slider .slide {
   padding: 35px !important;
   opacity: 0.3;

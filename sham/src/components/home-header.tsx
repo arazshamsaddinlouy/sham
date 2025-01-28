@@ -27,7 +27,7 @@ export default function HomeHeader() {
                   <button
                     onClick={() => navigate("/dashboard/request-price")}
                     type="button"
-                    className="bg-blue-600 p-[25px_45px] rounded-full text-[22px] text-white p-[5px_40px]"
+                    className="bg-blue-600 p-[26px_45px] h-[60px] rounded-full text-[22px] text-white p-[5px_40px]"
                   >
                     استعلام قیمت
                     <span aria-hidden="true" className="mr-[5px]">
