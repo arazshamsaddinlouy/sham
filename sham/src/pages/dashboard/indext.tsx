@@ -1,4 +1,5 @@
 import { Badge } from "antd";
+import { LuList } from "react-icons/lu";
 import { Link, Outlet } from "react-router-dom";
 
 export default function Dashboard() {
@@ -14,15 +15,64 @@ export default function Dashboard() {
                 to={"/dashboard/my-requests"}
                 className="flex gap-[20px] items-center"
               >
-                <div>استعلام های من</div>
-                <Badge
-                  count={109}
-                  style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
-                />
+                <div className="flex items-center gap-[10px]">
+                  <div>
+                    <LuList />
+                  </div>
+                  <div>استعلام های من</div>
+                  <div>
+                    <Badge
+                      count={109}
+                      style={{
+                        backgroundColor: "#52c41a",
+                        borderColor: "#52c41a",
+                      }}
+                    />
+                  </div>
+                </div>
               </Link>
             </li>
             <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
-              <Link to={"/dashboard/request-price"}>استعلام قیمت</Link>
+              <Link
+                to={"/dashboard/request-price"}
+                className="flex gap-[20px] items-center"
+              >
+                <div className="flex items-center gap-[10px]">
+                  <div>
+                    <LuList />
+                  </div>
+                  <div>استعلام قیمت</div>
+                  <div></div>
+                </div>
+              </Link>
+            </li>
+            <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
+              <Link
+                to={"/dashboard/request-price"}
+                className="flex gap-[20px] items-center"
+              >
+                <div className="flex items-center gap-[10px]">
+                  <div>
+                    <LuList />
+                  </div>
+                  <div>مزایده ها</div>
+                  <div></div>
+                </div>
+              </Link>
+            </li>
+            <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
+              <Link
+                to={"/dashboard/sales"}
+                className="flex gap-[20px] items-center"
+              >
+                <div className="flex items-center gap-[10px]">
+                  <div>
+                    <LuList />
+                  </div>
+                  <div> حراج ها</div>
+                  <div></div>
+                </div>
+              </Link>
             </li>
           </ul>
         </div>

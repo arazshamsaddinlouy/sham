@@ -9,7 +9,8 @@ import fa_IR from "antd/es/locale/fa_IR";
 import { ConfigProvider } from "antd";
 import RequestPrice from "./pages/dashboard/request-price";
 import MyRequests from "./pages/dashboard/my-requests";
-import ResponseCard from "./components/response-card";
+import Responses from "./pages/dashboard/responses";
+import DashboardSales from "./pages/dashboard/sales";
 function App() {
   return (
     <ConfigProvider locale={fa_IR} direction="rtl">
@@ -23,7 +24,8 @@ function App() {
             <Route path="dashboard" element={<Dashboard />}>
               <Route path="request-price" element={<RequestPrice />} />
               <Route path="my-requests" element={<MyRequests />} />
-              <Route path="responses" element={<ResponseCard />} />
+              <Route path="responses" element={<Responses />} />
+              <Route path="sales" element={<DashboardSales />} />
             </Route>
           </Route>
         </Routes>
