@@ -11,6 +11,8 @@ import RequestPrice from "./pages/dashboard/request-price";
 import MyRequests from "./pages/dashboard/my-requests";
 import Responses from "./pages/dashboard/responses";
 import DashboardSales from "./pages/dashboard/sales";
+import DashboardTrades from "./pages/dashboard/trade";
+import CustomerRequests from "./pages/dashboard/customer-request";
 function App() {
   return (
     <ConfigProvider locale={fa_IR} direction="rtl">
@@ -26,6 +28,8 @@ function App() {
               <Route path="my-requests" element={<MyRequests />} />
               <Route path="responses" element={<Responses />} />
               <Route path="sales" element={<DashboardSales />} />
+              <Route path="trades" element={<DashboardTrades />} />
+              <Route path="customer-request" element={<CustomerRequests />} />
             </Route>
           </Route>
         </Routes>

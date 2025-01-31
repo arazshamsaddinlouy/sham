@@ -1,6 +1,6 @@
 import { TreeSelect } from "antd";
 import { useState } from "react";
-import { SaleItem } from "../../components/home-sales";
+import { SaleTradeItem } from "../../components/home-time-sale";
 
 const { SHOW_PARENT } = TreeSelect;
 
@@ -74,22 +74,22 @@ export default function DashboardTrades() {
         <strong className="font-bold">لوازم الکتریکی</strong>
       </div>
       <div className="flex flex-wrap gap-[15px]">
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
-        <SaleItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
+        <SaleTradeItem />
       </div>
     </>
   );
