@@ -76,6 +76,20 @@ export default function Dashboard() {
             </li>
             <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
               <Link
+                to={"/dashboard/branches"}
+                className="flex gap-[20px] items-center"
+              >
+                <div className="flex items-center gap-[10px]">
+                  <div>
+                    <LuList />
+                  </div>
+                  <div>تنظیمات غرفه</div>
+                  <div></div>
+                </div>
+              </Link>
+            </li>
+            <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
+              <Link
                 to={"/dashboard/customer-request"}
                 className="flex gap-[20px] items-center"
               >
@@ -83,7 +97,7 @@ export default function Dashboard() {
                   <div>
                     <LuList />
                   </div>
-                  <div>تخمین قیمت</div>
+                  <div>استعلام های من</div>
                   <div></div>
                 </div>
               </Link>

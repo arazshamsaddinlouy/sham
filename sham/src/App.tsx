@@ -13,6 +13,7 @@ import Responses from "./pages/dashboard/responses";
 import DashboardSales from "./pages/dashboard/sales";
 import DashboardTrades from "./pages/dashboard/trade";
 import CustomerRequests from "./pages/dashboard/customer-request";
+import Branches from "./pages/dashboard/branches";
 function App() {
   return (
     <ConfigProvider locale={fa_IR} direction="rtl">
@@ -30,6 +31,7 @@ function App() {
               <Route path="sales" element={<DashboardSales />} />
               <Route path="trades" element={<DashboardTrades />} />
               <Route path="customer-request" element={<CustomerRequests />} />
+              <Route path="branches" element={<Branches />} />
             </Route>
           </Route>
         </Routes>

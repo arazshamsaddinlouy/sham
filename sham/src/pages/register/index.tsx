@@ -2,13 +2,10 @@ import { Modal } from "antd";
 import { Status, Wrapper } from "@googlemaps/react-wrapper";
 import MapComponent from "../../components/google-map";
 import { useState } from "react";
-import { Flex, Input, Typography } from "antd";
+import { Flex, Input } from "antd";
 import type { GetProps } from "antd";
 
 type OTPProps = GetProps<typeof Input.OTP>;
-
-const { Title } = Typography;
-
 export default function Register() {
   const render = (status: Status) => <h1>{status}</h1>;
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -36,6 +33,9 @@ export default function Register() {
   const handleCancel = () => {
     setIsModalOpen(false);
   };
+  const handleChange = (e: any) => {
+    console.log(e);
+  };
   return (
     <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-350px)]">
       <div className="w-[1000px] h-[700px] flex rounded-[32px] bg-[#f9f9f9] overflow-hidden">
@@ -52,7 +52,10 @@ export default function Register() {
                 <label className="text-[13px] text-[#444] block mb-[10px]">
                   نوع کاربری خود را مشخص نمایید
                 </label>
-                <select className="resize-none outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box">
+                <select
+                  onChange={handleChange}
+                  className="resize-none outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box"
+                >
                   <option>فروشنده هستم</option>
                   <option>خریدار هستم</option>
                 </select>

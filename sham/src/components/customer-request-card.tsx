@@ -1,18 +1,31 @@
-import { BiLocationPlus, BiUserCheck } from "react-icons/bi";
-import { Avatar, Card, Space, Button } from "antd";
-import { PiPhone } from "react-icons/pi";
+import { Avatar, Card, Space, Button, Badge } from "antd";
 import { IoBagCheckOutline, IoPricetag } from "react-icons/io5";
 import { AiFillProduct } from "react-icons/ai";
+import { BsClock } from "react-icons/bs";
+import { CgAttachment } from "react-icons/cg";
+import { BiMessage } from "react-icons/bi";
 export default function CustomerRequestCard() {
   return (
     <Space direction="vertical" className="flex flex-col mb-[20px]" size={16}>
       <Card
         title={
-          <div className="font-bold text-[#333] text-[18px] flex items-center gap-[10px]">
+          <div className="font-bold text-[#333] text-[18px] flex items-center justify-between gap-[10px]">
             <div>
-              <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
+              <div className="flex items-center gap-[5px]">
+                <div>
+                  <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
+                </div>
+                <div>سامان محمدی</div>
+              </div>
             </div>
-            <div>سامان محمدی</div>
+            <div>
+              <div className="flex gap-[5px] items-center p-[0_15px] text-[13px] text-[#ff5722]">
+                <div>
+                  <BsClock />
+                </div>
+                <div>۲۲:۳۰ امروز</div>
+              </div>
+            </div>
           </div>
         }
         extra={
@@ -45,10 +58,15 @@ export default function CustomerRequestCard() {
           </div>
           <div className="flex items-center text-[13px] text-[#333] gap-[15px]">
             <div className="flex gap-[8px] items-center">
+              <Button icon={<BiMessage />} className="primary">
+                ارسال پیام
+              </Button>
+            </div>
+            <div className="flex gap-[8px] items-center">
               <div>
-                <BiUserCheck size={24} />
+                <CgAttachment />
               </div>
-              <div>اطلاعات خریدار</div>
+              <Badge color="green" count={2} />
             </div>
           </div>
         </div>

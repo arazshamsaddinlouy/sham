@@ -69,3 +69,6 @@ body * {
 .carousel.carousel-slider .control-arrow.control-prev {
   left: 15px !important;
 }
+.font-yekan {
+  font-family: yekan !important;
+}

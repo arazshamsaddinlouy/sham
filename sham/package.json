@@ -12,6 +12,11 @@
   "dependencies": {
     "@googlemaps/markerclusterer": "^2.5.3",
     "@googlemaps/react-wrapper": "^1.1.42",
+    "@mapbox/polyline": "^1.2.1",
+    "@neshan-maps-platform/mapbox-gl": "^1.1.5",
+    "@neshan-maps-platform/mapbox-gl-react": "^1.0.2",
+    "@neshan-maps-platform/ol": "^1.0.5",
+    "@neshan-maps-platform/react-openlayers": "^3.0.1",
     "@react-google-maps/api": "^2.20.5",
     "@types/google.maps": "^3.58.1",
     "antd": "^5.23.3",
@@ -26,6 +31,8 @@
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@types/google-map-react": "^2.1.10",
+    "@types/mapbox__polyline": "^1.0.5",
+    "@types/ol": "5",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@types/react-slick": "^0.23.13",

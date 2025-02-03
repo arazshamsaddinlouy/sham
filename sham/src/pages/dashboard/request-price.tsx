@@ -5,7 +5,12 @@ import { BiSend } from "react-icons/bi";
 import { Status, Wrapper } from "@googlemaps/react-wrapper";
 import type { InputNumberProps } from "antd";
 import { InputNumber, Space } from "antd";
+import { TimePicker } from "antd";
+import dayjs from "dayjs";
+import ImageUploader from "../../components/image-uploader";
+import FileUploader from "../../components/file-uploader";
 
+const format = "HH:mm";
 export default function RequestPrice() {
   const render = (status: Status) => <h1>{status}</h1>;
   const onChange: InputNumberProps["onChange"] = (value) => {
@@ -58,7 +63,24 @@ export default function RequestPrice() {
           </Space>
         </div>
       </div>
-      <div className="flex gap-[15px] mb-[15px] h-[400px] overflow-hidden">
+      <div className="flex gap-[15px] mb-[15px] overflow-hidden">
+        <div className="flex-1">
+          <div className="text-[14px] mb-[10px] mt-[20px]">
+            ساعت پایان استعلام
+          </div>
+          <div className="flex gap-[15px]">
+            <TimePicker
+              defaultValue={dayjs("12:08", format)}
+              className="w-full h-[40px]"
+              format={format}
+            />
+          </div>
+          <div className="flex mt-[5px] text-[12px] text-[#999]">
+            <div>مدت ارسال قیمت توسط فروشندگان : ۱ ساعت و ۲۲ دقیقه</div>
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-[15px] mb-[15px] h-[200px] overflow-hidden">
         <div className="flex-1">
           <div className="text-[14px] mb-[10px] mt-[20px]">
             مکان خود روی نقشه را مشخص نمایید:
@@ -69,6 +91,22 @@ export default function RequestPrice() {
           >
             <MapComponent />
           </Wrapper>
+        </div>
+      </div>
+      <div className="flex gap-[15px] mb-[15px] h-[420px] overflow-hidden">
+        <div className="flex-1">
+          <div className="text-[14px] mb-[10px] mt-[20px]">
+            تصویر محصول مورد نظر خود را پیوست کنید
+          </div>
+          <ImageUploader />
+        </div>
+      </div>
+      <div className="flex gap-[15px] mb-[15px] h-[200px] overflow-hidden">
+        <div className="flex-1">
+          <div className="text-[14px] mb-[10px] mt-[20px]">
+            در صورت نیاز فایل پیوست نمایید
+          </div>
+          <FileUploader />
         </div>
       </div>
       <div className="pt-[20px] mt-[20px] border-t-[1px] border-t-[#ccc]">
