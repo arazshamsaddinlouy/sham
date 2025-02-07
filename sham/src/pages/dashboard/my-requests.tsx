@@ -12,11 +12,11 @@ export default function MyRequests() {
   const CurrentPriceReuests = () => {
     return (
       <div>
-        <PriceRequestCard />
-        <PriceRequestCard />
-        <PriceRequestCard />
-        <PriceRequestCard />
-        <PriceRequestCard />
+        <PriceRequestCard isRead={false} />
+        <PriceRequestCard isRead={false} />
+        <PriceRequestCard isRead={true} />
+        <PriceRequestCard isRead={true} />
+        <PriceRequestCard isRead={true} />
       </div>
     );
   };
@@ -59,7 +59,7 @@ export default function MyRequests() {
   return (
     <>
       <div className="text-[26px] pb-[15px] mb-[30px] border-b-[1px] border-b-[#ccc]">
-        درخواست های من
+        استعلام های قیمت
       </div>
       <Tabs defaultActiveKey="1" items={items} onChange={onChange} />
     </>

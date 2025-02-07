@@ -19,7 +19,7 @@ interface DataType {
   sellerName: string;
   suggestedPrice: number;
   distanceFromYou: number;
-  branch: string;
+  validTime: string;
   actions: any;
 }
 
@@ -90,21 +90,14 @@ const columns: TableColumnsType<DataType> = [
     render: () => <>۲۰۰ متر</>,
   },
   {
-    title: "غرفه",
-    dataIndex: "branch",
-    render: () => (
-      <Tag
-        color="#f0f0f0"
-        className="text-[15px] font-yekan p-[5px_15px] rounded-[30px]"
-      >
-        <div className="text-[#666] text-[12px]">لوازم الکترونیک</div>
-      </Tag>
-    ),
+    title: "زمان اعتبار",
+    dataIndex: "validTime",
+    render: () => <>۲۲ اسفند ۱۴۰۳ - ساعت ۱۲:۳۰ دقیقه</>,
   },
   {
     title: "",
     dataIndex: "acions",
-    render: () => (
+    render: (_value: string, record: DataType) => (
       <div className="flex gap-[10px]">
         <ConfigProvider
           theme={{
@@ -128,9 +121,15 @@ const columns: TableColumnsType<DataType> = [
             <BiLocationPlus /> مکان
           </Button>
         </ConfigProvider>
-        <Button type="primary">
-          <MdMessage /> پیام
-        </Button>
+        {Number(record.key) % 2 === 0 ? (
+          <Button type="primary">
+            <MdMessage /> ۲ پیام
+          </Button>
+        ) : (
+          <Button type="primary" disabled>
+            <MdMessage /> ۰ پیام
+          </Button>
+        )}
       </div>
     ),
   },
@@ -142,7 +141,7 @@ const data: DataType[] = [
     sellerName: "John Brown",
     suggestedPrice: 3000,
     distanceFromYou: 32,
-    branch: "",
+    validTime: "",
     actions: "New York No. 1 Lake Park",
   },
   {
@@ -150,7 +149,7 @@ const data: DataType[] = [
     sellerName: "John Brown",
     suggestedPrice: 3000,
     distanceFromYou: 32,
-    branch: "",
+    validTime: "",
     actions: "New York No. 1 Lake Park",
   },
   {
@@ -158,7 +157,7 @@ const data: DataType[] = [
     sellerName: "John Brown",
     suggestedPrice: 3000,
     distanceFromYou: 32,
-    branch: "",
+    validTime: "",
     actions: "New York No. 1 Lake Park",
   },
   {
@@ -166,7 +165,7 @@ const data: DataType[] = [
     sellerName: "John Brown",
     suggestedPrice: 3000,
     distanceFromYou: 32,
-    branch: "",
+    validTime: "",
     actions: "New York No. 1 Lake Park",
   },
   {
@@ -174,7 +173,7 @@ const data: DataType[] = [
     sellerName: "John Brown",
     suggestedPrice: 3000,
     distanceFromYou: 32,
-    branch: "",
+    validTime: "",
     actions: "New York No. 1 Lake Park",
   },
   {
@@ -182,7 +181,7 @@ const data: DataType[] = [
     sellerName: "John Brown",
     suggestedPrice: 3000,
     distanceFromYou: 32,
-    branch: "",
+    validTime: "",
     actions: "New York No. 1 Lake Park",
   },
   {
@@ -190,7 +189,7 @@ const data: DataType[] = [
     sellerName: "John Brown",
     suggestedPrice: 3000,
     distanceFromYou: 32,
-    branch: "",
+    validTime: "",
     actions: "New York No. 1 Lake Park",
   },
   {
@@ -198,7 +197,7 @@ const data: DataType[] = [
     sellerName: "John Brown",
     suggestedPrice: 3000,
     distanceFromYou: 32,
-    branch: "",
+    validTime: "",
     actions: "New York No. 1 Lake Park",
   },
 ];
@@ -226,16 +225,24 @@ export default function Responses() {
   const render = (status: Status) => <h1>{status}</h1>;
   return (
     <div>
-      <div className="flex justify-end">
-        <Button
-          color="cyan"
-          variant="solid"
-          icon={<BiLocationPlus />}
-          onClick={() => showModal()}
-          className="h-[40px] text-[18px] mt-[10px] mb-[30px]"
-        >
-          مشاهده استعلام ها بر روی نقشه
-        </Button>
+      <div className="text-[26px] pb-[15px] flex justify-between items-center mb-[30px] border-b-[1px] border-b-[#ccc]">
+        <div>
+          <p>سامسونگ A51</p>
+          <p className="text-[15px] text-[#666] mt-[10px]">
+            گروه کالا :‌ لوازم الکترونیک
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            color="cyan"
+            variant="solid"
+            icon={<BiLocationPlus />}
+            onClick={() => showModal()}
+            className="h-[40px] text-[18px] mt-[10px] mb-[30px]"
+          >
+            مشاهده استعلام ها بر روی نقشه
+          </Button>
+        </div>
       </div>
 
       <Table<DataType>
