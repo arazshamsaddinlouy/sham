@@ -1,16 +1,46 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Avatar, Dropdown, Menu, Popover, Button } from "antd";
+import {
+  DownOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 
 export default function Header() {
   const [isSubActive, setIsSubActive] = useState<boolean>(false);
   const navigate = useNavigate();
+  const user = {
+    name: "آراز شمس الدینلوی",
+    avatar: "https://randomuser.me/api/portraits/men/1.jpg", // Sample Avatar URL
+  };
+  // Sign out handler
+  const handleSignOut = () => {
+    console.log("User signed out");
+  };
+
+  // Settings handler
+  const handleSettings = () => {
+    console.log("Settings clicked");
+  };
+  const MenuItems = () => (
+    <Menu className="w-[120px]">
+      <Menu.Item icon={<SettingOutlined />} onClick={handleSettings}>
+        تنظیمات
+      </Menu.Item>
+      <Menu.Item icon={<LogoutOutlined />} onClick={handleSignOut}>
+        خروج
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
     <header className="bg-white">
       <nav
-        className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8"
+        className="mx-auto flex container items-center justify-between p-6 lg:px-8"
         aria-label="Global"
       >
-        <div className="flex lg:flex-1">
+        <div className="flex">
           <Link to={"/"} className="-m-1.5 p-1.5">
             <span className="sr-only">خرید و فروش آنلاین</span>
             <img
@@ -19,30 +49,31 @@ export default function Header() {
               alt=""
             />
           </Link>
-        </div>
-        <div className="flex lg:hidden">
-          <button
-            type="button"
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
-          >
-            <span className="sr-only">Open main menu</span>
-            <svg
-              className="size-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              aria-hidden="true"
-              data-slot="icon"
+          <div className="flex lg:hidden">
+            <button
+              type="button"
+              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-              />
-            </svg>
-          </button>
+              <span className="sr-only">Open main menu</span>
+              <svg
+                className="size-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                aria-hidden="true"
+                data-slot="icon"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
+
         <div className="hidden lg:flex lg:gap-x-12">
           <div className="relative">
             <button
@@ -269,11 +300,24 @@ export default function Header() {
             حریم خصوصی
           </a>
         </div>
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end">
+        <div className="focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm text-center">
+          <Popover
+            content={<MenuItems />}
+            title=""
+            className="ml-[25px]"
+            trigger="click"
+          >
+            <Button
+              icon={<DownOutlined />}
+              className="border-none bg-transparent p-[0_10px]"
+            >
+              <Avatar src={user.avatar} size={40} /> {user.name}
+            </Button>
+          </Popover>
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2"
+            className="focus:outline-none focus:ring-4 ml-[25px] focus:ring-blue-300 font-medium rounded-full text-sm text-center"
           >
             ورود
           </button>
