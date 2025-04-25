@@ -183,7 +183,7 @@ export default function Responses() {
     {
       title: "قیمت پیشنهادی",
       dataIndex: "suggestedPrice",
-      sorter: (a: any, b: any) => a.suggestedPrice - b.suggestedPrice,
+      sorter: (a: any, b: any) => a.price - b.price,
       render: (_, record: any) => (
         <Tag color="blue" className="text-[15px] font-yekan p-[5px_15px]">
           {formatPersianNumber(record.price)} ریال
@@ -195,15 +195,12 @@ export default function Responses() {
       dataIndex: "distanceFromYou",
       sorter: (a: any, b: any) => a.distanceFromYou - b.distanceFromYou,
       render: (_: string, record: any) => {
-        const point1 = [userLatLng.lat, userLatLng.lng];
-        const point2 = [record.seller.lat, record.seller.lng];
-        const dist = distance(point1, point2, { units: "meters" });
         return (
           <>
             {new Intl.NumberFormat("fa-IR", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
-            }).format(dist)}{" "}
+            }).format(record.distanceFromYou)}{" "}
             متر
           </>
         );
@@ -281,7 +278,15 @@ export default function Responses() {
     });
     getAllInquiryResponses(`${id}`).then((data) => {
       if (data.status === 200) {
-        setDataSource(data.data);
+        const record = [...data.data];
+
+        for (let r of record) {
+          const point1 = [userLatLng.lng, userLatLng.lat];
+          const point2 = [r.seller.lng, r.seller.lat];
+          const dist = distance(point1, point2, { units: "meters" });
+          r.distanceFromYou = dist;
+        }
+        setDataSource([...record]);
       } else {
         setDataSource([]);
       }
