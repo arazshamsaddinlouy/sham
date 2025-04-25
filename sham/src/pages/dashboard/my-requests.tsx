@@ -4,30 +4,52 @@ import { BiMessage } from "react-icons/bi";
 import { FaClock } from "react-icons/fa";
 import PriceRequestCard from "../../components/price-request-card";
 import PriceRequestExpireCard from "../../components/price-request-expire-card";
+import { useEffect, useState } from "react";
+import {
+  getActiveRequests,
+  getExpiredRequests,
+} from "../../services/price-inquiry.service";
+import { useDispatch } from "react-redux";
+import { setActiveRequest } from "../../store/slices/userSlice";
 export default function MyRequests() {
+  const dispatch = useDispatch();
+  const [activeTab, setActiveTab] = useState<string>("1");
+  const [activeRequests, setActiveRequests] = useState<any[]>([]);
+  const [expiredRequests, setExpiredRequests] = useState<any[]>([]);
   const onChange = (key: string) => {
-    console.log(key);
+    setActiveTab(key);
   };
-
+  useEffect(() => {
+    if (activeTab === "1") {
+      getActiveRequests().then((data) => {
+        if (data.status === 200) {
+          setActiveRequests(data.data);
+          dispatch(setActiveRequest(data.data.length));
+        }
+      });
+    } else {
+      getExpiredRequests().then((data) => {
+        if (data.status === 200) {
+          setExpiredRequests(data.data);
+        }
+      });
+    }
+  }, [activeTab]);
   const CurrentPriceReuests = () => {
     return (
-      <div>
-        <PriceRequestCard isRead={false} />
-        <PriceRequestCard isRead={false} />
-        <PriceRequestCard isRead={true} />
-        <PriceRequestCard isRead={true} />
-        <PriceRequestCard isRead={true} />
+      <div className="lower-card-body">
+        {activeRequests.map((req: any) => (
+          <PriceRequestCard request={req} />
+        ))}
       </div>
     );
   };
   const ExpiredPriceReuests = () => {
     return (
-      <div>
-        <PriceRequestExpireCard />
-        <PriceRequestExpireCard />
-        <PriceRequestExpireCard />
-        <PriceRequestExpireCard />
-        <PriceRequestExpireCard />
+      <div className="lower-card-body">
+        {expiredRequests.map((req: any) => (
+          <PriceRequestExpireCard request={req} />
+        ))}
       </div>
     );
   };
@@ -40,7 +62,7 @@ export default function MyRequests() {
           <div>استعلام های فعال</div>
           <div>
             <Badge
-              count={109}
+              count={activeRequests.length}
               style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
             />
           </div>

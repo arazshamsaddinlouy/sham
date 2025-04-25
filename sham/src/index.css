@@ -65,10 +65,28 @@ body * {
 .carousel.carousel-slider .control-arrow.control-next {
   right: 15px !important;
 }
-
+.white-space-break {
+  white-space: break-spaces;
+}
+#otp {
+  direction: ltr !important;
+}
+.input-otp {
+  justify-content: space-between !important;
+  gap: 15px !important;
+}
+.input-otp > input {
+  max-width: 100px !important;
+}
 .carousel.carousel-slider .control-arrow.control-prev {
   left: 15px !important;
 }
 .font-yekan {
   font-family: yekan !important;
+}
+.lower-card-body .ant-card-body {
+  padding: 10px 24px 10px 24px !important;
+}
+.ltr {
+  direction: ltr !important;
 }

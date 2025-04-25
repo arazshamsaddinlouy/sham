@@ -1,39 +1,180 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Avatar, Dropdown, Menu, Popover, Button } from "antd";
+import { useContext, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Popover, Button, Alert } from "antd";
 import {
   DownOutlined,
-  SettingOutlined,
   LogoutOutlined,
+  UserOutlined,
+  BellOutlined,
+  UserAddOutlined,
+  PlusOutlined,
+  WalletOutlined,
+  ProductOutlined,
 } from "@ant-design/icons";
-
+import { BiHeadphone } from "react-icons/bi";
+import { ShamContext } from "../App";
+import { getUserInfo } from "../services/auth.service";
+import { setUser } from "../store/slices/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { CgChevronLeft } from "react-icons/cg";
+import { GiMedal } from "react-icons/gi";
 export default function Header() {
+  const { user } = useSelector((state: any) => state.user);
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const [token, setToken] = useState<string>();
+  const value: any = useContext(ShamContext);
   const [isSubActive, setIsSubActive] = useState<boolean>(false);
   const navigate = useNavigate();
-  const user = {
-    name: "آراز شمس الدینلوی",
-    avatar: "https://randomuser.me/api/portraits/men/1.jpg", // Sample Avatar URL
-  };
   // Sign out handler
   const handleSignOut = () => {
-    console.log("User signed out");
+    window.localStorage.removeItem("accessToken");
+    window.localStorage.removeItem("refreshToken");
+    value.setNotif({ type: "success", description: "خروج با موفقیت" });
+    navigate("/");
   };
-
   // Settings handler
-  const handleSettings = () => {
-    console.log("Settings clicked");
+  const handleEditMobile = () => {
+    navigate("/dashboard/branches");
+  };
+  // Settings handler
+  const handleEditProfile = () => {
+    navigate("/dashboard/profile/edit");
   };
   const MenuItems = () => (
-    <Menu className="w-[120px]">
-      <Menu.Item icon={<SettingOutlined />} onClick={handleSettings}>
-        تنظیمات
-      </Menu.Item>
-      <Menu.Item icon={<LogoutOutlined />} onClick={handleSignOut}>
+    <div className="w-[250px]">
+      <div className="flex items-center relative overflow-hidden rounded-[12px] overflow-hidden mb-[5px] p-[12px_15px] justify-between bg-[#FDDC5C]">
+        <div className="absolute right-[-45px] rounded-[12px] top-[-11px] w-[70px] h-[70px] rotate-[45deg] bg-[rgb(239,202,62)]" />
+        <div className="absolute left-[-45px] rounded-[12px] top-[-11px] w-[70px] h-[70px] rotate-[45deg] bg-[rgb(239,202,62)]" />
+        <div className="text-[13px] relative z-[2] flex items-center font-bold">
+          امتیاز شما : ۳۲۱
+        </div>
+        <div className="flex gap-[5px] relative z-[5] items-center bg-[#fff] text-[#333] text-[10px] p-[4px_8px] rounded-[12px]">
+          <GiMedal size={15} />
+          کاربر طلایی
+        </div>
+      </div>
+      <div onClick={handleEditProfile}>
+        <div className="flex h-[60px] justify-between items-center border-b-[1px] border-b-[#eee] p-[10px_5px] hover:bg-[#f5f5f5] cursor-pointer">
+          <div className="flex items-center gap-[10px]">
+            <div>
+              <UserAddOutlined className="text-[27px] text-[#555]" />
+            </div>
+            <div className="pb-[5px]">
+              <div className="text-[15px] text-[#111]">
+                {user?.first_name} {user?.last_name}
+              </div>
+              <div className="text-[10px] mt-[4px] text-[#444]">
+                {user?.mobile}
+              </div>
+            </div>
+          </div>
+          <div>
+            <CgChevronLeft size={20} />
+          </div>
+        </div>
+      </div>
+      <div
+        className="flex h-[40px] cursor-pointer p-[10px_15px] pr-[30px] gap-[10px] items-center hover:bg-[#f5f5f5]"
+        onClick={handleEditMobile}
+      >
+        <ProductOutlined />
+        خرید اشتراک
+      </div>
+      <div
+        className="flex h-[40px] cursor-pointer p-[10px_15px] pr-[30px] gap-[10px] items-center hover:bg-[#f5f5f5]"
+        onClick={handleEditMobile}
+      >
+        <PlusOutlined />
+        افزودن غرفه
+      </div>
+      <div
+        className="flex justify-between h-[40px] cursor-pointer p-[10px_5px] pr-[30px] gap-[10px] items-center hover:bg-[#f5f5f5]"
+        onClick={handleEditMobile}
+      >
+        <div className="flex gap-[10px]">
+          <WalletOutlined />
+          شارژ کیف پول
+        </div>
+        <div className="bg-[#4CAF50] text-[11px] rounded-[20px] text-[#fff] p-[2px_6px]">
+          ۲۲,۳۰۰۰ تومان
+        </div>
+      </div>
+      <div
+        className="flex h-[40px] cursor-pointer p-[10px_15px] pr-[30px] gap-[10px] items-center hover:bg-[#f5f5f5]"
+        onClick={handleSignOut}
+      >
+        <LogoutOutlined />
         خروج
-      </Menu.Item>
-    </Menu>
+      </div>
+    </div>
+  );
+  const NotificationItems = () => (
+    <div className="w-[300px]">
+      <div>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-[10px]">
+            <div className="pb-[5px]">
+              <div className="flex flex-col gap-[10px] text-[13px]">
+                <Alert
+                  className="w-[300px]"
+                  message="فلانی تخمین قیمت ارسال کرد"
+                  type="success"
+                  showIcon
+                  closable
+                />
+                <Alert
+                  className="w-[300px]"
+                  message="قلانی پیامی برای شما ارسال کرد"
+                  type="info"
+                  showIcon
+                  closable
+                />
+                <Alert
+                  className="w-[300px]"
+                  message="تخمین قیمت فلانی به پایان رسید"
+                  type="warning"
+                  showIcon
+                  closable
+                />
+                <Alert
+                  className="w-[300px]"
+                  message="فعالیت شما در این کارتابل کم بود"
+                  type="error"
+                  showIcon
+                  closable
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
+  useEffect(() => {
+    const storageToken = localStorage.getItem("accessToken");
+    if (storageToken) {
+      setToken(storageToken);
+      getUserInfo()
+        .then((data) => {
+          if (data.status == 200) {
+            dispatch(setUser(data.data.user));
+          } else {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            navigate("/login");
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          navigate("/login");
+        });
+    } else {
+      setToken(undefined);
+    }
+  }, [location.pathname]);
   return (
     <header className="bg-white">
       <nav
@@ -82,7 +223,7 @@ export default function Header() {
               aria-expanded={isSubActive ? "true" : "false"}
               onClick={() => setIsSubActive(!isSubActive)}
             >
-              محصولات
+              خدمات
               <svg
                 className="size-5 flex-none text-gray-400"
                 viewBox="0 0 20 20"
@@ -300,33 +441,67 @@ export default function Header() {
             حریم خصوصی
           </a>
         </div>
-        <div className="focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm text-center">
-          <Popover
-            content={<MenuItems />}
-            title=""
-            className="ml-[25px]"
-            trigger="click"
-          >
-            <Button
-              icon={<DownOutlined />}
-              className="border-none bg-transparent p-[0_10px]"
+        <div className="flex gap-[10px] pt-[10px] focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm text-center">
+          {token && (
+            <div className="relative mt-[13px] ml-[-15px]">
+              <Popover
+                content={<NotificationItems />}
+                title=""
+                className="ml-[15px] mt-[8px] relative top-[-5px] ltr"
+                trigger="click"
+              >
+                <div className="absolute top-[-13px] z-[2] right-[-10px] w-[20px] h-[20px] rounded-[10px] bg-[#f44336] text-[#fff] text-[11px]">
+                  3
+                </div>
+                <BellOutlined className="text-[22px] items-center text-[#555]" />
+              </Popover>
+            </div>
+          )}
+          {token ? (
+            <Popover
+              content={<MenuItems />}
+              title=""
+              className="ml-[5px] mt-[8px] relative top-[-5px] ltr"
+              trigger="click"
             >
-              <Avatar src={user.avatar} size={40} /> {user.name}
-            </Button>
-          </Popover>
+              {user && user.first_name && user.last_name && (
+                <Button
+                  icon={<DownOutlined className="text-[12px]" />}
+                  className="border-none bg-transparent shadow-none p-[0_10px]"
+                >
+                  <UserOutlined className="text-[20px] text-[#555]" />
+                </Button>
+              )}
+            </Popover>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="focus:outline-none mt-[1px] focus:ring-4 ml-[15px] focus:ring-blue-300 font-medium rounded-full text-sm text-center"
+              >
+                ورود
+              </button>
+              <button
+                onClick={() => navigate("/register")}
+                type="button"
+                className="text-white mt-[7px] bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              >
+                ثبت نام <span aria-hidden="true">&larr;</span>
+              </button>
+            </>
+          )}
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="focus:outline-none focus:ring-4 ml-[25px] focus:ring-blue-300 font-medium rounded-full text-sm text-center"
+            className={`focus:outline-none ${
+              !token ? "relative top-[6px]" : ""
+            } focus:ring-4 ml-[25px] h-[40px] px-[25px] border-[1px] border-[#ccc] focus:ring-blue-300 font-medium rounded-full text-sm text-center`}
           >
-            ورود
-          </button>
-          <button
-            onClick={() => navigate("/register")}
-            type="button"
-            className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-          >
-            ثبت نام <span aria-hidden="true">&larr;</span>
+            <div className="flex items-center gap-[5px]">
+              <BiHeadphone size={18} />
+              <div>پشتیبانی</div>
+            </div>
           </button>
         </div>
       </nav>

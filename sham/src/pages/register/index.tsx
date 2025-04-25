@@ -1,182 +1,416 @@
-import { Modal } from "antd";
+import { Modal, Form, Select, ConfigProvider, Button, Alert } from "antd";
 import { Status, Wrapper } from "@googlemaps/react-wrapper";
 import MapComponent from "../../components/google-map";
-import { useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Flex, Input } from "antd";
-import type { GetProps } from "antd";
-
-type OTPProps = GetProps<typeof Input.OTP>;
+import { getAllProvinces } from "../../services/province.service";
+import { getAllCity } from "../../services/city.service";
+import { addUser } from "../../services/user.service";
+import { ShamContext } from "../../App";
+import { useNavigate } from "react-router-dom";
+import TextArea from "antd/es/input/TextArea";
+import { convertLocationToAddress } from "../../services/map.service";
+import { InputOTP } from "antd-input-otp";
+let cityList: any[] = [];
 export default function Register() {
+  const value: any = useContext(ShamContext);
+  const [cityName, setCityName] = useState<string>("");
+  const [selectedCity, setSelectedCity] = useState<string>("");
   const render = (status: Status) => <h1>{status}</h1>;
+  const [isMapTouched, setIsMapTouched] = useState<boolean>(false);
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [registerType, setRegisterType] = useState<0 | 1>(0);
+  const [latLng, setLatLng] = useState<{
+    lng: number | null;
+    lat: number | null;
+  }>({ lat: 35.6892, lng: 51.389 });
+  const [otp, setOtp] = useState<string[]>([]);
+  const [isSubmittable, setSubmittable] = useState<boolean>(false);
+
+  const [form] = Form.useForm();
+  const values = Form.useWatch([], form);
+  useEffect(() => {
+    form
+      .validateFields({ validateOnly: true })
+      .then(() => {
+        if (latLng.lat && latLng.lng) {
+          setSubmittable(true);
+        } else {
+          setSubmittable(false);
+        }
+      })
+      .catch((errors) => {
+        console.log(errors);
+        setSubmittable(false);
+      });
+  }, [form, values]);
+  const [cities, setCities] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const [_error, setError] = useState<string | null>(null);
+  const handleCityCheck = () => {
+    const city = cityList.find(
+      (el) => el.id == form.getFieldValue("city")
+    ).name;
+    if (cityName !== city) {
+      setSubmittable(false);
+      value.setNotif({
+        type: "error",
+        description: "شهر انتخابی با لوکیشن انتخابی یکی نمیباشد",
+      });
+    }
+  };
+  const getLocation = () => {
+    if (!navigator.geolocation) {
+      value.setNotif({
+        type: "error",
+        description: "Geolocation is not supported by your browser",
+      });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position: GeolocationPosition) => {
+        const { latitude, longitude } = position.coords;
+        setLatLng({ lat: latitude, lng: longitude });
+        setError(null);
+      },
+      (error: GeolocationPositionError) => {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            break;
+          case error.POSITION_UNAVAILABLE:
+            break;
+          case error.TIMEOUT:
+            break;
+          default:
+            break;
+        }
+      }
+    );
+  };
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const onChange: OTPProps["onChange"] = (text) => {
-    console.log("onChange:", text);
-  };
-
-  const onInput: OTPProps["onInput"] = (value) => {
-    console.log("onInput:", value);
-  };
-
-  const sharedProps: OTPProps = {
-    onChange,
-    onInput,
-  };
-
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleOk = () => {
-    setIsModalOpen(false);
-  };
+  const fetchCities = useCallback((province_id: string) => {
+    getAllCity(province_id).then((data) => {
+      setCities(data.data.cities);
+      cityList = data.data.cities;
+    });
+  }, []);
 
   const handleCancel = () => {
     setIsModalOpen(false);
   };
-  const handleChange = (e: any) => {
-    console.log(e);
+  useEffect(() => {
+    if (isMapTouched) {
+      handleCityCheck();
+    }
+  }, [isMapTouched, latLng, selectedCity, cityName]);
+  const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const payload = form.getFieldsValue();
+    addUser({
+      ...payload,
+      lat: latLng.lat,
+      lng: latLng.lng,
+      otp: otp.join(""),
+      customer_type: registerType,
+    })
+      .then((data) => {
+        if (data.status == 200) {
+          localStorage.setItem("accessToken", data.data.accessToken);
+          localStorage.setItem("refreshToken", data.data.refreshToken);
+          value.setNotif({ type: "success", description: "ورود با موفقیت" });
+          navigate("/dashboard");
+        } else {
+          value.setNotif({
+            type: "error",
+            description: data?.data?.message,
+          });
+        }
+      })
+      .catch((e) => {
+        value.setNotif({
+          type: "error",
+          description: e?.response?.data?.message,
+        });
+      });
   };
+  useEffect(() => {
+    getAllProvinces().then((data) => {
+      setProvinces(data.data);
+    });
+    getLocation();
+  }, []);
   return (
     <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-350px)]">
-      <div className="w-[1000px] h-[700px] flex rounded-[32px] bg-[#f9f9f9] overflow-hidden">
+      <div className="w-[1000px] h-[700px] flex rounded-[32px] bg-[#f9f9f9] overflow-hidden mb-[40px]">
         <div className="w-[400px] relative">
           <div className="h-[100%] w-[100%] bg-[url('/images/login-wallpaper.jpg')] bg-cover bg-center absolute left-[0px] top-[0px]" />
         </div>
-        <div className="w-[600px] overflow-auto p-[60px] h-[700px] flex flex-col pb-[60px] items-center rounded-[16px] p-[10px]">
+        <div className="w-[600px] overflow-auto p-[15px_15px] h-[700px] flex flex-col items-center rounded-[16px] p-[10px]">
           <div className="text-[22px] text-center mt-[0px] mb-[30px]">
             ثبت نام
           </div>
-          <form className="w-full mx-auto p-[0px_15px]">
-            <div className="flex gap-[15px] mb-[15px]">
+          <Form
+            form={form}
+            layout={"vertical"}
+            className="w-full mx-auto p-[0px_5px]"
+          >
+            <div className="flex gap-[15px]">
               <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
-                  نوع کاربری خود را مشخص نمایید
-                </label>
-                <select
-                  onChange={handleChange}
-                  className="resize-none outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box"
+                <div className="flex w-full mb-[20px] bg-[#fff] p-[10px] rounded-[8px] border-[1px] border-[#f0f0f0] relative overflow-hidden">
+                  <div
+                    className={`bg-[rgb(37,99,235)] transition-all w-[50%] h-[42px] rounded-[8px] absolute top-[0px] ${
+                      registerType === 0 ? "right-[0px]" : "right-[50%]"
+                    }`}
+                  />
+                  <div
+                    onClick={() => setRegisterType(0)}
+                    className={`flex-1 relative z-[2] cursor-pointer text-center ${
+                      registerType === 0 ? "text-[#fff]" : "text-[#000]"
+                    }`}
+                  >
+                    فروشنده هستم
+                  </div>
+                  <div
+                    onClick={() => setRegisterType(1)}
+                    className={`flex-1 relative z-[2] cursor-pointer text-center ${
+                      registerType === 1 ? "text-[#fff]" : "text-[#000]"
+                    }`}
+                  >
+                    خریدار هستم
+                  </div>
+                </div>
+              </div>
+            </div>
+            {form.getFieldValue("customer_type") == "0" && (
+              <div className="mt-[0px] mb-[20px]">
+                <Alert
+                  message="بعد از ثبت نام میتوانید تنظیمات مربوط به غرفه را در پروفایل خود انجام دهید"
+                  type="info"
+                  showIcon
+                />
+              </div>
+            )}
+            <div className="flex gap-[15px]">
+              <div className="flex-1">
+                <Form.Item
+                  name="first_name"
+                  label="نام"
+                  className="rtl"
+                  rules={[
+                    { required: true, message: "نام اجباری است" },
+                    {
+                      pattern: /^[\u0600-\u06FF\s]+$/,
+                      message: "نام صحیح نیست",
+                    },
+                  ]}
                 >
-                  <option>فروشنده هستم</option>
-                  <option>خریدار هستم</option>
-                </select>
+                  <Input
+                    type="text"
+                    placeholder="مثال: محمد"
+                    className="h-[40px]"
+                  />
+                </Form.Item>
+              </div>
+              <div className="flex-1">
+                <Form.Item
+                  name="last_name"
+                  label="نام خانوادگی"
+                  className="rtl"
+                  rules={[
+                    { required: true, message: "نام خانوادگی اجباری است" },
+                    {
+                      pattern: /^[\u0600-\u06FF\s]+$/,
+                      message: "نام خانوادگی صحیح نیست",
+                    },
+                  ]}
+                >
+                  <Input
+                    name="last_name"
+                    type="text"
+                    placeholder="مثال: محمدی"
+                    className="h-[40px]"
+                  />
+                </Form.Item>
               </div>
             </div>
-            <div className="flex gap-[15px] mb-[15px]">
+            <div className="flex  gap-[15px]">
               <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
-                  نام
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: محمد"
-                  className="h-[50px] outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box"
-                />
+                <Form.Item
+                  name="telephone"
+                  label="شماره تلفن ثابت"
+                  className="rtl"
+                  rules={[
+                    {
+                      pattern: /^\d{0,}$/,
+                      message: "شماره تلفن ثابت فقط شامل رقم باید باشد",
+                    },
+                  ]}
+                >
+                  <Input
+                    name="telephone"
+                    type="text"
+                    placeholder="مثال: 021221122"
+                    className="h-[40px]"
+                  />
+                </Form.Item>
               </div>
               <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
-                  نام خانوادگی
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: محمدی"
-                  className="h-[50px] outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box"
-                />
-              </div>
-            </div>
-            <div className="flex gap-[15px] mb-[15px]">
-              <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
-                  شماره موبایل
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: 09123456789"
-                  className="h-[50px] outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box"
-                />
-              </div>
-            </div>
-            <div className="flex gap-[15px] mb-[15px]">
-              <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
-                  استان
-                </label>
-                <select className="resize-none outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box">
-                  <option>تهران</option>
-                  <option>تهران</option>
-                  <option>تهران</option>
-                  <option>تهران</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
-                  شهر
-                </label>
-                <select className="resize-none outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box">
-                  <option>تهران</option>
-                  <option>تهران</option>
-                  <option>تهران</option>
-                  <option>تهران</option>
-                </select>
+                <Form.Item
+                  name="mobile"
+                  label="شماره موبایل"
+                  className="rtl"
+                  rules={[
+                    { required: true, message: "شماره موبایل اجباری است" },
+                    {
+                      pattern: /^09\d{9}$/,
+                      message: "شماره موبایل صحیح نمیباشد",
+                    },
+                  ]}
+                >
+                  <Input
+                    type="text"
+                    placeholder="09123456789"
+                    className="h-[40px]"
+                  />
+                </Form.Item>
               </div>
             </div>
-            <div className="flex gap-[15px] mb-[15px]">
+            <div className="flex  gap-[15px]">
               <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
-                  آدرس دقیق
-                </label>
-                <textarea
-                  placeholder="مثال: 09123456789"
-                  className="h-[70px] resize-none outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box"
-                ></textarea>
+                <Form.Item
+                  name="province"
+                  label="استان"
+                  className="rtl"
+                  rules={[{ required: true, message: "استان اجباری است" }]}
+                >
+                  <Select
+                    onChange={(provinceId: string) => {
+                      form.setFieldValue("city", "");
+                      if (provinceId) {
+                        fetchCities(provinceId);
+                      } else {
+                        setCities([]);
+                      }
+                    }}
+                    className="h-[40px]"
+                  >
+                    <option value={""}> </option>
+                    {provinces.map((province) => (
+                      <Select.Option value={province.id}>
+                        {province.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </div>
+              <div className="flex-1">
+                <Form.Item
+                  name="city"
+                  label="شهر"
+                  className="rtl"
+                  rules={[{ required: true, message: "شهر اجباری است" }]}
+                >
+                  <Select
+                    disabled={cities.length === 0}
+                    className="h-[40px]"
+                    onChange={(c: string) => {
+                      const cit = cities.find((el) => el.id == c);
+                      setLatLng({ lat: cit.lat, lng: cit.lng });
+                      setSelectedCity(c);
+                    }}
+                  >
+                    <Select.Option value={""}> </Select.Option>
+                    {cities.map((city) => (
+                      <Select.Option value={city.id}>{city.name}</Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
               </div>
             </div>
-            <div className="flex gap-[15px] mb-[15px]">
+            <div className="flex  gap-[15px]">
               <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
-                  پلاک
-                </label>
-                <input
-                  placeholder="مثال: 40"
-                  className="resize-none outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
-                  واحد
-                </label>
-                <input
-                  placeholder="مثال: 2"
-                  className="resize-none outline-none w-full bg-[#f0f0f0] focus:bg-[#f0f0f0] rounded-[8px] p-[10px] border-box"
-                />
+                <Form.Item
+                  name="address"
+                  label="آدرس "
+                  className="rtl"
+                  rules={[{ required: true, message: "آدرس اجباری است" }]}
+                >
+                  <TextArea
+                    name="address"
+                    placeholder="مثال : تهران - پاسداران ..."
+                    rows={5}
+                    style={{ resize: "none" }}
+                  ></TextArea>
+                </Form.Item>
               </div>
             </div>
-            <div className="flex gap-[15px] mb-[15px] h-[180px] overflow-hidden">
+            <div className="flex  gap-[15px]">
               <div className="flex-1">
-                <label className="text-[13px] text-[#444] block mb-[10px]">
+                <Form.Item
+                  name="postalCode"
+                  label="کد پستی"
+                  className="rtl"
+                  rules={[
+                    {
+                      pattern: /^\d{5,}$/,
+                      message: "کد پستی صحیح نمیباشد",
+                    },
+                  ]}
+                >
+                  <Input
+                    name="postalCode"
+                    placeholder="مثال: 1111111111"
+                    className="h-[40px]"
+                  />
+                </Form.Item>
+              </div>
+            </div>
+            <div className="flex gap-[15px] h-[450px] overflow-hidden mb-[30px]">
+              <div className="flex-1">
+                <label className="text-[13px] text-[#444] block">
                   آدرس روی نقشه
                 </label>
                 <Wrapper
                   apiKey={"AIzaSyAtOnE4vyEvfJxG268WbsUlK9EphptwyWo"}
                   render={render}
                 >
-                  <MapComponent />
+                  <MapComponent
+                    initialLatLng={latLng}
+                    handleLatLngChange={(lat: number, lng: number) => {
+                      convertLocationToAddress(lat, lng).then(function (data) {
+                        setCityName(data.data.city);
+                        setLatLng({ lat: lat, lng: lng });
+                        setIsMapTouched(true);
+                      });
+                    }}
+                  />
                 </Wrapper>
               </div>
             </div>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                showModal();
-              }}
-              className="w-full h-[42px] leading-[42px] bg-[#4caf50] outline-none mt-[30px] mb-[20px] rounded-[8px] text-[#fff]"
-            >
-              ارسال پیامک
-            </button>
-          </form>
+            <Form.Item>
+              <ConfigProvider
+                theme={{
+                  token: {
+                    colorPrimary: "#4caf50",
+                  },
+                }}
+              >
+                <Button
+                  onClick={() => setIsModalOpen(true)}
+                  htmlType="submit"
+                  className="w-full h-[40px]"
+                  type="primary"
+                  disabled={!isSubmittable || !isMapTouched}
+                >
+                  ثبت نام
+                </Button>
+              </ConfigProvider>
+            </Form.Item>
+          </Form>
         </div>
       </div>
-      <Modal open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
-        <div className="flex gap-[15px] mb-[15px] overflow-hidden">
+      <Modal open={isModalOpen} onOk={handleSubmit} onCancel={handleCancel}>
+        <div className="flex  gap-[15px] overflow-hidden">
           <div className="flex-1">
             <label className="text-[13px] text-[#444] block mb-[10px]">
               پیامک وارد شده را وارد نمایید
@@ -184,13 +418,16 @@ export default function Register() {
             <div>
               <Flex
                 gap="middle"
-                className="w-full flex-reverse"
+                className="w-full ltr"
                 align="flex-start"
                 vertical
               >
-                <Input.OTP
-                  formatter={(str) => str.toUpperCase()}
-                  {...sharedProps}
+                <InputOTP
+                  length={5}
+                  autoSubmit={form}
+                  value={otp}
+                  onChange={setOtp}
+                  inputType="numeric"
                 />
               </Flex>
             </div>

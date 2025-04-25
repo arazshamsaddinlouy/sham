@@ -1,61 +1,43 @@
-import React from "react";
-import { StarOutlined, UploadOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
+import { UploadOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
 import { Button, Upload } from "antd";
 
-const props: UploadProps = {
-  action: "https://660d2bd96ddfa2943b33731c.mockapi.io/api/upload",
-  onChange({ file, fileList }) {
-    if (file.status !== "uploading") {
-      console.log(file, fileList);
-    }
-  },
-  defaultFileList: [
-    {
-      uid: "1",
-      name: "xxx.png",
-      size: 1234567,
-      status: "done",
-      response: "Server Error 500", // custom error message to show
-      url: "http://www.baidu.com/xxx.png",
-    },
-    {
-      uid: "2",
-      name: "yyy.png",
-      size: 1234567,
-      status: "done",
-      url: "http://www.baidu.com/yyy.png",
-    },
-    {
-      uid: "3",
-      name: "zzz.png",
-      size: 1234567,
-      status: "error",
-      response: "Server Error 500", // custom error message to show
-      url: "http://www.baidu.com/zzz.png",
-    },
-  ],
-  showUploadList: {
-    extra: ({ size = 0 }) => (
-      <span style={{ color: "#cccccc" }}>
-        ({(size / 1024 / 1024).toFixed(2)}MB)
-      </span>
-    ),
-    showDownloadIcon: true,
-    downloadIcon: "Download",
-    showRemoveIcon: true,
-    removeIcon: (
-      <StarOutlined
-        onClick={(e) => console.log(e, "custom removeIcon event")}
-      />
-    ),
-  },
-};
+interface FileUploaderProps {
+  handleFile: (file: File | null) => void;
+}
 
-const FileUploader: React.FC = () => (
-  <Upload {...props}>
-    <Button icon={<UploadOutlined />}>Upload</Button>
-  </Upload>
-);
+const FileUploader: React.FC<FileUploaderProps> = ({ handleFile }) => {
+  const [fileList, setFileList] = useState<any[]>([]);
+
+  const uploadProps: UploadProps = {
+    maxCount: 1,
+    accept: "audio/*", // Only accept audio files
+    fileList,
+    beforeUpload: (file) => {
+      if (!file.type.startsWith("audio/")) {
+        console.error("Only audio files are allowed!");
+        return false;
+      }
+      setFileList([file]); // Store selected file
+      handleFile(file); // Pass file to parent
+      return false; // Prevent auto-upload
+    },
+    onRemove: () => {
+      setFileList([]);
+      handleFile(null);
+    },
+    showUploadList: {
+      showDownloadIcon: false,
+      showRemoveIcon: true,
+    },
+  };
+
+  return (
+    <Upload {...uploadProps}>
+      <Button icon={<UploadOutlined />}>Select Audio</Button>
+    </Upload>
+  );
+};
 
 export default FileUploader;
