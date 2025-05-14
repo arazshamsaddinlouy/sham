@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { CgChevronLeft } from "react-icons/cg";
 import { GiMedal } from "react-icons/gi";
 export default function Header() {
+  const [openMenu, setOpenMenu] = useState<boolean>(false);
   const { user } = useSelector((state: any) => state.user);
   const dispatch = useDispatch();
   const location = useLocation();
@@ -178,10 +179,13 @@ export default function Header() {
   return (
     <header className="bg-white">
       <nav
-        className="mx-auto flex container items-center justify-between p-6 lg:px-8"
+        className="mx-auto flex container items-center justify-between p-6 max-lg:px-4 max-lg:py-2 max-lg:shadow-[0px_2px_4px-rgba(0,0,0,0.1)]"
         aria-label="Global"
       >
-        <div className="flex">
+        <div
+          className="flex cursor-pointer relative z-[10]"
+          onClick={() => setOpenMenu(!openMenu)}
+        >
           <Link to={"/"} className="-m-1.5 p-1.5">
             <span className="sr-only">خرید و فروش آنلاین</span>
             <img
@@ -193,7 +197,7 @@ export default function Header() {
           <div className="flex lg:hidden">
             <button
               type="button"
-              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
+              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700 max-lg:relative max-lg:top-[8px]"
             >
               <span className="sr-only">Open main menu</span>
               <svg
@@ -506,8 +510,11 @@ export default function Header() {
         </div>
       </nav>
       <div className="lg:hidden" role="dialog" aria-modal="true">
-        <div className="fixed inset-0 z-10"></div>
-        <div className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+        <div
+          className={`fixed inset-y-0 transition-all ${
+            openMenu ? "right-[0px]" : "right-[-400px]"
+          } z-10 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10`}
+        >
           <div className="flex items-center justify-between">
             <a href="#" className="-m-1.5 p-1.5">
               <span className="sr-only">Your Company</span>
@@ -519,7 +526,8 @@ export default function Header() {
             </a>
             <button
               type="button"
-              className="-m-2.5 rounded-md p-2.5 text-gray-700"
+              className="-m-2.5 rounded-md p-2.5 text-gray-700 cursor-pointer"
+              onClick={() => setOpenMenu(!openMenu)}
             >
               <span className="sr-only">Close menu</span>
               <svg

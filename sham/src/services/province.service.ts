@@ -10,6 +10,7 @@ export const getAllProvincesWithCities = () => {
   return axios.get(`${config.BASE_URL}/province/getAllWithCities`, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };

@@ -1,8 +1,10 @@
 import { BiBasket } from "react-icons/bi";
 import SectionHeadings from "./section-headings";
+import useIsMobile from "../hooks/useIsMobile";
 export const SaleItem = () => {
+  const isMobile = useIsMobile();
   return (
-    <div className="flex-1 min-w-[20%]">
+    <div className={`p-2 ${isMobile ? "w-1/2" : "w-1/5"}`}>
       <div>
         <div className="relative aspect-[3/2] rounded-[16px] overflow-hidden mb-[15px]">
           <img
@@ -37,11 +39,12 @@ export const SaleItem = () => {
   );
 };
 export default function HomeSales() {
+  const isMobile = useIsMobile();
   return (
     <div>
       <SectionHeadings title="جدیدترین حراج ها" />
       <div className="container mx-auto mb-[20px]">
-        <div className="flex gap-[15px]">
+        <div className={`flex ${isMobile ? "flex-wrap" : ""}`}>
           <SaleItem />
           <SaleItem />
           <SaleItem />

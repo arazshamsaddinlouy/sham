@@ -56,6 +56,17 @@ body * {
   background-color: #fff !important;
   top: 120px !important;
 }
+@media (max-width: 768px) {
+  .carousel.carousel-slider .control-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    opacity: 1 !important;
+    background-color: #fff !important;
+    top: 85px !important;
+  }
+}
 .carousel .control-next.control-arrow:before {
   border-left: 8px solid #333 !important;
 }

@@ -9,6 +9,7 @@ export const getEditUserInfo = () => {
   return axios.get(`${config.BASE_URL}/user/edit`, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };
@@ -17,6 +18,7 @@ export const getEditUserMobile = () => {
   return axios.get(`${config.BASE_URL}/user/edit/mobile`, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };
@@ -25,6 +27,7 @@ export const editUserInfo = (params: any) => {
   return axios.put(`${config.BASE_URL}/user/edit`, params, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };
@@ -36,6 +39,7 @@ export const getUserCoords = () => {
   return axios.get(`${config.BASE_URL}/user/getLocation`, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };

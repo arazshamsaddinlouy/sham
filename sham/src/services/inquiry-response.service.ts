@@ -6,6 +6,7 @@ export const addPriceInquiryResponse = (payload: any) => {
   return axios.post(`${config.BASE_URL}/inquiry-response/add`, payload, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };
@@ -14,6 +15,7 @@ export const addPriceMessageResponse = (payload: any) => {
   return axios.post(`${config.BASE_URL}/inquiry-response/addMessage`, payload, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };
@@ -25,6 +27,7 @@ export const getAllInquiryResponses = (requestId: string) => {
     {
       headers: {
         authorization: `Bearer ${header}`,
+        "Content-Type": "application/json; charset=UTF-8",
       },
     }
   );

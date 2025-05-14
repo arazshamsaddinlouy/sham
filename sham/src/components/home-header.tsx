@@ -3,16 +3,16 @@ import { useNavigate } from "react-router-dom";
 export default function HomeHeader() {
   const navigate = useNavigate();
   return (
-    <div className="relative h-[550px] overflow-hidden bg-[#444]">
-      <div className="flex">
-        <div className="flex-1 bg-[#f5f5f5]">
-          <div className="text-right p-[0_60px] relative overflow-hidden">
+    <div className="relative h-[550px] max-lg:h-[400px] overflow-hidden bg-[#444]">
+      <div className="flex max-md:flex-col">
+        <div className="flex-1 bg-[#f5f5f5] max-lg:mt-[-90px]">
+          <div className="text-right p-[0_60px] max-lg:p-[0px] max-lg:pt-[10px] relative overflow-hidden">
             <div className="relative z-[3] flex flex-col gap-[10px] h-[550px] justify-center">
-              <h1 className="text-[40px] mb-[20px] text-[#111] font-bold">
+              <h1 className="text-[40px] mb-[20px] text-[#111] font-bold max-lg:text-[25px] max-lg:px-[30px]">
                 سامانه خرید و فروش آنلاین
               </h1>
 
-              <h2 className="text-[16px] text-[#666] mb-[10px] leading-[36px]">
+              <h2 className="text-[16px] text-[#666] mb-[10px] leading-[36px] max-lg:text-[16px] max-lg:px-[30px]">
                 <p>
                   شما از طریق این سامانه میتوانید محصولات خود را خرید و فروش
                   نمایید.
@@ -23,11 +23,11 @@ export default function HomeHeader() {
                 </p>
               </h2>
               <div>
-                <div className="rounded-full border-[10px] inline-block border-[rgba(33,150,243,0.3)]">
+                <div className="rounded-full border-[10px] mr-[30px] inline-block border-[rgba(33,150,243,0.3)]">
                   <button
                     onClick={() => navigate("/dashboard/request-price")}
                     type="button"
-                    className="bg-blue-600 p-[26px_45px] h-[60px] rounded-full text-[22px] text-white p-[5px_40px]"
+                    className="bg-blue-600 h-[60px] rounded-full text-[22px] text-white p-[5px_40px] max-lg:p-[5px_15px] max-lg:text-[15px]"
                   >
                     استعلام قیمت
                     <span aria-hidden="true" className="mr-[5px]">
@@ -39,7 +39,7 @@ export default function HomeHeader() {
             </div>
           </div>
         </div>
-        <div className="flex-1 bg-[#eee] h-[550px] relative overflow-hidden">
+        <div className="flex-1 max-lg:hidden bg-[#eee] h-[550px] relative overflow-hidden">
           <div className="absolute w-[150%] h-[150%] left-[-25%] top-[-25%] opacity-[0.04] bg-[url('/images/header-pattern.jpg')] bg-cover bg-center" />
           <div className="flex flex-col h-[550px] justify-center">
             <div className="flex">

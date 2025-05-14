@@ -6,6 +6,7 @@ export const addBranch = (payload: any) => {
   return axios.post(`${config.BASE_URL}/branch/add`, payload, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };
@@ -14,6 +15,7 @@ export const editBranch = (payload: any) => {
   return axios.put(`${config.BASE_URL}/branch/edit`, payload, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };
@@ -22,6 +24,7 @@ export const deleteBranch = (id: string) => {
   return axios.delete(`${config.BASE_URL}/branch/delete?id=${id}`, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };
@@ -30,6 +33,7 @@ export const getAllBranches = () => {
   return axios.get(`${config.BASE_URL}/branch/getAll`, {
     headers: {
       authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
     },
   });
 };
@@ -41,6 +45,7 @@ export const getBranchLocation = (id: string) => {
     {
       headers: {
         authorization: `Bearer ${header}`,
+        "Content-Type": "application/json; charset=UTF-8",
       },
     }
   );
