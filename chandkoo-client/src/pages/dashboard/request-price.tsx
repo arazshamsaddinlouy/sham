@@ -8,6 +8,7 @@ import {
   InputNumber,
   Space,
   Modal,
+  Select,
 } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import MapComponent from "../../components/google-map";
@@ -33,7 +34,21 @@ import { getAllProvincesWithCities } from "../../services/province.service";
 import ImageUploader from "../../components/image-uploader";
 import FileUploader from "../../components/file-uploader";
 import { Moment } from "moment";
-
+const colors = [
+  { label: "قرمز", value: "red", hex: "#FF0000" },
+  { label: "آبی", value: "blue", hex: "#0000FF" },
+  { label: "سبز", value: "green", hex: "#008000" },
+  { label: "زرد", value: "yellow", hex: "#FFFF00" },
+  { label: "نارنجی", value: "orange", hex: "#FFA500" },
+  { label: "بنفش", value: "purple", hex: "#800080" },
+  { label: "صورتی", value: "pink", hex: "#FFC0CB" },
+  { label: "مشکی", value: "black", hex: "#000000" },
+  { label: "سفید", value: "white", hex: "#FFFFFF" },
+  { label: "خاکستری", value: "gray", hex: "#808080" },
+  { label: "قهوه‌ای", value: "brown", hex: "#8B4513" },
+  { label: "طلایی", value: "gold", hex: "#FFD700" },
+  { label: "نقره‌ای", value: "silver", hex: "#C0C0C0" },
+];
 export default function RequestPrice() {
   const [categories, setCategories] = useState<any[]>([]);
   const [latLng, setLatLng] = useState<{
@@ -231,70 +246,119 @@ export default function RequestPrice() {
             treeCheckable
             onChange={onProvinceChange}
             treeData={provinces}
+            treeNodeFilterProp="label"
           />
         </Form.Item>
-        <Form.Item
-          name="productCount"
-          label="تعداد محصول"
-          className="rtl"
-          initialValue={1}
-          rules={[{ required: true, message: "تعداد محصول اجباری است" }]}
-        >
-          <InputNumber min={1} onChange={(val) => setProductCount(val || 1)} />
-        </Form.Item>
-        <Form.Item name="color" label="رنگ محصول (اختیاری)" className="rtl">
-          <InputNumber
-            min={0}
-            max={255}
-            onChange={(val) => setColor(val || undefined)}
-          />
-        </Form.Item>
-        <Form.Item
-          label="توضیحات"
-          className="rtl"
-          rules={[{ required: true, message: "توضیحات اجباری است" }]}
-        >
-          <TextArea rows={4} onChange={(e) => setDescription(e.target.value)} />
-        </Form.Item>
-        <Form.Item label="بارگذاری تصویر (اختیاری)" className="rtl">
-          <ImageUploader handleFile={(file) => setImage(file)} />
-        </Form.Item>
-        <Form.Item label="بارگذاری صوت (اختیاری)" className="rtl">
-          <FileUploader handleFile={(file) => setFile(file)} />
-        </Form.Item>
-        <Form.Item label="تاریخ انقضا" className="rtl">
+        <div className="flex gap-[30px] justify-between">
+          <div className="flex-1">
+            <Form.Item
+              name="productCount"
+              label="تعداد محصول"
+              className="rtl w-full"
+              initialValue={1}
+              rules={[{ required: true, message: "تعداد محصول اجباری است" }]}
+            >
+              <InputNumber
+                min={1}
+                style={{ width: "100%" }}
+                onChange={(val) => setProductCount(val || 1)}
+              />
+            </Form.Item>
+            <Form.Item
+              name="color"
+              label="رنگ محصول (اختیاری)"
+              className="rtl w-full"
+            >
+              <Select
+                style={{ width: "100%" }}
+                placeholder="انتخاب رنگ"
+                allowClear
+                onChange={(val) => setColor(val || undefined)}
+              >
+                {colors.map((color) => (
+                  <Select.Option key={color.value} value={color.value}>
+                    <span
+                      style={{ display: "inline-flex", alignItems: "center" }}
+                    >
+                      <span
+                        style={{
+                          backgroundColor: color.hex,
+                          width: 14,
+                          height: 14,
+                          borderRadius: "50%",
+                          display: "inline-block",
+                          marginLeft: 8,
+                          border: "1px solid #ccc",
+                        }}
+                      />
+                      {color.label}
+                    </span>
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </div>
+          <div className="w-[200px]">
+            <Form.Item label="بارگذاری تصویر (اختیاری)" className="rtl w-full">
+              <ImageUploader handleFile={(file) => setImage(file)} />
+            </Form.Item>
+            <Form.Item label="بارگذاری صوت (اختیاری)" className="rtl w-full">
+              <FileUploader handleFile={(file) => setFile(file)} />
+            </Form.Item>
+          </div>
+        </div>
+        <Form.Item label="تاریخ انقضا" className="rtl w-full">
           <ConfigProvider locale={fa_IR}>
             <JalaliLocaleListener />
             <DatePickerJalali
+              style={{ width: "100%" }} // 👈 Make DatePicker full width
               onChange={(val: Moment | null) =>
                 setDateString(val ? val.format("YYYY-MM-DD") : "")
               }
             />
           </ConfigProvider>
         </Form.Item>
-        <Space direction="vertical" className="rtl mb-4">
-          <Switch
-            checked={hasGuaranteeChecked}
-            onChange={(checked) => setIsGuaranteeChecked(checked)}
-            checkedChildren={<CheckOutlined />}
-            unCheckedChildren={<CloseOutlined />}
-          />{" "}
-          گارانتی داشته باشد
-          <Switch
-            checked={deliceryChecked}
-            onChange={(checked) => setDeliveryChecked(checked)}
-            checkedChildren={<CheckOutlined />}
-            unCheckedChildren={<CloseOutlined />}
-          />{" "}
-          شامل حمل و نقل باشد
-          <Switch
-            checked={isMessageEnabled}
-            onChange={(checked) => setIsMessageEnabled(checked)}
-            checkedChildren={<CheckOutlined />}
-            unCheckedChildren={<CloseOutlined />}
-          />{" "}
-          امکان ارسال پیامک به فروشنده
-        </Space>
+        <div className="flex gap-[30px] justify-between">
+          <div className="flex-1">
+            <Form.Item
+              label="توضیحات"
+              className="rtl"
+              name={"description"}
+              rules={[{ required: true, message: "توضیحات اجباری است" }]}
+            >
+              <TextArea
+                rows={6}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </Form.Item>
+          </div>
+
+          <div className="w-[200px]">
+            <Space direction="vertical" className="rtl mb-4">
+              <Switch
+                checked={hasGuaranteeChecked}
+                onChange={(checked) => setIsGuaranteeChecked(checked)}
+                checkedChildren={<CheckOutlined />}
+                unCheckedChildren={<CloseOutlined />}
+              />{" "}
+              گارانتی داشته باشد
+              <Switch
+                checked={deliceryChecked}
+                onChange={(checked) => setDeliveryChecked(checked)}
+                checkedChildren={<CheckOutlined />}
+                unCheckedChildren={<CloseOutlined />}
+              />{" "}
+              شامل حمل و نقل باشد
+              <Switch
+                checked={isMessageEnabled}
+                onChange={(checked) => setIsMessageEnabled(checked)}
+                checkedChildren={<CheckOutlined />}
+                unCheckedChildren={<CloseOutlined />}
+              />{" "}
+              امکان ارسال پیامک به فروشنده
+            </Space>
+          </div>
+        </div>
         <div className="text-[14px] mb-[5px] mt-[0px]">
           مکان خود روی نقشه را مشخص نمایید:
         </div>

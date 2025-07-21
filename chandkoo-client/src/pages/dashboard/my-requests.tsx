@@ -38,7 +38,7 @@ export default function MyRequests() {
   }, [activeTab]);
 
   const CurrentPriceRequests = () => (
-    <div className="lower-card-body grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="lower-card-body grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1">
       {activeRequests.map((req: any) => (
         <PriceRequestCard key={req.id} request={req} />
       ))}
@@ -46,7 +46,7 @@ export default function MyRequests() {
   );
 
   const ExpiredPriceRequests = () => (
-    <div className="lower-card-body grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="lower-card-body grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1">
       {expiredRequests.map((req: any) => (
         <PriceRequestExpireCard key={req.id} request={req} />
       ))}
