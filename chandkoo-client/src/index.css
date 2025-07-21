@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "yekan";
+  src: url("/fonts/IRANSans_Light.ttf");
+}
+body {
+  overflow-x: hidden;
+}
+body * {
+  font-family: "yekan";
+}
+.ant-tabs-tab-btn {
+  display: flex;
+  align-items: center;
+  font-size: 18px !important;
+}
+.ant-space-item {
+  width: 100%;
+}
+.ant-otp {
+  width: 100%;
+  flex-direction: row-reverse;
+  gap: 20px;
+}
+.ant-otp .ant-input {
+  height: 45px !important;
+}
+.slider .slide {
+  padding: 35px !important;
+  opacity: 0.3;
+  transform: scale(0.5);
+  transition: all 0.2s linear;
+}
+.slider .slide.selected {
+  opacity: 1;
+  transform: scale(1);
+}
+.slider .slide.selected > div {
+  box-shadow: 0 10px 15px 2px rgba(0, 0, 0, 0.05);
+}
+.ltr {
+  direction: ltr !important;
+}
+.rtl {
+  direction: rtl !important;
+}
+.carousel.carousel-slider .control-arrow {
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  opacity: 1 !important;
+  background-color: #fff !important;
+  top: 120px !important;
+}
+@media (max-width: 768px) {
+  .carousel.carousel-slider .control-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    opacity: 1 !important;
+    background-color: #fff !important;
+    top: 85px !important;
+  }
+}
+.carousel .control-next.control-arrow:before {
+  border-left: 8px solid #333 !important;
+}
+.carousel .control-prev.control-arrow:before {
+  border-right: 8px solid #333 !important;
+}
+.carousel.carousel-slider .control-arrow.control-next {
+  right: 15px !important;
+}
+.white-space-break {
+  white-space: break-spaces;
+}
+#otp {
+  direction: ltr !important;
+}
+.input-otp {
+  justify-content: space-between !important;
+  gap: 15px !important;
+}
+.input-otp > input {
+  max-width: 100px !important;
+}
+.carousel.carousel-slider .control-arrow.control-prev {
+  left: 15px !important;
+}
+.font-yekan {
+  font-family: yekan !important;
+}
+.lower-card-body .ant-card-body {
+  padding: 10px 24px 10px 24px !important;
+}
+.ltr {
+  direction: ltr !important;
+}
+.lh-40 {
+  line-height: 40px !important;
+}

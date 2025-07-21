@@ -1,0 +1,10 @@
+User-agent: *
+Disallow:
+
+# Prevent indexing of service worker and manifest
+Disallow: /service-worker.js
+Disallow: /manifest.webmanifest
+Disallow: /asset-manifest.json
+Disallow: /robots.txt
+
+Sitemap: https://yourdomain.com/sitemap.xml
