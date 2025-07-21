@@ -1,0 +1,43 @@
+[
+    {
+        "id": "1",
+        "shop_name": "محصولات فلانی",
+        "produc_name": "ایرپاد پرو ۲۰۲۵",
+        "non_sale_price": "۱۲,۰۰۰۰,۰۰۰",
+        "sale_price": "۸,۰۰۰,۰۰۰",
+        "category": "لوازم الکترونیکی",
+        "image": "https://genkiware.com/demo-modules/1-medium_default/hummingbird-printed-t-shirt.jpg"
+    },{
+        "id": "2",
+        "shop_name": "محصولات فلانی",
+        "produc_name": "ایرپاد پرو ۲۰۲۵",
+        "non_sale_price": "۱۲,۰۰۰۰,۰۰۰",
+        "sale_price": "۸,۰۰۰,۰۰۰",
+        "category": "لوازم الکترونیکی",
+        "image": "https://genkiware.com/demo-modules/1-medium_default/hummingbird-printed-t-shirt.jpg"
+    },{
+        "id": "3",
+        "shop_name": "محصولات فلانی",
+        "produc_name": "ایرپاد پرو ۲۰۲۵",
+        "non_sale_price": "۱۲,۰۰۰۰,۰۰۰",
+        "sale_price": "۸,۰۰۰,۰۰۰",
+        "category": "لوازم الکترونیکی",
+        "image": "https://genkiware.com/demo-modules/1-medium_default/hummingbird-printed-t-shirt.jpg"
+    },{
+        "id": "4",
+        "shop_name": "محصولات فلانی",
+        "produc_name": "ایرپاد پرو ۲۰۲۵",
+        "non_sale_price": "۱۲,۰۰۰۰,۰۰۰",
+        "sale_price": "۸,۰۰۰,۰۰۰",
+        "category": "لوازم الکترونیکی",
+        "image": "https://genkiware.com/demo-modules/1-medium_default/hummingbird-printed-t-shirt.jpg"
+    },{
+        "id": "5",
+        "shop_name": "محصولات فلانی",
+        "produc_name": "ایرپاد پرو ۲۰۲۵",
+        "non_sale_price": "۱۲,۰۰۰۰,۰۰۰",
+        "sale_price": "۸,۰۰۰,۰۰۰",
+        "category": "لوازم الکترونیکی",
+        "image": "https://genkiware.com/demo-modules/1-medium_default/hummingbird-printed-t-shirt.jpg"
+    }
+]
