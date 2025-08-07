@@ -70,9 +70,10 @@ export default function LoginOtp() {
       ch.replace(/[۰-۹]/g, (d) => englishDigits[persianDigits.indexOf(d)])
     );
   };
+
   const handleOtpChange = (val: string[]) => {
     const converted = persianToEnglishDigits(val);
-    setOtp(converted);
+    setOtp(converted); // assuming `otp` is a string[] too
   };
   return (
     <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-350px)]">
