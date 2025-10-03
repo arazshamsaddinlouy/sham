@@ -81,7 +81,7 @@ export default function Login() {
           className="w-full h-full object-cover min-h-[100%]"
         />
       </div>
-      <div className="flex bg-[#fff] relative z-[20] flex-col md:flex-row bg-white rounded-3xl shadow-lg overflow-hidden max-w-4xl w-full">
+      <div className="flex bg-[#fff] relative z-[20] flex-col md:flex-row bg-white rounded-[5px] shadow-lg overflow-hidden max-w-4xl w-full">
         {/* Left Image Section */}
         <div
           className="hidden md:block md:w-1/3 bg-cover bg-center"

@@ -48,7 +48,7 @@ export default function HomeSales() {
   useEffect(() => {
     getAllSales().then((res) => {
       if (res.status === 200) {
-        setSales(res.data.sales);
+        setSales([...res.data.sales, res.data.sales[0]]);
       }
     });
   }, []);

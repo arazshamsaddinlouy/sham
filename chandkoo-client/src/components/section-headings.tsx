@@ -5,7 +5,7 @@ export default function SectionHeadings({ title }: { title: string }) {
   return (
     <div
       className={`w-full text-center ${
-        isMobile ? "pt-[20px] pb-[20px]" : "pt-[60px] pb-[60px]"
+        isMobile ? "pt-[20px] pb-[20px]" : "pt-[30px] pb-[30px]"
       }`}
     >
       <div className={`${isMobile ? "text-[22px]" : "text-[32px]"} pb-[20px]`}>

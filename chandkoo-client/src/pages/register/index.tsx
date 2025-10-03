@@ -11,7 +11,6 @@ import { useNavigate } from "react-router-dom";
 import TextArea from "antd/es/input/TextArea";
 import { convertLocationToAddress } from "../../services/map.service";
 import { InputOTP } from "antd-input-otp";
-import useIsMobile from "../../hooks/useIsMobile";
 import { sendOtp } from "../../services/auth.service";
 let cityList: any[] = [];
 export default function Register() {
@@ -149,13 +148,9 @@ export default function Register() {
           className="w-full h-full object-cover min-h-[100%]"
         />
       </div>
-      <div className="flex bg-[#fff] relative z-[20] mt-[30px] mb-[30px] flex-col md:flex-row bg-white rounded-3xl shadow-lg overflow-hidden max-w-[1500px] w-full">
+      <div className="flex bg-[#fff] relative z-[20] mt-[30px] mb-[30px] flex-col md:flex-row bg-white rounded-[5px] shadow-lg overflow-hidden max-w-[1000px] w-full">
         {/* Left Image Section */}
-        <div
-          className="hidden md:block md:w-1/6 bg-cover bg-center"
-          style={{ backgroundImage: "url('/images/login-wallpaper.jpg')" }}
-        />
-        <div className="w-full md:w-5/6 p-8 md:p-12 flex flex-col justify-center">
+        <div className="w-full p-8 md:p-12 flex flex-col justify-center">
           <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8">
             ثبت نام
           </h2>

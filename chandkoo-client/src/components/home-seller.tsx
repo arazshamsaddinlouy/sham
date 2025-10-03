@@ -3,7 +3,6 @@ import { getAllSellers } from "../services/content.service";
 import { Tag } from "antd";
 import { MdCategory } from "react-icons/md";
 import { FaBuilding, FaShoppingCart } from "react-icons/fa";
-import { BiUserCheck } from "react-icons/bi";
 
 function HomerSellerItem({ seller }: { seller: any }): JSX.Element {
   return (
@@ -58,7 +57,7 @@ export default function HomeSeller() {
   }, []);
 
   return (
-    <div className="w-full bg-gray-50 py-12">
+    <div className="w-full">
       {/* Header with background */}
       <div className="relative w-full flex flex-col justify-center items-center overflow-hidden mb-8">
         <div
@@ -73,15 +72,14 @@ export default function HomeSeller() {
             className="w-full h-full object-cover min-h-[100%]"
           />
         </div>
-        <div className="relative z-10 flex flex-col items-center text-center">
-          <BiUserCheck size={80} className="text-white mb-2" />
+        <div className="relative z-10 pt-[20px] flex flex-col items-center text-center">
           <h2 className="text-white text-2xl sm:text-3xl font-extrabold">
             بهترین فروشندگان
           </h2>
         </div>
         {/* Seller cards */}
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 relative pt-[30px] pb-[30px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 relative pt-[30px] pb-[30px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
             {sellers.map((el) => (
               <HomerSellerItem seller={el} key={`seller-${el.id}`} />
             ))}

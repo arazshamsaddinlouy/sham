@@ -12,6 +12,7 @@ import {
   setRequestCount,
 } from "../../store/slices/userSlice";
 import useIsMobile from "../../hooks/useIsMobile";
+import { GiHamburgerMenu } from "react-icons/gi";
 
 export default function Dashboard() {
   const location = useLocation();
@@ -41,18 +42,18 @@ export default function Dashboard() {
     }
   }, [location.pathname, user.customerType]);
 
-  // Sticky sidebar logic
+  // Sticky sidebar logic for desktop only
   useEffect(() => {
-    if (isMobile) return; // No sticky behavior on mobile
+    if (isMobile) return;
 
     const handleScroll = () => {
       const sidebar = sidebarRef.current;
-      const footer = document.querySelector("footer"); // assumes you have a footer tag
+      const footer = document.querySelector("footer");
       if (!sidebar || !footer) return;
 
       const footerRect = footer.getBoundingClientRect();
       const sidebarHeight = sidebar.offsetHeight;
-      const topOffset = 90; // same as pt-[100px]
+      const topOffset = 90;
 
       if (footerRect.top <= sidebarHeight + topOffset) {
         sidebar.style.position = "absolute";
@@ -99,18 +100,19 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="flex w-full min-h-screen bg-gray-50 pt-[90px]">
+    <div className="flex w-full min-h-screen bg-gray-50 pt-[90px] relative">
       {/* Sidebar */}
       <div
         ref={sidebarRef}
         className={`
+          bg-gradient-to-b from-purple-700 to-purple-500 text-white flex flex-col overflow-hidden
           ${
             isMobile
-              ? `${sidebarOpen ? "w-64" : "w-0"} overflow-hidden`
-              : "w-64"
+              ? `fixed top-[90px] left-0 h-[calc(100vh-90px)] z-50 transition-width duration-300 ease-in-out ${
+                  sidebarOpen ? "w-64" : "w-0"
+                }`
+              : "w-64 h-[calc(100vh-90px)] relative"
           }
-          bg-gradient-to-b from-purple-700 h-[calc(100vh-90px)] to-purple-500 text-white
-          z-50 flex overflow-hidden flex-col
         `}
       >
         <div className="absolute inset-0 opacity-20">
@@ -121,7 +123,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center relative z-[20] justify-between p-6 border-b border-white/20">
           <h1 className="text-xl font-bold">پنل مدیریت</h1>
-          {isMobile && (
+          {isMobile && sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(false)}
               className="text-white text-2xl focus:outline-none"
@@ -136,6 +138,7 @@ export default function Dashboard() {
               <Link
                 to={item.to}
                 className="flex justify-between items-center p-4 font-medium"
+                onClick={() => isMobile && setSidebarOpen(false)} // close sidebar on link click (mobile)
               >
                 <div className="flex items-center gap-2">
                   <LuList />
@@ -166,19 +169,33 @@ export default function Dashboard() {
 
       {/* Main content */}
       <div
-        className={`flex-1 transition-all duration-300 ${
-          isMobile ? "mr-0" : "mr-64"
-        } px-[10px] pt-[30px] md:px-[30px]`}
+        className={`flex-1 transition-all duration-300 relative z-[20] px-[10px] pt-[30px] md:px-[30px] sm:!mr-[260px]
+    ${isMobile ? "w-full" : "w-[calc(100vw-256px)]"}
+  `}
       >
         {isMobile && !sidebarOpen && (
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="mb-4 text-purple-700 bg-white px-4 py-2 rounded-lg shadow-md"
-          >
-            منو
-          </button>
+          <div className="w-full flex  shadow-md items-center bg-[#fff] z-[10] right-[0px] fixed top-[97px]">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="mb-4 px-4 py-2"
+            >
+              <div className="flex gap-[8px] items-center">
+                <div>
+                  <GiHamburgerMenu
+                    size={22}
+                    className="text-[#222] relative top-[7px]"
+                  />
+                </div>
+                <div className="text-[12px] relative top-[6px] text-[#222]">
+                  منوی کاربری
+                </div>
+              </div>
+            </button>
+          </div>
         )}
-        <Outlet />
+        <div className="pt-[50px] sm:pt-[0px]">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

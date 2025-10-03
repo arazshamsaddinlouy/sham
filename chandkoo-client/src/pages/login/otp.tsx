@@ -8,6 +8,8 @@ import { Button, ConfigProvider, Form } from "antd";
 let timeout: any = null;
 
 export default function LoginOtp() {
+  const [autoSubmitted, setAutoSubmitted] = useState(false);
+
   const [form] = Form.useForm();
   const [otp, setOtp] = useState<string[]>(Array(5).fill("")); // initialize with 5 empty slots
   const [timer, setTimer] = useState(120);
@@ -44,7 +46,13 @@ export default function LoginOtp() {
   const handleOtpChange = (val: string[]) => {
     setOtp(persianToEnglishDigits(val));
   };
-
+  // Auto-submit once OTP is fully entered
+  useEffect(() => {
+    if (!autoSubmitted && otp.every((digit) => digit !== "")) {
+      setAutoSubmitted(true);
+      handleSubmit();
+    }
+  }, [otp, autoSubmitted]);
   // Submit OTP
   const handleSubmit = () => {
     setIsLoading(true);
@@ -80,7 +88,7 @@ export default function LoginOtp() {
       </div>
 
       {/* OTP Container */}
-      <div className="relative z-20 flex flex-col md:flex-row bg-white rounded-3xl shadow-lg overflow-hidden max-w-3xl w-full">
+      <div className="relative z-20 flex flex-col md:flex-row bg-white rounded-[5px] shadow-lg overflow-hidden max-w-3xl w-full">
         {/* Left Sidebar Image */}
         <div
           className="hidden md:block md:w-1/3 bg-cover bg-center"
