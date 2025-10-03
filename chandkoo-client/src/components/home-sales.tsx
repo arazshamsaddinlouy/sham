@@ -1,48 +1,50 @@
-import { BiBasket } from "react-icons/bi";
-import SectionHeadings from "./section-headings";
-import useIsMobile from "../hooks/useIsMobile";
 import { useEffect, useState } from "react";
+import SectionHeadings from "./section-headings";
 import { getAllSales } from "../services/content.service";
+
 export const SaleItem = ({ sale }: { sale: any }) => {
-  const isMobile = useIsMobile();
   return (
-    <div className={`p-2 ${isMobile ? "w-1/2" : "w-1/5"}`}>
-      <div>
-        <div className="relative aspect-[3/2] rounded-[16px] overflow-hidden mb-[15px]">
+    <div className="w-full max-[768px]:px-[15px]">
+      <div className="flex items-center border rounded-[12px] overflow-hidden shadow-sm bg-white">
+        {/* Image section */}
+        <div className="w-[130px] h-[130px] flex-shrink-0 overflow-hidden">
           <img
             src={sale.image}
-            className="absolute w-[100%] rounded-[16px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]"
+            className="w-full h-full object-cover"
+            alt={sale.product_name}
           />
-          <div className="text-[16px] mb-[10px] absolute right-[10px] top-[10px] p-[5px_15px] rounded-[16px] text-[11px] bg-[rgba(255,255,255,0.2)] text-[#fff] backdrop-blur-md">
-            {sale.shop_name}
-          </div>
         </div>
-        <div className="relative">
-          <div className="absolute left-[0px] bg-[#f50057] rounded-[20px] font-bold top-[0px] p-[5px_8px] text-[15px] text-[#fff]">
+
+        {/* Content section */}
+        <div className="flex-1 p-3 relative">
+          {/* Sale percent badge */}
+          <div className="absolute left-3 top-3 bg-[#f50057] rounded-[12px] font-bold px-2 py-1 text-[12px] text-white">
             {sale.sale_percent}
           </div>
-          <div className="text-[20px] mb-[10px]">{sale.product_name}</div>
-          <div className="text-[12px] text-[#999] line-through mb-[5px]">
+
+          <div className="text-[16px] font-semibold mb-1">
+            {sale.product_name}
+          </div>
+          <div className="text-[12px] text-[#999] line-through mb-[2px]">
             {sale.non_sale_price} تومان
           </div>
-          <div className="text-[16px] text-[#222]">{sale.sale_price} تومان</div>
-          <div className="text-[12px] text-[#666] bg-[#f0f0f0] border-[1px] border-[#ccc] rounded-[20px] absolute bottom-[0px] left-[0px] p-[4px_10px]">
+          <div className="text-[14px] text-[#222] font-medium">
+            {sale.sale_price} تومان
+          </div>
+
+          {/* Category badge */}
+          <div className="text-[11px] text-[#666] bg-[#f0f0f0] border border-[#ccc] rounded-[12px] inline-block mt-2 px-3 py-1">
             {sale.category}
           </div>
         </div>
       </div>
-      <button className="bg-[#6fbf73] gap-[10px] mt-[10px] flex text-[#fff] justify-center items-center w-full outline-none border-none rounded-[8px] p-[10px_0]">
-        <div>
-          <BiBasket size={22} />
-        </div>
-        <div>افزودن به سبد خرید</div>
-      </button>
     </div>
   );
 };
+
 export default function HomeSales() {
-  const isMobile = useIsMobile();
   const [sales, setSales] = useState<any[]>([]);
+
   useEffect(() => {
     getAllSales().then((res) => {
       if (res.status === 200) {
@@ -50,12 +52,14 @@ export default function HomeSales() {
       }
     });
   }, []);
+
   return (
     <div>
       <SectionHeadings title="جدیدترین حراج ها" />
       <div className="container mx-auto mb-[20px]">
-        <div className={`flex ${isMobile ? "flex-wrap" : ""}`}>
-          {sales.map((el) => (
+        {/* Grid with 3 columns and gap */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {sales.slice(0, 6).map((el) => (
             <SaleItem sale={el} key={`sales-${el.id}`} />
           ))}
         </div>

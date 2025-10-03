@@ -1,183 +1,42 @@
+import { IoSearchOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 
 export default function HomeHeader() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative h-[550px] max-lg:h-[400px] overflow-hidden bg-[#444]">
-      <div className="flex max-md:flex-col">
-        <div className="flex-1 bg-[#f5f5f5] max-lg:mt-[-90px]">
-          <div className="text-right p-[0_60px] max-lg:p-[0px] max-lg:pt-[10px] relative overflow-hidden">
-            <div className="relative z-[3] flex flex-col gap-[10px] h-[550px] justify-center">
-              <h1 className="text-[40px] mb-[20px] text-[#111] font-bold max-lg:text-[25px] max-lg:px-[30px]">
-                سامانه خرید و فروش آنلاین
-              </h1>
+    <div className="w-full relative mt-[145px]">
+      <div className="relative h-[400px] md:h-[500px] lg:h-[550px] overflow-hidden rounded-[20px] shadow-lg mx-auto max-w-[1500px] !max-[768px]:px-[15px]">
+        {/* Background image */}
+        <img
+          src="/images/wallpaper.jpg"
+          className="absolute inset-0 w-full h-full object-cover brightness-75"
+          alt="Header background"
+        />
 
-              <h2 className="text-[16px] text-[#666] mb-[10px] leading-[36px] max-lg:text-[16px] max-lg:px-[30px]">
-                <p>
-                  شما از طریق این سامانه میتوانید محصولات خود را خرید و فروش
-                  نمایید.
-                </p>
-                <p>
-                  همچنین روی نقشه میتوانین نزدیک ترین فروشندگان را یافت و بهترین
-                  قیمت را پیدا کنید.  
-                </p>
-              </h2>
-              <div>
-                <div className="rounded-full border-[10px] mr-[30px] inline-block border-[rgba(33,150,243,0.3)]">
-                  <button
-                    onClick={() => navigate("/dashboard/request-price")}
-                    type="button"
-                    className="bg-blue-600 h-[60px] rounded-full text-[22px] text-white p-[5px_40px] max-lg:p-[5px_15px] max-lg:text-[15px]"
-                  >
-                    استعلام قیمت
-                    <span aria-hidden="true" className="mr-[5px]">
-                      &larr;
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 max-lg:hidden bg-[#eee] h-[550px] relative overflow-hidden">
-          <div className="absolute w-[150%] h-[150%] left-[-25%] top-[-25%] opacity-[0.04] bg-[url('/images/header-pattern.jpg')] bg-cover bg-center" />
-          <div className="flex flex-col h-[550px] justify-center">
-            <div className="flex">
-              <div className="flex-1">
-                <div className="text-center">
-                  <div className="flex flex-col items-center justify-center p-[10px]">
-                    <div>
-                      <svg
-                        className="size-8 w-[90px] h-[90px] text-gray-600 group-hover:text-indigo-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        aria-hidden="true"
-                        data-slot="icon"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"
-                        />
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-[42px] text-[#333]">
-                      +۴۰ <span className="text-[16px]"> هزار</span>
-                    </div>
-                    <div className="text-[15px] text-[#666]">کاربر فعال</div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="text-center">
-                  <div className="flex flex-col items-center justify-center p-[10px]">
-                    <div>
-                      <svg
-                        className="size-8 w-[90px] h-[90px] text-gray-600 group-hover:text-indigo-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        aria-hidden="true"
-                        data-slot="icon"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"
-                        />
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-[42px] text-[#333]">
-                      +۱۰۰ <span className="text-[16px]"> هزار</span>
-                    </div>
-                    <div className="text-[15px] text-[#666]">
-                      خرید و فروش موفق
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex">
-              <div className="flex-1">
-                <div className="text-center">
-                  <div className="flex flex-col items-center justify-center p-[30px]">
-                    <div>
-                      <svg
-                        className="size-8 w-[90px] h-[90px] text-gray-600 group-hover:text-indigo-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        aria-hidden="true"
-                        data-slot="icon"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"
-                        />
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-[42px] text-[#333]">
-                      +۲۰ <span className="text-[16px]"> هزار</span>
-                    </div>
-                    <div className="text-[15px] text-[#666]">فروشنده</div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="text-center">
-                  <div className="flex flex-col items-center justify-center p-[30px]">
-                    <div>
-                      <svg
-                        className="size-8 w-[90px] h-[90px] text-gray-600 group-hover:text-indigo-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        aria-hidden="true"
-                        data-slot="icon"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z"
-                        />
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-[42px] text-[#333]">
-                      +۴۰ <span className="text-[16px]"> هزار</span>
-                    </div>
-                    <div className="text-[15px] text-[#666]">خریدار</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-800/70 via-purple-600/40 to-blue-500/50"></div>
+
+        {/* Content */}
+        <div className="relative z-20 h-full flex flex-col justify-center items-center text-center px-6 md:px-12">
+          <h1 className="text-white text-[42px] md:text-[52px] lg:text-[60px] font-extrabold mb-4 drop-shadow-lg">
+            سامانه خرید و فروش آنلاین
+          </h1>
+          <p className="text-white text-[16px] md:text-[18px] lg:text-[20px] mb-8 max-w-[800px] leading-relaxed drop-shadow-sm">
+            شما از طریق این سامانه میتوانید محصولات خود را خرید و فروش نمایید.
+            <br />
+            همچنین روی نقشه میتوانید نزدیک ترین فروشندگان را یافته و بهترین قیمت
+            را پیدا کنید.
+          </p>
+
+          {/* Button */}
+          <button
+            onClick={() => navigate("/dashboard/request-price")}
+            className="flex items-center gap-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-indigo-600 hover:to-blue-500 text-white font-semibold text-lg md:text-xl lg:text-2xl px-6 md:px-10 py-4 md:py-5 rounded-full shadow-xl transform hover:scale-105 transition-all duration-300"
+          >
+            <IoSearchOutline size={24} />
+            <span>استعلام قیمت</span>
+          </button>
         </div>
       </div>
     </div>

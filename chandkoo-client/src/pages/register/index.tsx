@@ -141,33 +141,25 @@ export default function Register() {
     });
     getLocation();
   }, []);
-  const isMobile = useIsMobile();
   return (
-    <div
-      className={`container mx-auto flex ${
-        isMobile ? "flex-col" : ""
-      } justify-center items-center min-h-[calc(100vh-350px)]`}
-    >
-      <div
-        className={`flex ${
-          !isMobile ? "w-[1000px]" : "w-[calc(100vw-30px)] flex-col"
-        } h-[700px] rounded-[32px] bg-[#f9f9f9] overflow-hidden mb-[40px]`}
-      >
+    <div className="flex items-center relative overflow-hidden pt-[90px] min-h-[calc(100vh-90px)] justify-center min-h-[calc(100vh-50px)] bg-gray-50 px-4">
+      <div className="absolute w-[100vw] left-[0px] top-[0px] h-[100vh] opacity-20">
+        <img
+          src={"/images/middle-wallpaper.jpg"}
+          className="w-full h-full object-cover min-h-[100%]"
+        />
+      </div>
+      <div className="flex bg-[#fff] relative z-[20] mt-[30px] mb-[30px] flex-col md:flex-row bg-white rounded-3xl shadow-lg overflow-hidden max-w-[1500px] w-full">
+        {/* Left Image Section */}
         <div
-          className={`${
-            isMobile ? "w-[calc(100vw-30px)] h-[100px]" : "w-[400px]"
-          } relative`}
-        >
-          <div className="h-[100%] w-[100%] bg-[url('/images/login-wallpaper.jpg')] bg-cover bg-center absolute left-[0px] top-[0px]" />
-        </div>
-        <div
-          className={`${
-            isMobile ? "w-[calc(100vw-30px)]" : "w-[600px]"
-          } overflow-auto p-[15px_15px] h-[700px] flex flex-col items-center rounded-[16px] p-[10px]`}
-        >
-          <div className="text-[22px] text-center mt-[0px] mb-[30px]">
+          className="hidden md:block md:w-1/6 bg-cover bg-center"
+          style={{ backgroundImage: "url('/images/login-wallpaper.jpg')" }}
+        />
+        <div className="w-full md:w-5/6 p-8 md:p-12 flex flex-col justify-center">
+          <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8">
             ثبت نام
-          </div>
+          </h2>
+
           <Form
             form={form}
             layout={"vertical"}

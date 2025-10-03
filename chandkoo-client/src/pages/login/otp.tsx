@@ -1,68 +1,37 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { loginService } from "../../services/auth.service";
 import { useContext, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ShamContext } from "../../App";
+import { loginService } from "../../services/auth.service";
 import { InputOTP } from "antd-input-otp";
 import { Button, ConfigProvider, Form } from "antd";
-import useIsMobile from "../../hooks/useIsMobile";
+
 let timeout: any = null;
+
 export default function LoginOtp() {
   const [form] = Form.useForm();
+  const [otp, setOtp] = useState<string[]>(Array(5).fill("")); // initialize with 5 empty slots
   const [timer, setTimer] = useState(120);
-  const [otp, setOtp] = useState<string[]>([]); // Since the value will be array of string, the default value of state is empty array.
   const value: any = useContext(ShamContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const onFinish = () => {
-    loginService(location.state.mobile, otp.join(""))
-      .then((data) => {
-        if (data.status == 200) {
-          window.localStorage.setItem("accessToken", data.data.accessToken);
-          window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          value.setNotif({ type: "success", description: "ورود با موفقیت" });
-          navigate("/dashboard");
-        } else if (data.status === 401) {
-          value.setNotif({ type: "error", description: "نام کاربری اشتباه" });
-        } else {
-          value.setNotif({
-            type: "error",
-            description: "خطا در ارسال اطلاعات",
-          });
-        }
-      })
-      .catch((e) => {
-        if (e.status === 401) {
-          value.setNotif({
-            type: "error",
-            description: e.response.data.message,
-          });
-        }
-      });
-  };
-  const handleSubmit = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    onFinish();
-  };
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Redirect if mobile is missing
   useEffect(() => {
-    if (!location?.state?.mobile) {
-      navigate("/login");
-    }
+    if (!location?.state?.mobile) navigate("/login");
   }, [location.state]);
-  const isMobile = useIsMobile();
+
+  // Timer countdown
   useEffect(() => {
     if (timer >= 0) {
-      timeout = setTimeout(() => {
-        setTimer(timer - 1);
-      }, 1000);
+      timeout = setTimeout(() => setTimer(timer - 1), 1000);
     } else {
       navigate("/login");
     }
-    return () => {
-      try {
-        clearTimeout(timeout);
-      } catch {}
-    };
+    return () => clearTimeout(timeout);
   }, [timer]);
+
+  // Convert Persian digits to English
   const persianToEnglishDigits = (arr: string[]) => {
     const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
     const englishDigits = "0123456789";
@@ -71,82 +40,102 @@ export default function LoginOtp() {
     );
   };
 
+  // Handle OTP change
   const handleOtpChange = (val: string[]) => {
-    const converted = persianToEnglishDigits(val);
-    setOtp(converted); // assuming `otp` is a string[] too
+    setOtp(persianToEnglishDigits(val));
   };
-  return (
-    <div className="container mx-auto flex justify-center items-center min-h-[calc(100vh-350px)]">
-      <div
-        className={`${
-          !isMobile ? "w-[1000px] h-[500px]" : "w-[calc(100vw-20px)] flex-col"
-        } flex rounded-[32px] bg-[#f9f9f9] overflow-hidden`}
-      >
-        <div className={`w-[400px] ${isMobile ? "h-[100px]" : ""} relative`}>
-          <div className="h-[100%] w-[100%] bg-[url('/images/login-wallpaper.jpg')] bg-cover bg-center absolute left-[0px] top-[0px]" />
-        </div>
-        <div
-          className={`${
-            isMobile ? "w-[calc(100vw-30px)]" : "p-[60px] w-[600px]"
-          }  h-[400px] flex flex-col justify-center items-center rounded-[16px] p-[10px]`}
-        >
-          <div className="text-[22px] text-center mt-[20px] mb-[30px]">
-            ورود به پنل مدیریت
-          </div>
-          <form
-            className={`w-full mx-auto ${
-              isMobile ? "p-[0_10px]" : "p-[0px_60px]"
-            }`}
-          >
-            <Form onFinish={onFinish} form={form} layout="vertical">
-              <Form.Item
-                name="otp"
-                label={`کد پیامک شده به ${location?.state?.mobile} را وارد نمایید`}
-                className="rtl"
-              >
-                <InputOTP
-                  length={5}
-                  autoSubmit={form}
-                  value={otp}
-                  onChange={handleOtpChange}
-                  inputType="numeric"
-                />
-              </Form.Item>
 
-              <Form.Item>
-                <ConfigProvider
-                  theme={{
-                    token: {
-                      colorPrimary: "#4caf50",
-                    },
-                  }}
+  // Submit OTP
+  const handleSubmit = () => {
+    setIsLoading(true);
+    loginService(location.state.mobile, otp.join(""))
+      .then((res) => {
+        setIsLoading(false);
+        if (res.status === 200) {
+          localStorage.setItem("accessToken", res.data.accessToken);
+          localStorage.setItem("refreshToken", res.data.refreshToken);
+          value.setNotif({ type: "success", description: "ورود با موفقیت" });
+          navigate("/dashboard");
+        } else {
+          value.setNotif({
+            type: "error",
+            description: "کد وارد شده اشتباه است",
+          });
+        }
+      })
+      .catch(() => {
+        setIsLoading(false);
+        value.setNotif({ type: "error", description: "خطا در ارسال اطلاعات" });
+      });
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen relative bg-gray-50 px-4">
+      {/* Background Image */}
+      <div className="absolute inset-0 opacity-20">
+        <img
+          src="/images/middle-wallpaper.jpg"
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      {/* OTP Container */}
+      <div className="relative z-20 flex flex-col md:flex-row bg-white rounded-3xl shadow-lg overflow-hidden max-w-3xl w-full">
+        {/* Left Sidebar Image */}
+        <div
+          className="hidden md:block md:w-1/3 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/images/login-wallpaper.jpg')",
+          }}
+        />
+
+        {/* Right Form Section */}
+        <div className="w-full md:w-2/3 p-8 md:p-10 flex flex-col justify-center">
+          <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8">
+            وارد کردن کد پیامکی
+          </h2>
+
+          <Form form={form} layout="vertical" className="w-full">
+            <Form.Item
+              label={`کد پیامک شده به ${location?.state?.mobile} را وارد نمایید`}
+            >
+              <InputOTP
+                length={5}
+                value={otp}
+                onChange={handleOtpChange}
+                inputType="numeric" // numeric keyboard
+                autoFocus={true}
+              />
+            </Form.Item>
+
+            <Form.Item>
+              <ConfigProvider theme={{ token: { colorPrimary: "#4caf50" } }}>
+                <Button
+                  loading={isLoading}
+                  onClick={handleSubmit}
+                  className="w-full h-12 rounded-lg text-white font-medium"
+                  type="primary"
+                  disabled={otp.filter((d) => d !== "").length < 5}
                 >
-                  <Button
-                    onClick={handleSubmit}
-                    htmlType="submit"
-                    className="w-full h-[40px]"
-                    type="primary"
-                    disabled={otp.length < 5}
-                  >
-                    ورود به سامانه
-                  </Button>
-                </ConfigProvider>
-              </Form.Item>
-            </Form>
-            <div className="flex justify-between">
-              <div className="text-left text-[#2196f3] text-[11px] mt-[20px]">
-                <Link to={"/login"}>اصلاح شماره موبایل</Link>
-              </div>
-              <div className="text-left text-[#222] text-[11px] mt-[20px]">
-                زمان باقیمانده :{" "}
-                {`0${Math.floor(timer / 60)}:${
-                  Math.floor(timer % 60) < 10
-                    ? "0" + Math.floor(timer % 60)
-                    : Math.floor(timer % 60)
-                }`}
-              </div>
-            </div>
-          </form>
+                  ورود به سامانه
+                </Button>
+              </ConfigProvider>
+            </Form.Item>
+          </Form>
+
+          <div className="flex justify-between mt-4 text-sm">
+            <Link className="text-blue-500" to="/login">
+              اصلاح شماره موبایل
+            </Link>
+            <span>
+              زمان باقیمانده:{" "}
+              {`0${Math.floor(timer / 60)}:${
+                Math.floor(timer % 60) < 10
+                  ? "0" + Math.floor(timer % 60)
+                  : Math.floor(timer % 60)
+              }`}
+            </span>
+          </div>
         </div>
       </div>
     </div>

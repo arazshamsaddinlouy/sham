@@ -1,4 +1,4 @@
-import { Avatar, Card, Image, Space } from "antd";
+import { Avatar, Card, Image } from "antd";
 import { BiUser } from "react-icons/bi";
 import { BsClock } from "react-icons/bs";
 import { IoImageOutline } from "react-icons/io5";
@@ -10,67 +10,68 @@ export default function CustomerRequestExpireCard({
   request: any;
 }) {
   return (
-    <Space
-      direction="vertical"
-      className="flex lower-card-body flex-col mb-[20px]"
-      size={16}
+    <Card
+      className={`w-full mb-4 shadow-sm rounded-xl transition hover:shadow-md ${
+        request.hasResponse ? "bg-green-50 border border-green-400" : ""
+      } rtl`}
+      bodyStyle={{ padding: "16px" }}
+      title={
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 min-w-0 font-bold text-lg truncate">
+            {request.title}
+          </div>
+          <div className="flex items-center gap-2 text-pink-500 text-sm whitespace-nowrap">
+            تاریخ ارسال قیمت:{" "}
+            {new Date(request.expiredAt).toLocaleDateString("fa-IR", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: false,
+            })}
+          </div>
+        </div>
+      }
     >
-      <div className="flex overflow-hidden gap-[10px]">
+      <div className="flex flex-col sm:flex-row gap-4 items-start">
+        {/* Left: image */}
         {request.attachedImage ? (
-          <div className="h-[105px] w-[105px] relative bg-[#fff] p-[15px] overflow-hidden rounded-[8px]">
-            <Image
-              width={75}
-              height={75}
-              src={`${config.BACKEND_IMAGE_URL}/api/${request.attachedImage}`}
-              className="h-[75px] w-[75px] absolute"
-            />
-          </div>
+          <Image
+            src={`${config.BACKEND_IMAGE_URL}/api/${request.attachedImage}`}
+            width={100}
+            height={100}
+            className="rounded-lg flex-shrink-0"
+            preview={false}
+          />
         ) : (
-          <Avatar className="w-[105px] rounded-[8px] h-[105px] bg-[#f0f0f0]">
-            <IoImageOutline size={30} color="#333" />
-          </Avatar>
+          <Avatar
+            size={100}
+            className="rounded-lg flex-shrink-0 bg-gray-100"
+            icon={<IoImageOutline size={30} />}
+          />
         )}
-        <Card
-          className={`${
-            request.hasResponse &&
-            "bg-[rgba(51,235,145,0.2)] border-[1px] border-[rgba(51,235,145,1)]"
-          }`}
-          title={
-            <div className="font-bold flex-1 text-[#333] text-[18px]">
-              {request.title}
-            </div>
-          }
-          extra={
-            <div className="text-[#f50057] font-bold text-[13px]">
-              تاریخ ارسال قیمت : ۲۲{" "}
-              {new Date(request.expiredAt).toLocaleDateString("fa-IR", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: false, // 24-hour format
-              })}
-            </div>
-          }
-          style={{ width: "100%" }}
-        >
-          <div className="flex flex-row items-center justify-between text-[#666]">
-            <div className="flex">
-              <div className="ml-[15px] flex gap-[5px] items-center">
-                <div>
-                  <BiUser size={16} />
-                </div>
-                <div>قیمت تخمین زده شده: ۶ میلیون تومان</div>
-              </div>
-            </div>
-            <div className="flex text-[14px] font-bold gap-[10px] text-[#999] items-center">
-              <BsClock /> منقضی شده
-            </div>
+
+        {/* Center: description */}
+        <div className="flex-1 min-w-0">
+          <p className="text-gray-600 truncate whitespace-pre-wrap">
+            {request.description}
+          </p>
+        </div>
+
+        {/* Right: info */}
+        <div className="flex flex-col gap-2 justify-center sm:w-[250px]">
+          <div className="flex items-center gap-2 text-gray-700">
+            <BiUser />
+            <span>قیمت تخمین زده شده: ۶ میلیون تومان</span>
           </div>
-        </Card>
+          <div className="flex items-center gap-2 text-gray-500 text-sm">
+            <BsClock />
+            <span>منقضی شده</span>
+          </div>
+        </div>
       </div>
-    </Space>
+    </Card>
   );
 }

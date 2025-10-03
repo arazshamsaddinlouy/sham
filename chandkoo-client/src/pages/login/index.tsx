@@ -3,7 +3,6 @@ import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { isUserRegistered } from "../../services/user.service";
 import { ShamContext } from "../../App";
-import useIsMobile from "../../hooks/useIsMobile";
 import { sendOtp } from "../../services/auth.service";
 
 const persianToEnglishDigits = (str: string) => {
@@ -11,17 +10,20 @@ const persianToEnglishDigits = (str: string) => {
   const englishDigits = "0123456789";
   return str.replace(/[۰-۹]/g, (d) => englishDigits[persianDigits.indexOf(d)]);
 };
+
 export default function Login() {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [isSubmittable, setIsSubmittable] = useState<boolean>(false);
-  // Watch all values
   const values = Form.useWatch([], form);
   const value: any = useContext(ShamContext);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const converted = persianToEnglishDigits(e.target.value);
     form.setFieldsValue({ mobile: converted });
   };
+
   useEffect(() => {
     form
       .validateFields({ validateOnly: true })
@@ -31,15 +33,15 @@ export default function Login() {
 
   const onFinish = () => {
     const mobileNum = form.getFieldValue("mobile");
+    setIsLoading(true);
     isUserRegistered(mobileNum)
       .then((data) => {
+        setIsLoading(false);
         if (data.status === 200) {
           sendOtp(mobileNum)
             .then((res) => {
               if (res.status === 200) {
-                navigate("/login/otp", {
-                  state: { mobile: form.getFieldValue("mobile") },
-                });
+                navigate("/login/otp", { state: { mobile: mobileNum } });
               } else {
                 value.setNotif({
                   type: "error",
@@ -48,12 +50,14 @@ export default function Login() {
               }
             })
             .catch(() => {
+              setIsLoading(false);
               value.setNotif({
                 type: "error",
                 description: "خطا در ارسال پیامک",
               });
             });
         } else {
+          setIsLoading(false);
           value.setNotif({
             type: "error",
             description: "کاربری با این مشخصات ثبت نام نکرده است",
@@ -61,31 +65,35 @@ export default function Login() {
         }
       })
       .catch(() => {
+        setIsLoading(false);
         value.setNotif({
           type: "error",
           description: "کاربری با این مشخصات ثبت نام نکرده است",
         });
       });
   };
-  const isMobile = useIsMobile();
+
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-350px)]">
-      <div
-        className={`${
-          !isMobile ? "w-[1000px] h-[500px]" : "w-[calc(100vw-20px)] flex-col"
-        } flex rounded-[32px] bg-[#f9f9f9] overflow-hidden`}
-      >
-        <div className={`w-[400px] ${isMobile ? "h-[100px]" : ""} relative`}>
-          <div className="h-[100%] w-[100%] bg-[url('/images/login-wallpaper.jpg')] bg-cover bg-center absolute left-[0px] top-[0px]" />
-        </div>
+    <div className="flex items-center relative overflow-hidden justify-center min-h-[calc(100vh-50px)] bg-gray-50 px-4">
+      <div className="absolute w-[100vw] left-[0px] top-[0px] h-[100vh] opacity-20">
+        <img
+          src={"/images/middle-wallpaper.jpg"}
+          className="w-full h-full object-cover min-h-[100%]"
+        />
+      </div>
+      <div className="flex bg-[#fff] relative z-[20] flex-col md:flex-row bg-white rounded-3xl shadow-lg overflow-hidden max-w-4xl w-full">
+        {/* Left Image Section */}
         <div
-          className={`${isMobile ? "w-[calc(100vw-30px)]" : "w-[600px]"} ${
-            isMobile ? "p-[15px]" : "p-[60px]}"
-          } h-[400px] flex flex-col justify-center items-center rounded-[16px] p-[10px]`}
-        >
-          <div className="text-[22px] text-center mt-[20px] mb-[30px]">
+          className="hidden md:block md:w-1/3 bg-cover bg-center"
+          style={{ backgroundImage: "url('/images/login-wallpaper.jpg')" }}
+        />
+
+        {/* Right Form Section */}
+        <div className="w-full md:w-2/3 p-8 md:p-12 flex flex-col justify-center">
+          <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8">
             ورود به پنل مدیریت
-          </div>
+          </h2>
+
           <Form
             form={form}
             onFinish={onFinish}
@@ -95,8 +103,7 @@ export default function Login() {
           >
             <Form.Item
               name="mobile"
-              label="لطفا شماره موبایل را وارد نمایید"
-              className="rtl"
+              label="شماره موبایل"
               rules={[
                 { required: true, message: "شماره موبایل اجباری است" },
                 {
@@ -106,37 +113,39 @@ export default function Login() {
               ]}
             >
               <Input
-                type="text"
                 placeholder="09123456789"
-                className="h-[50px]"
+                className="h-12 rounded-lg border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500"
                 onChange={handleChange}
               />
             </Form.Item>
+
             <Form.Item>
               <ConfigProvider
                 theme={{
                   token: {
-                    colorPrimary: "4caf50",
+                    colorPrimary: "#4caf50",
                   },
                 }}
               >
                 <Button
+                  loading={isLoading}
                   htmlType="submit"
-                  className="w-full h-[40px]"
+                  className="w-full h-12 rounded-lg text-white font-medium"
                   type="primary"
-                  disabled={!isSubmittable} // Disabled based on form validity
+                  disabled={!isSubmittable}
                 >
                   ارسال پیامک
                 </Button>
               </ConfigProvider>
             </Form.Item>
-            <label>
-              ثبت نام نکرده اید؟{" "}
-              <Link className="text-[#2196f3]" to="/register">
-                ثبت نام کنید
-              </Link>
-            </label>
           </Form>
+
+          <p className="text-center text-sm mt-4 text-gray-500">
+            ثبت نام نکرده اید؟{" "}
+            <Link className="text-blue-500 font-medium" to="/register">
+              ثبت نام کنید
+            </Link>
+          </p>
         </div>
       </div>
     </div>

@@ -80,9 +80,11 @@ export default function DashboardSales() {
       <div className="mb-[15px] mt-[40px] pb-[15px] border-b-[1px] border-b-[#ccc] text-[18px]">
         حراج های دسته بندی <strong className="font-bold">لوازم الکتریکی</strong>
       </div>
-      <div className="flex flex-wrap">
+      <div className="flex flex-col flex-wrap">
         {sales.map((el) => (
-          <SaleItem sale={el} key={`sale-${el.id}`} />
+          <div className="mb-[20px]">
+            <SaleItem sale={el} key={`sale-${el.id}`} />
+          </div>
         ))}
       </div>
     </>

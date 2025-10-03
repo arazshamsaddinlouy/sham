@@ -1,5 +1,5 @@
 import { Badge } from "antd";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { LuList } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Outlet, useLocation } from "react-router-dom";
@@ -16,174 +16,169 @@ import useIsMobile from "../../hooks/useIsMobile";
 export default function Dashboard() {
   const location = useLocation();
   const dispatch = useDispatch();
-  const activeRequests = useSelector((state: any) => {
-    return state?.user?.activeRequests || 0;
-  });
-  const requestCount = useSelector((state: any) => {
-    return state?.user?.requestCount || 0;
-  });
+  const isMobile = useIsMobile();
 
   const user = useSelector((state: any) => state?.user?.user || {});
+  const activeRequests = useSelector(
+    (state: any) => state?.user?.activeRequests || 0
+  );
+  const requestCount = useSelector(
+    (state: any) => state?.user?.requestCount || 0
+  );
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (user.customerType == "1") {
       getActiveRequests().then((data) => {
-        if (data.status === 200) {
-          dispatch(setActiveRequest(data.data.length));
-        }
+        if (data.status === 200) dispatch(setActiveRequest(data.data.length));
       });
     } else {
       getAllActiveRequests().then((data) => {
-        if (data.status === 200) {
-          dispatch(setRequestCount(data.data.length));
-        }
+        if (data.status === 200) dispatch(setRequestCount(data.data.length));
       });
     }
   }, [location.pathname, user.customerType]);
-  const isMobile = useIsMobile();
+
+  // Sticky sidebar logic
+  useEffect(() => {
+    if (isMobile) return; // No sticky behavior on mobile
+
+    const handleScroll = () => {
+      const sidebar = sidebarRef.current;
+      const footer = document.querySelector("footer"); // assumes you have a footer tag
+      if (!sidebar || !footer) return;
+
+      const footerRect = footer.getBoundingClientRect();
+      const sidebarHeight = sidebar.offsetHeight;
+      const topOffset = 90; // same as pt-[100px]
+
+      if (footerRect.top <= sidebarHeight + topOffset) {
+        sidebar.style.position = "absolute";
+        sidebar.style.top = `${footer.offsetTop - sidebarHeight}px`;
+      } else {
+        sidebar.style.position = "fixed";
+        sidebar.style.top = `${topOffset}px`;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll);
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [isMobile]);
+
+  const sidebarItems = [
+    ...(user.customerType == "1"
+      ? [
+          {
+            title: "استعلام های قیمت",
+            to: "/dashboard/my-requests",
+            count: activeRequests,
+          },
+          { title: "درخواست استعلام قیمت", to: "/dashboard/request-price" },
+        ]
+      : []),
+    { title: "مزایده ها", to: "/dashboard/trades" },
+    { title: "حراج ها", to: "/dashboard/sales" },
+    ...(user.customerType == "0"
+      ? [
+          { title: "تنظیمات غرفه", to: "/dashboard/branches" },
+          {
+            title: "استعلام های دریافتی",
+            to: "/dashboard/customer-request",
+            count: requestCount,
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <div
-      className={`container flex ${
-        isMobile ? "flex-col" : ""
-      } justify-cente items-center mx-auto min-h-[calc(100vh-350px)]`}
-    >
+    <div className="flex w-full min-h-screen bg-gray-50 pt-[90px]">
+      {/* Sidebar */}
       <div
-        className={`${
-          !isMobile ? "w-[calc(100vw-200px)]" : "w-[calc(100vw-30px)]"
-        } h-[calc(100vh-450px)] mt-[40px] mb-[40px] flex ${
-          isMobile ? "flex-col" : ""
-        } relative rounded-[32px] bg-[#f9f9f9] overflow-hidden`}
+        ref={sidebarRef}
+        className={`
+          ${
+            isMobile
+              ? `${sidebarOpen ? "w-64" : "w-0"} overflow-hidden`
+              : "w-64"
+          }
+          bg-gradient-to-b from-purple-700 h-[calc(100vh-90px)] to-purple-500 text-white
+          z-50 flex overflow-hidden flex-col
+        `}
       >
+        <div className="absolute inset-0 opacity-20">
+          <img
+            src="/images/middle-wallpaper.jpg"
+            className="w-full h-full object-cover min-h-[100%]"
+          />
+        </div>
+        <div className="flex items-center relative z-[20] justify-between p-6 border-b border-white/20">
+          <h1 className="text-xl font-bold">پنل مدیریت</h1>
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="text-white text-2xl focus:outline-none"
+            >
+              &times;
+            </button>
+          )}
+        </div>
+        <ul className="mt-6 flex flex-col gap-2 pr-2 relative z-[20]">
+          {sidebarItems.map((item, index) => (
+            <li key={index} className="hover:bg-white/20 rounded-lg">
+              <Link
+                to={item.to}
+                className="flex justify-between items-center p-4 font-medium"
+              >
+                <div className="flex items-center gap-2">
+                  <LuList />
+                  <span>{item.title}</span>
+                </div>
+                {item.count !== undefined && (
+                  <Badge
+                    count={item.count}
+                    style={{
+                      backgroundColor: "#52c41a",
+                      borderColor: "#52c41a",
+                    }}
+                  />
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Overlay for mobile */}
+      {isMobile && sidebarOpen && (
         <div
-          className={`${
-            isMobile ? "w-[calc(100vw-30px)] h-[100px]" : "w-[400px]"
-          } relative overflow-hidden`}
-        >
-          <div className="absolute left-[0px] top-[0px] w-full h-[100vh] bg-[rgba(103,58,183,0.8)] z-[4]"></div>
-          <div className="h-[100%] w-[100%] bg-[url('/images/login-wallpaper.jpg')] bg-cover bg-center absolute left-[0px] top-[0px]" />
-          <ul
-            className={`list-none mt-[30px] !p-[10px_30px] relative z-[10] ${
-              isMobile
-                ? "flex items-center h-[50px] mt-[15px] whitespace-nowrap overflow-x-auto"
-                : ""
-            }`}
+          className="fixed inset-0 bg-black/40 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <div
+        className={`flex-1 transition-all duration-300 ${
+          isMobile ? "mr-0" : "mr-64"
+        } px-[10px] pt-[30px] md:px-[30px]`}
+      >
+        {isMobile && !sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="mb-4 text-purple-700 bg-white px-4 py-2 rounded-lg shadow-md"
           >
-            {user.customerType === 1 && (
-              <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
-                <Link
-                  to={"/dashboard/my-requests"}
-                  className="flex gap-[20px] items-center"
-                >
-                  <div className="flex items-center gap-[10px]">
-                    <div>
-                      <LuList />
-                    </div>
-                    <div>استعلام های قیمت</div>
-                    <div>
-                      <Badge
-                        count={activeRequests}
-                        style={{
-                          backgroundColor: "#52c41a",
-                          borderColor: "#52c41a",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            )}
-            {user.customerType === 1 && (
-              <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
-                <Link
-                  to={"/dashboard/request-price"}
-                  className="flex gap-[20px] items-center"
-                >
-                  <div className="flex items-center gap-[10px]">
-                    <div>
-                      <LuList />
-                    </div>
-                    <div>درخواست استعلام قیمت</div>
-                    <div></div>
-                  </div>
-                </Link>
-              </li>
-            )}
-            <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
-              <Link
-                to={"/dashboard/trades"}
-                className="flex gap-[20px] items-center"
-              >
-                <div className="flex items-center gap-[10px]">
-                  <div>
-                    <LuList />
-                  </div>
-                  <div>مزایده ها</div>
-                  <div></div>
-                </div>
-              </Link>
-            </li>
-            <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
-              <Link
-                to={"/dashboard/sales"}
-                className="flex gap-[20px] items-center"
-              >
-                <div className="flex items-center gap-[10px]">
-                  <div>
-                    <LuList />
-                  </div>
-                  <div>حراج ها</div>
-                  <div></div>
-                </div>
-              </Link>
-            </li>
-            <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
-              {user.customerType === 0 && (
-                <Link
-                  to={"/dashboard/branches"}
-                  className="flex gap-[20px] items-center"
-                >
-                  <div className="flex items-center gap-[10px]">
-                    <div>
-                      <LuList />
-                    </div>
-                    <div>تنظیمات غرفه</div>
-                    <div></div>
-                  </div>
-                </Link>
-              )}
-            </li>
-            {user.customerType === 0 && (
-              <li className="text-[#fff] text-[18px] leading-[32px] p-[15px] rounded-[12px] hover:bg-[rgba(255,255,255,0.05)] hover:backdrop-blur-sm">
-                <Link
-                  to={"/dashboard/customer-request"}
-                  className="flex gap-[20px] items-center"
-                >
-                  <div className="flex items-center gap-[10px]">
-                    <div>
-                      <LuList />
-                    </div>
-                    <div>استعلام های دریافتی</div>
-                    <div>
-                      <Badge
-                        count={requestCount}
-                        style={{
-                          backgroundColor: "#52c41a",
-                          borderColor: "#52c41a",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            )}
-          </ul>
-        </div>
-        <div
-          className={`${
-            isMobile ? " p-[15px_15px]" : "w-[calc(100vw-600px)]  p-[25px_50px]"
-          }" h-[calc(100vh-450px)] rounded-[16px] p-[10px] overflow-auto`}
-        >
-          <Outlet />
-        </div>
+            منو
+          </button>
+        )}
+        <Outlet />
       </div>
     </div>
   );

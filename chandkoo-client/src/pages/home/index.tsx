@@ -7,7 +7,7 @@ import HomeTimeSales from "../../components/home-time-sale";
 
 export default function Home() {
   return (
-    <div className="max-w-[100vw] overflow-hidden">
+    <div className="max-w-[100vw] max-[768px]:px-[15px] overflow-hidden">
       <HomeHeader />
       <HomeCategories />
       <HomeOrderFlow />
