@@ -33,7 +33,6 @@ import { useDispatch } from "react-redux";
 import { getAllProvincesWithCities } from "../../services/province.service";
 import ImageUploader from "../../components/image-uploader";
 import FileUploader from "../../components/file-uploader";
-import { Moment } from "moment";
 const colors = [
   { label: "قرمز", value: "red", hex: "#FF0000" },
   { label: "آبی", value: "blue", hex: "#0000FF" },
@@ -59,7 +58,7 @@ export default function RequestPrice() {
   const [selectedProvince, setSelectedProvince] = useState<string[]>([]);
   const [productCount, setProductCount] = useState<number>(1);
   const [description, setDescription] = useState<string>();
-  const [dateString, setDateString] = useState<string>("");
+  const [dateString, setDateString] = useState<any>("");
   const [isMapTouched, setIsMapTouched] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>();
   const [image, setImage] = useState<File | null>();
@@ -117,7 +116,7 @@ export default function RequestPrice() {
     formData.append("includeDelivery", deliceryChecked ? "true" : "false");
     formData.append("hasGuarantee", hasGuaranteeChecked ? "true" : "false");
     formData.append("hasMessage", isMessageEnabled ? "true" : "false");
-    if (dateString) formData.append("expiredAt", dateString);
+    if (dateString) formData.append("expiredAt", dateString.toISOString());
 
     addPriceInquiry(formData).then((data) => {
       if (data.status === 200) {
@@ -312,9 +311,10 @@ export default function RequestPrice() {
             <JalaliLocaleListener />
             <DatePickerJalali
               style={{ width: "100%" }} // 👈 Make DatePicker full width
-              onChange={(val: Moment | null) =>
-                setDateString(val ? val.format("YYYY-MM-DD") : "")
-              }
+              onChange={(val: any) => {
+                console.log("val is", val.$d);
+                setDateString(val ? new Date(val.$d) : "");
+              }}
             />
           </ConfigProvider>
         </Form.Item>

@@ -15,7 +15,7 @@ import {
   JalaliLocaleListener,
 } from "antd-jalali";
 import fa_IR from "antd/lib/locale/fa_IR";
-import { IoBagCheckOutline, IoImageOutline, IoPricetag } from "react-icons/io5";
+import { IoBagCheckOutline, IoImageOutline } from "react-icons/io5";
 import { AiFillProduct } from "react-icons/ai";
 import { BsClock } from "react-icons/bs";
 import { BiMessage } from "react-icons/bi";
@@ -354,19 +354,6 @@ export default function CustomerRequestCard({
                   {request.description}
                 </div>
                 <div className="flex flex-col sm:w-[35%] gap-2 justify-center">
-                  <Badge
-                    count={request.priceCount}
-                    overflowCount={99}
-                    style={{ backgroundColor: "#52c41a" }}
-                  >
-                    <Button
-                      icon={<IoPricetag />}
-                      onClick={showMessageModal}
-                      disabled={!request.hasResponse}
-                    >
-                      قیمت ها
-                    </Button>
-                  </Badge>
                   <Badge
                     count={request.messageCount}
                     overflowCount={99}

@@ -24,19 +24,20 @@ export default function MapComponent({
 }) {
   const location = useLocation();
   const [map, setMap] = useState<any>(null);
-  const [markers, setMarkers] = useState<any[]>([]);
+  const [marker, setMarker] = useState<any>(null); // ⬅️ Single marker reference
 
   const isArray = Array.isArray(initialLatLng);
 
   const getMarkerColor = (point: LatLng, lowestPrice: number | null) => {
     if (point.price == null) return "#00F955"; // Green for no price
-    if (lowestPrice != null && point.price === lowestPrice) return "#00F955"; // Green for lowest
-    return "#FF0000"; // Red for other prices
+    if (lowestPrice != null && point.price === lowestPrice) return "#00F955";
+    return "#FF0000";
   };
 
   const renderMarkers = (mapInstance: any) => {
-    markers.forEach((m) => m.remove());
-    const newMarkers: any[] = [];
+    if (marker) {
+      marker.remove(); // Remove previous marker if exists
+    }
 
     const latLngArray = isArray ? (initialLatLng as LatLng[]) : [];
     const prices = latLngArray
@@ -55,35 +56,32 @@ export default function MapComponent({
 
         const popup = new nmp_mapboxgl.Popup({ offset: 25 }).setText(popupText);
 
-        const marker = new nmp_mapboxgl.Marker({
+        const newMarker = new nmp_mapboxgl.Marker({
           color: getMarkerColor(point, lowestPrice),
         })
           .setLngLat([point.lng, point.lat])
           .setPopup(popup)
           .addTo(mapInstance);
 
-        newMarkers.push(marker);
-        // ✅ This works with Neshan
         bounds.extend(new nmp_mapboxgl.LngLat(point.lng, point.lat));
-        if (latLngArray.length > 1) {
-          const lats = latLngArray.map((p) => p.lat);
-          const lngs = latLngArray.map((p) => p.lng);
-
-          const minLat = Math.min(...lats);
-          const maxLat = Math.max(...lats);
-          const minLng = Math.min(...lngs);
-          const maxLng = Math.max(...lngs);
-
-          const centerLat = (minLat + maxLat) / 2;
-          const centerLng = (minLng + maxLng) / 2;
-
-          // Set map center
-          mapInstance.setCenter([centerLng, centerLat]);
-
-          // Optional: adjust zoom manually (or dynamically if you want to calculate distance)
-          mapInstance.setZoom(13); // or 8–12 based on spread
-        }
+        setMarker(newMarker);
       });
+
+      if (latLngArray.length > 1) {
+        const lats = latLngArray.map((p) => p.lat);
+        const lngs = latLngArray.map((p) => p.lng);
+
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+
+        const centerLat = (minLat + maxLat) / 2;
+        const centerLng = (minLng + maxLng) / 2;
+
+        mapInstance.setCenter([centerLng, centerLat]);
+        mapInstance.setZoom(13);
+      }
     } else if (
       (initialLatLng as { lat: number | null; lng: number | null })?.lat &&
       (initialLatLng as { lat: number | null; lng: number | null })?.lng
@@ -92,7 +90,8 @@ export default function MapComponent({
       const popup = new nmp_mapboxgl.Popup({ offset: 25 }).setText(
         "با نگه داشتن مارکر می‌توانید آن را روی نقشه جابه‌جا کنید"
       );
-      const marker = new nmp_mapboxgl.Marker({
+
+      const newMarker = new nmp_mapboxgl.Marker({
         color: "#00F955",
         draggable: !!isDraggable,
       })
@@ -102,19 +101,15 @@ export default function MapComponent({
         .togglePopup();
 
       if (isDraggable) {
-        marker.on("dragend", (e: any) => {
-          if (handleLatLngChange) {
-            const lngLat = e.target.getLngLat();
-            handleLatLngChange(lngLat.lat, lngLat.lng);
-          }
+        newMarker.on("dragend", (e: any) => {
+          const lngLat = e.target.getLngLat();
+          handleLatLngChange?.(lngLat.lat, lngLat.lng);
         });
       }
 
-      newMarkers.push(marker);
       mapInstance.setCenter([lng, lat]);
+      setMarker(newMarker);
     }
-
-    setMarkers(newMarkers);
   };
 
   const mapSetter = (neshanMap: any) => {
@@ -122,12 +117,31 @@ export default function MapComponent({
     renderMarkers(neshanMap);
   };
 
+  // Re-render marker on data or map updates
   useEffect(() => {
     if (map) {
       renderMarkers(map);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialLatLng, map, location, isDraggable]);
+
+  // Handle map clicks for marker relocation (only if draggable)
+  useEffect(() => {
+    if (!map || !isDraggable || !marker) return;
+
+    const handleClick = (e: any) => {
+      const { lng, lat } = e.lngLat;
+
+      marker.setLngLat([lng, lat]);
+
+      handleLatLngChange?.(lat, lng);
+    };
+
+    map.on("click", handleClick);
+    return () => {
+      map.off("click", handleClick);
+    };
+  }, [map, marker, isDraggable, handleLatLngChange]);
 
   const center = isArray ? (initialLatLng as LatLng[])[0] : initialLatLng;
 
