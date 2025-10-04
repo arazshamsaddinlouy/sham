@@ -1,6 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Popover, Button, Alert } from "antd";
+import { FaHeadset } from "react-icons/fa"; // inside return JSX:
+
 import {
   LogoutOutlined,
   UserOutlined,
@@ -15,7 +17,7 @@ import { getUserInfo } from "../services/auth.service";
 import { setUser } from "../store/slices/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { CgChevronLeft } from "react-icons/cg";
-import { GiMedal } from "react-icons/gi";
+import { GiHamburgerMenu, GiMedal } from "react-icons/gi";
 import { getAllMenus } from "../services/content.service";
 import { BiLogIn, BiUserCheck } from "react-icons/bi";
 
@@ -153,6 +155,15 @@ export default function Header() {
       <nav className="container mx-auto flex items-center justify-between h-24 px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
+          <div
+            className="block sm:hidden w-[45px] h-[45px] bg-[#fff] rounded-[4px] border-[1px] border-[#f0f0f0] cursor-pointer text-center"
+            onClick={() => setOpenMenu(true)}
+          >
+            <GiHamburgerMenu
+              size={23}
+              className="relative top-[10px] right-[10px]"
+            />
+          </div>
           <img src="/logo.png" className="h-10 w-auto" />
           <div className="hidden sm:flex flex-col">
             <div className="text-lg font-bold">چندکو</div>
@@ -161,7 +172,6 @@ export default function Header() {
             </div>
           </div>
         </Link>
-
         {/* Desktop Menu */}
         <div className="hidden lg:flex gap-6 items-center">
           {menus.map((el) => (
@@ -174,7 +184,6 @@ export default function Header() {
             </a>
           ))}
         </div>
-
         {/* Right Actions */}
         <div className="flex items-center gap-4">
           {token && (
@@ -200,36 +209,100 @@ export default function Header() {
               <Button
                 icon={<BiLogIn />}
                 onClick={() => navigate("/login")}
-                className="rounded-full py-[20px] border border-gray-300 px-4 py-1 text-gray-700 hover:bg-gray-100 transition"
+                className="rounded-full border border-gray-300 px-4 py-4 text-gray-700 hover:bg-gray-100 h-[45px]"
               >
                 ورود
               </Button>
               <Button
                 icon={<BiUserCheck />}
                 onClick={() => navigate("/register")}
-                className="rounded-full py-[20px] bg-blue-600 text-white px-4 py-1 hover:bg-blue-700 transition"
+                className="rounded-full bg-blue-600 text-white px-4 py-4 h-[45px]"
               >
                 ثبت نام
               </Button>
+              <div
+                onClick={() => navigate("/support")}
+                className="border-r-[1px] hidden sm:flex items-center gap-[3px] border-r-[#ccc] pr-[10px] mr-[10px] h-[45px]"
+              >
+                <div>
+                  <FaHeadset />
+                </div>
+                <div>پشتیبانی</div>
+              </div>
             </div>
           )}
+          {/* Mobile Overlay */}
+          {openMenu && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-60 z-[250] h-[100vh]"
+              onClick={() => setOpenMenu(false)}
+            />
+          )}
 
-          {/* Mobile Hamburger */}
-          <button className="lg:hidden" onClick={() => setOpenMenu(true)}>
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
+          {/* Mobile Slide Menu */}
+          <div
+            className={`fixed top-0 right-0 h-[100vh] w-72 bg-white z-[300] transform transition-transform ${
+              openMenu ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            <div className="flex justify-between items-center p-4 border-b">
+              <div>منو</div>
+              <button onClick={() => setOpenMenu(false)}>
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 space-y-2">
+              {menus.map((el) => (
+                <a
+                  key={el.id}
+                  href={el.url}
+                  className="block py-2 px-3 rounded hover:bg-gray-100"
+                >
+                  {el.title}
+                </a>
+              ))}
+              {!token && (
+                <>
+                  <Button
+                    icon={<BiLogIn />}
+                    block
+                    onClick={() => navigate("/login")}
+                    className="my-2 py-[20px] rounded-full border border-gray-300"
+                  >
+                    ورود
+                  </Button>
+                  <Button
+                    icon={<BiUserCheck />}
+                    block
+                    onClick={() => navigate("/register")}
+                    className="my-2 py-[20px] rounded-full bg-blue-600 text-white"
+                  >
+                    ثبت نام
+                  </Button>
+                  <Button
+                    icon={<FaHeadset />}
+                    block
+                    onClick={() => navigate("/support")}
+                    className="my-2 py-[20px] rounded-full border border-gray-300"
+                  >
+                    پشتیبانی
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </nav>
 

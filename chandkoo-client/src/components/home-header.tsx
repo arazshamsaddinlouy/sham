@@ -6,7 +6,7 @@ export default function HomeHeader() {
 
   return (
     <div className="w-full relative mt-[145px]">
-      <div className="relative h-[400px] md:h-[500px] lg:h-[550px] overflow-hidden rounded-[20px] shadow-lg mx-auto max-w-[1500px] !max-[768px]:px-[15px]">
+      <div className="relative h-[400px] md:h-[500px] lg:h-[400px] overflow-hidden rounded-[20px] shadow-lg mx-auto max-w-[1500px] !max-[768px]:px-[15px]">
         {/* Background image */}
         <img
           src="/images/header-wallpaper.jpg"
