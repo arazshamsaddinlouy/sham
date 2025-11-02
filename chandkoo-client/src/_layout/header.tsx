@@ -45,6 +45,7 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
+    setOpenMenu(false);
     const storageToken = localStorage.getItem("accessToken");
     if (storageToken) {
       setToken(storageToken);
@@ -273,34 +274,14 @@ export default function Header() {
                   {el.title}
                 </a>
               ))}
-              {!token && (
-                <>
-                  <Button
-                    icon={<BiLogIn />}
-                    block
-                    onClick={() => navigate("/login")}
-                    className="my-2 py-[20px] rounded-full border border-gray-300"
-                  >
-                    ورود
-                  </Button>
-                  <Button
-                    icon={<BiUserCheck />}
-                    block
-                    onClick={() => navigate("/register")}
-                    className="my-2 py-[20px] rounded-full bg-blue-600 text-white"
-                  >
-                    ثبت نام
-                  </Button>
-                  <Button
-                    icon={<FaHeadset />}
-                    block
-                    onClick={() => navigate("/support")}
-                    className="my-2 py-[20px] rounded-full border border-gray-300"
-                  >
-                    پشتیبانی
-                  </Button>
-                </>
-              )}
+              <Button
+                icon={<FaHeadset />}
+                block
+                onClick={() => navigate("/support")}
+                className="my-2 py-[20px] rounded-full border border-gray-300"
+              >
+                پشتیبانی
+              </Button>
             </div>
           </div>
         </div>

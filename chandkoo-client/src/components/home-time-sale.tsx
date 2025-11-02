@@ -4,7 +4,7 @@ import { getAllTrades } from "../services/content.service";
 
 export const SaleTradeItem = ({ trade }: { trade: any }) => {
   return (
-    <div className="w-1/2 sm:w-1/2 lg:w-1/5 p-2">
+    <div className="w-1/2 sm:w-1/2 lg:w-1/6 p-2">
       <div className="relative rounded-[16px] overflow-hidden shadow-md group">
         {/* Full Image */}
         <img
@@ -40,7 +40,7 @@ export default function HomeTimeSales() {
   useEffect(() => {
     getAllTrades().then((res) => {
       if (res.status === 200) {
-        setTrades(res.data.trades);
+        setTrades([...res.data.trades, res.data.trades[0]]);
       }
     });
   }, []);

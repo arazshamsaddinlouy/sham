@@ -3,10 +3,15 @@ import { getAllSellers } from "../services/content.service";
 import { Tag } from "antd";
 import { MdCategory } from "react-icons/md";
 import { FaBuilding, FaShoppingCart } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 function HomerSellerItem({ seller }: { seller: any }): JSX.Element {
+  const navigate = useNavigate();
   return (
-    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 border border-gray-200 rounded-xl bg-white hover:shadow-lg transition-shadow">
+    <div
+      onClick={() => navigate("/seller")}
+      className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 border border-gray-200 rounded-xl bg-white hover:shadow-lg transition-shadow"
+    >
       {/* Avatar */}
       <div className="w-20 h-20 flex-shrink-0 relative">
         <img

@@ -4,7 +4,7 @@ import { ShamContext } from "../../App";
 import { loginService } from "../../services/auth.service";
 import { InputOTP } from "antd-input-otp";
 import { Button, ConfigProvider, Form } from "antd";
-
+import wallpaper from "./login-wallpaper.jpg";
 let timeout: any = null;
 
 export default function LoginOtp() {
@@ -93,7 +93,7 @@ export default function LoginOtp() {
         <div
           className="hidden md:block md:w-1/3 bg-cover bg-center"
           style={{
-            backgroundImage: "url('/images/login-wallpaper.jpg')",
+            backgroundImage: `url('${wallpaper}')`,
           }}
         />
 
@@ -113,6 +113,7 @@ export default function LoginOtp() {
                 onChange={handleOtpChange}
                 inputType="numeric" // numeric keyboard
                 autoFocus={true}
+                inputMode="numeric"
               />
             </Form.Item>
 

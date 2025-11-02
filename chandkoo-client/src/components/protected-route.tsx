@@ -11,7 +11,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const value: any = useContext(ShamContext);
   const navigate = useNavigate();
   const handleRedirect = useCallback(() => {
-    value.setNotif({ type: "error", description: "!اجازه دسترسی ندارید" });
+    value.setNotif({
+      type: "error",
+      description: "جهت استعلام قیمت ابتدا وارد سایت شوید!",
+    });
     // Redirect to login if no token found
   }, []);
   useEffect(() => {

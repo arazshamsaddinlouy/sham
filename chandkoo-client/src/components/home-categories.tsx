@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { getAllCategories } from "../services/categories.service";
 import { BiCategory } from "react-icons/bi";
 import SectionHeadings from "./section-headings";
+import { useNavigate } from "react-router-dom";
 
 export default function HomeCategories() {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<any[]>([]);
 
   useEffect(() => {
@@ -19,6 +21,7 @@ export default function HomeCategories() {
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
           {categories.map((el) => (
             <div
+              onClick={() => navigate("/dashboard")}
               key={el.title}
               className="relative shadow-sm flex flex-col justify-center items-center h-[120px] md:h-[130px] rounded-[16px] border border-green-300 bg-green-100 overflow-hidden transition-transform transform hover:scale-105 cursor-pointer group text-green-600"
             >

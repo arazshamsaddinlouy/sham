@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { isUserRegistered } from "../../services/user.service";
 import { ShamContext } from "../../App";
 import { sendOtp } from "../../services/auth.service";
-
+import wallpaper from "./login-wallpaper.jpg";
 const persianToEnglishDigits = (str: string) => {
   const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
   const englishDigits = "0123456789";
@@ -85,13 +85,13 @@ export default function Login() {
         {/* Left Image Section */}
         <div
           className="hidden md:block md:w-1/3 bg-cover bg-center"
-          style={{ backgroundImage: "url('/images/login-wallpaper.jpg')" }}
+          style={{ backgroundImage: `url('${wallpaper}')` }}
         />
 
         {/* Right Form Section */}
         <div className="w-full md:w-2/3 p-8 md:p-12 flex flex-col justify-center">
           <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8">
-            ورود به پنل مدیریت
+            ورود به چندکو
           </h2>
 
           <Form
@@ -116,6 +116,7 @@ export default function Login() {
                 placeholder="09123456789"
                 className="h-12 rounded-lg border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500"
                 onChange={handleChange}
+                type="number"
               />
             </Form.Item>
 

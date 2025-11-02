@@ -24,6 +24,8 @@ import {
 import ProtectedRoute from "./components/protected-route";
 import EditProfile from "./pages/dashboard/edit-profile";
 import Admin from "./pages/admin/page";
+import SellerPage from "./pages/seller";
+import ScrollToTop from "./components/scroll-to-top";
 
 export const ShamContext = createContext({ name: "ShamApp" });
 function App() {
@@ -70,8 +72,10 @@ function App() {
       <ShamContext.Provider value={contextValue}>
         {contextHolder}
         <Router>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Layout />}>
+              <Route path="/seller" element={<SellerPage />} />
               <Route path="/" element={<Home />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />

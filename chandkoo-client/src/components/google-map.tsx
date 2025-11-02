@@ -152,7 +152,7 @@ export default function MapComponent({
         <MComponent
           options={{
             mapKey: "web.8d3c1ec0100543bba908b6367985d91a",
-            mapType: MapTypes.neshanRasterNight,
+            mapType: MapTypes.neshanRaster,
             zoom: 16,
             center: [center.lng, center.lat],
           }}
