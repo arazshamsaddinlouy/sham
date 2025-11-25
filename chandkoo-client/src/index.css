@@ -116,3 +116,32 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+/* Uploader responsive styles */
+.uploader-mobile {
+  width: 100%;
+  max-width: 120px;
+  margin: 0 auto;
+}
+
+.uploader-desktop {
+  width: 100%;
+  max-width: 150px;
+  margin: 0 auto;
+}
+
+/* Optional: Add some animations */
+.uploader-mobile,
+.uploader-desktop {
+  transition: all 0.3s ease-in-out;
+}
+
+/* If you want to scale the entire uploader */
+.uploader-mobile .ant-upload,
+.uploader-mobile .upload-area {
+  transform: scale(0.9);
+}
+
+.uploader-desktop .ant-upload,
+.uploader-desktop .upload-area {
+  transform: scale(1);
+}

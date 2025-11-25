@@ -85,10 +85,10 @@ export default function Dashboard() {
           { title: "درخواست استعلام قیمت", to: "/dashboard/request-price" },
         ]
       : []),
-    { title: "مزایده ها", to: "/dashboard/trades" },
-    { title: "حراج ها", to: "/dashboard/sales" },
     ...(user.customerType == "0"
       ? [
+          { title: "مزایده ها", to: "/dashboard/trades" },
+          { title: "حراج ها", to: "/dashboard/sales" },
           { title: "تنظیمات غرفه", to: "/dashboard/branches" },
           {
             title: "استعلام های دریافتی",

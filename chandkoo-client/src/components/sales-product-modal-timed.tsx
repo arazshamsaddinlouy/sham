@@ -7,6 +7,8 @@ import {
   Input,
   Button,
   message,
+  Alert,
+  Spin,
 } from "antd";
 import { useEffect, useState } from "react";
 import {
@@ -16,7 +18,10 @@ import {
   ShopOutlined,
   UserOutlined,
   CrownOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
+import { getBidById } from "../services/bids.service"; // Adjust import path as needed
+import formatPersianNumber from "../utils/numberPriceFormat"; // Adjust import path as needed
 
 interface Comment {
   id: number;
@@ -24,12 +29,6 @@ interface Comment {
   rating: number;
   text: string;
   date: string;
-}
-
-interface Seller {
-  name: string;
-  avatar: string;
-  link?: string;
 }
 
 interface Bid {
@@ -42,43 +41,101 @@ interface Bid {
 interface BiddingProductModalProps {
   open: boolean;
   onClose: () => void;
-  product?: {
-    name: string;
-    description: string;
-    startingPrice: number;
-    currentHighestBid?: number;
-    images: string[];
-    rating: number;
-    reviewsCount: number;
-    deadline: string; // ISO date string for bid expiration
-    seller?: Seller;
-    comments?: Comment[];
-    bids?: Bid[];
+  id?: string; // Bid ID to fetch data
+}
+
+interface BidData {
+  id: string;
+  title: string;
+  description: string;
+  startingPrice: number;
+  currentPrice: number;
+  images: string[];
+  startDate: string;
+  endDate: string;
+  status: string;
+  viewCount: number;
+  bidCount: number;
+  user?: {
+    first_name: string;
+    last_name: string;
   };
+  category?: {
+    title: string;
+  };
+  highestBidder?: {
+    first_name: string;
+    last_name: string;
+  };
+  comments?: Array<{
+    id: string;
+    text: string;
+    createdAt: string;
+    user?: {
+      first_name: string;
+      last_name: string;
+    };
+  }>;
 }
 
 export default function BiddingProductModal({
   open,
   onClose,
-  product,
+  id,
 }: BiddingProductModalProps) {
-  if (!product) return null;
-
   const [current, setCurrent] = useState(0);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [bidAmount, setBidAmount] = useState<number>(0);
   const [isBiddingEnded, setIsBiddingEnded] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [bidData, setBidData] = useState<BidData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const highestBid = product.currentHighestBid || product.startingPrice;
-  const minimumBid = highestBid + highestBid * 0.05; // 5% higher than current highest bid
+  // Fetch bid data when modal opens or id changes
+  useEffect(() => {
+    if (open && id) {
+      fetchBidData();
+    }
+  }, [open, id]);
+
+  // Reset states when modal closes
+  useEffect(() => {
+    if (!open) {
+      setBidData(null);
+      setError(null);
+      setCurrent(0);
+    }
+  }, [open]);
+
+  const fetchBidData = async () => {
+    if (!id) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getBidById(id);
+      if (response.data.success) {
+        const bid = response.data.data;
+        bid.images = JSON.parse(bid.images);
+        setBidData(bid);
+      } else {
+        setError("Failed to fetch bid data");
+      }
+    } catch (err) {
+      console.error("Error fetching bid data:", err);
+      setError("Error loading bid information");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 🕒 Countdown effect for bid expiration
   useEffect(() => {
-    if (!product.deadline) return;
+    if (!bidData?.endDate) return;
 
     const updateCountdown = () => {
       const now = new Date().getTime();
-      const end = new Date(product.deadline!).getTime();
+      const end = new Date(bidData.endDate).getTime();
       const distance = end - now;
 
       if (distance <= 0) {
@@ -104,24 +161,38 @@ export default function BiddingProductModal({
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
-  }, [product.deadline]);
+  }, [bidData?.endDate]);
 
-  // Initialize bid amount when product changes
+  // Initialize bid amount when bid data changes
   useEffect(() => {
-    setBidAmount(minimumBid);
-  }, [product, minimumBid]);
+    if (bidData) {
+      const highestBid = bidData.currentPrice || bidData.startingPrice;
+      const minimumBid = highestBid + highestBid * 0.05;
+      setBidAmount(minimumBid);
+    }
+  }, [bidData]);
 
-  const nextSlide = () =>
-    setCurrent((prev) => (prev + 1) % product.images.length);
-  const prevSlide = () =>
-    setCurrent((prev) => (prev === 0 ? product.images.length - 1 : prev - 1));
+  const nextSlide = () => {
+    if (bidData?.images) {
+      setCurrent((prev) => (prev + 1) % bidData.images.length);
+    }
+  };
+
+  const prevSlide = () => {
+    if (bidData?.images) {
+      setCurrent((prev) => (prev === 0 ? bidData.images.length - 1 : prev - 1));
+    }
+  };
 
   const handleBidSubmit = () => {
+    if (!bidData) return;
+
+    const highestBid = bidData.currentPrice || bidData.startingPrice;
+    const minimumBid = highestBid + highestBid * 0.05;
+
     if (bidAmount < minimumBid) {
       message.error(
-        `مبلغ پیشنهادی باید حداقل ${minimumBid.toLocaleString(
-          "fa-IR"
-        )} تومان باشد`
+        `مبلغ پیشنهادی باید حداقل ${formatPersianNumber(minimumBid)} تومان باشد`
       );
       return;
     }
@@ -133,7 +204,7 @@ export default function BiddingProductModal({
 
     // Here you would typically send the bid to your backend
     message.success(
-      `پیشنهاد ${bidAmount.toLocaleString("fa-IR")} تومانی شما ثبت شد`
+      `پیشنهاد ${formatPersianNumber(bidAmount)} تومانی شما ثبت شد`
     );
     console.log("Bid submitted:", bidAmount);
 
@@ -142,8 +213,72 @@ export default function BiddingProductModal({
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString("fa-IR") + " تومان";
+    return formatPersianNumber(amount) + " تومان";
   };
+
+  // Format date to Persian
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("fa-IR");
+  };
+
+  // Get seller name
+  const getSellerName = () => {
+    if (!bidData?.user) return "فروشگاه چندکو";
+    return `${bidData.user.first_name} ${bidData.user.last_name}`;
+  };
+
+  // Transform comments to the expected format
+  const getComments = (): Comment[] => {
+    if (!bidData?.comments) return [];
+
+    return bidData.comments.map((comment) => ({
+      id: parseInt(comment.id),
+      name: comment.user
+        ? `${comment.user.first_name} ${comment.user.last_name}`
+        : "کاربر ناشناس",
+      rating: 5, // Default rating since your API doesn't have ratings
+      text: comment.text,
+      date: formatDate(comment.createdAt),
+    }));
+  };
+
+  // Transform bids history (you'll need to implement getBidOffers service)
+  const getBidsHistory = (): Bid[] => {
+    // This would come from your getBidOffers service
+    // For now, returning empty array - implement this when you have the service
+    return [];
+  };
+
+  if (loading) {
+    return (
+      <Modal open={open} onCancel={onClose} footer={null} centered>
+        <div className="flex justify-center items-center h-40">
+          <Spin size="large" />
+        </div>
+      </Modal>
+    );
+  }
+
+  if (error) {
+    return (
+      <Modal open={open} onCancel={onClose} footer={null} centered>
+        <div className="flex flex-col items-center justify-center h-40 gap-4">
+          <ExclamationCircleOutlined className="text-red-500 text-2xl" />
+          <p className="text-red-500">{error}</p>
+          <Button onClick={fetchBidData}>تلاش مجدد</Button>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (!bidData) {
+    return null;
+  }
+
+  const highestBid = bidData.currentPrice || bidData.startingPrice;
+  const minimumBid = highestBid + highestBid * 0.05;
+  const comments = getComments();
+  const bidsHistory = getBidsHistory();
 
   return (
     <Modal
@@ -157,69 +292,75 @@ export default function BiddingProductModal({
       <div className="grid md:grid-cols-2 grid-cols-1">
         {/* Product Image Slider */}
         <div className="relative bg-gray-50 flex items-center justify-center">
-          <img
-            src={product.images[current]}
-            alt={product.name}
-            className="object-cover w-full h-[350px]"
-          />
-
-          {product.images.length > 1 && (
+          {bidData.images && bidData.images.length > 0 ? (
             <>
-              <button
-                onClick={prevSlide}
-                className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow"
-              >
-                <LeftOutlined />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow"
-              >
-                <RightOutlined />
-              </button>
-            </>
-          )}
-
-          <div className="absolute bottom-3 w-full flex justify-center gap-2">
-            {product.images.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrent(idx)}
-                className={`w-2.5 h-2.5 rounded-full ${
-                  idx === current ? "bg-green-600" : "bg-gray-300"
-                }`}
+              <img
+                src={`https://chandkoo.ir/api/${bidData.images[current]}`}
+                alt={bidData.title}
+                className="object-cover w-full h-[350px]"
               />
-            ))}
-          </div>
+
+              {bidData.images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevSlide}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow"
+                  >
+                    <LeftOutlined />
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow"
+                  >
+                    <RightOutlined />
+                  </button>
+                </>
+              )}
+
+              <div className="absolute bottom-3 w-full flex justify-center gap-2">
+                {bidData.images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrent(idx)}
+                    className={`w-2.5 h-2.5 rounded-full ${
+                      idx === current ? "bg-green-600" : "bg-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="w-full h-[350px] flex items-center justify-center bg-gray-200">
+              <span className="text-gray-500">تصویری موجود نیست</span>
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
         <div className="p-6 flex flex-col justify-between">
           <div>
+            <Alert
+              className="mb-[20px]"
+              type="warning"
+              showIcon
+              message="حداقل ۲۰ درصد قیمت مزایده باید در کیف پول شما باشد و بلوکه شود"
+            />
             <h2 className="text-2xl font-bold mb-2 text-gray-800 text-right">
-              {product.name}
+              {bidData.title}
             </h2>
 
             {/* Seller Info */}
-            {product.seller && (
-              <div className="flex justify-end items-center gap-2 mb-3">
-                <Avatar src={product.seller.avatar} icon={<ShopOutlined />} />
-                <a
-                  href={product.seller.link || "#"}
-                  className="text-green-600 hover:underline text-sm"
-                >
-                  {product.seller.name}
-                </a>
+            <div className="flex justify-end items-center gap-2 mb-3">
+              <Avatar icon={<ShopOutlined />} />
+              <span className="text-green-600 text-sm">{getSellerName()}</span>
+            </div>
+
+            {/* Category */}
+            {bidData.category && (
+              <div className="flex justify-end mb-3">
+                <Tag color="blue">{bidData.category.title}</Tag>
               </div>
             )}
-
-            {/* Rating & Reviews */}
-            <div className="flex items-center justify-end gap-2 mb-3">
-              <Rate disabled defaultValue={product.rating} />
-              <span className="text-gray-500 text-sm">
-                ({product.reviewsCount.toLocaleString("fa-IR")} نظر)
-              </span>
-            </div>
 
             <Divider className="my-3" />
 
@@ -230,7 +371,7 @@ export default function BiddingProductModal({
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 text-sm">قیمت شروع:</span>
                   <span className="text-gray-700 font-medium">
-                    {formatCurrency(product.startingPrice)}
+                    {formatCurrency(bidData.startingPrice)}
                   </span>
                 </div>
 
@@ -245,6 +386,16 @@ export default function BiddingProductModal({
                       {formatCurrency(highestBid)}
                     </span>
                   </div>
+                </div>
+
+                {/* Bid Count */}
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-sm">
+                    تعداد پیشنهادها:
+                  </span>
+                  <span className="text-gray-700 font-medium">
+                    {formatPersianNumber(bidData.bidCount || 0)}
+                  </span>
                 </div>
 
                 {/* Minimum Next Bid */}
@@ -315,21 +466,23 @@ export default function BiddingProductModal({
             </div>
 
             {/* Description */}
-            <p className="text-gray-700 leading-relaxed text-right">
-              {product.description}
-            </p>
+            {bidData.description && (
+              <p className="text-gray-700 leading-relaxed text-right">
+                {bidData.description}
+              </p>
+            )}
           </div>
 
           <Divider />
 
           {/* Bids History */}
-          {product.bids && product.bids.length > 0 && (
+          {bidsHistory.length > 0 && (
             <div className="text-right mb-4">
               <h3 className="text-lg font-semibold mb-3 text-gray-800">
                 تاریخچه پیشنهادها
               </h3>
               <div className="space-y-2 max-h-[120px] overflow-y-auto pr-2">
-                {product.bids.map((bid) => (
+                {bidsHistory.map((bid) => (
                   <div
                     key={bid.id}
                     className="flex justify-between items-center bg-gray-50 rounded-lg p-2 border border-gray-100"
@@ -355,13 +508,13 @@ export default function BiddingProductModal({
           )}
 
           {/* Comments Section */}
-          {product.comments && product.comments.length > 0 && (
+          {comments.length > 0 && (
             <div className="text-right mb-4">
               <h3 className="text-lg font-semibold mb-3 text-gray-800">
                 نظرات کاربران
               </h3>
               <div className="space-y-3 max-h-[150px] overflow-y-auto pr-2">
-                {product.comments.map((c) => (
+                {comments.map((c) => (
                   <div
                     key={c.id}
                     className="bg-gray-50 rounded-lg p-3 border border-gray-100"

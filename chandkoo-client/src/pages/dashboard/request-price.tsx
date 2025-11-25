@@ -6,9 +6,10 @@ import {
   Switch,
   TreeSelect,
   InputNumber,
-  Space,
   Modal,
   Select,
+  Grid,
+  Card,
 } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import MapComponent from "../../components/google-map";
@@ -33,6 +34,9 @@ import { useDispatch } from "react-redux";
 import { getAllProvincesWithCities } from "../../services/province.service";
 import ImageUploader from "../../components/image-uploader";
 import FileUploader from "../../components/file-uploader";
+
+const { useBreakpoint } = Grid;
+
 const colors = [
   { label: "قرمز", value: "red", hex: "#FF0000" },
   { label: "آبی", value: "blue", hex: "#0000FF" },
@@ -48,12 +52,14 @@ const colors = [
   { label: "طلایی", value: "gold", hex: "#FFD700" },
   { label: "نقره‌ای", value: "silver", hex: "#C0C0C0" },
 ];
+
 export default function RequestPrice() {
   const [categories, setCategories] = useState<any[]>([]);
   const [latLng, setLatLng] = useState<{
     lng: number | null;
     lat: number | null;
   }>({ lat: null, lng: null });
+  const [loading, setLoading] = useState<boolean>(false);
   const [provinces, setProvinces] = useState<any[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<string[]>([]);
   const [productCount, setProductCount] = useState<number>(1);
@@ -75,10 +81,12 @@ export default function RequestPrice() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const value: any = useContext(ShamContext);
+  const screens = useBreakpoint();
+
+  const isMobile = !screens.md;
+  const isTablet = !screens.lg;
 
   const render = (status: Status) => <h1>{status}</h1>;
-
-  const isMobile = () => window.innerWidth < 768;
 
   const onProvinceChange = (newValue: string[]) =>
     setSelectedProvince(newValue);
@@ -95,6 +103,8 @@ export default function RequestPrice() {
   const handleSubmit = () => {
     const formData = new FormData();
     const formValues = form.getFieldsValue();
+    setLoading(true);
+
     for (let key in formValues) {
       if (key === "description") {
         formData.append("description", `${description}`);
@@ -107,6 +117,7 @@ export default function RequestPrice() {
         formData.append(key, formValues[key]);
       }
     }
+
     if (file) formData.append("audio", file);
     if (image) formData.append("image", image);
     if (latLng.lat) formData.append("lat", `${latLng.lat}`);
@@ -120,16 +131,21 @@ export default function RequestPrice() {
 
     addPriceInquiry(formData).then((data) => {
       if (data.status === 200) {
-        getActiveRequests().then((res) => {
-          if (res.status === 200) {
-            value.setNotif({
-              type: "success",
-              description: "درخواست استعلام ارسال شد",
-            });
-            dispatch(setActiveRequest(res.data.length));
-            navigate("/dashboard");
-          }
-        });
+        getActiveRequests()
+          .then((res) => {
+            setLoading(false);
+            if (res.status === 200) {
+              value.setNotif({
+                type: "success",
+                description: "درخواست استعلام ارسال شد",
+              });
+              dispatch(setActiveRequest(res.data.length));
+              navigate("/dashboard");
+            }
+          })
+          .catch(() => {
+            setLoading(false);
+          });
       }
     });
   };
@@ -188,214 +204,284 @@ export default function RequestPrice() {
         handleLatLngChange={(lat: number, lng: number) => {
           setLatLng({ lat, lng });
           setIsMapTouched(true);
-          if (isMobile()) setIsMapModalOpen(false);
+          if (isMobile) setIsMapModalOpen(false);
         }}
       />
     </Wrapper>
   );
 
   return (
-    <>
-      <div className="text-[26px] pb-[15px] mb-[30px] border-b-[1px] border-b-[#ccc]">
+    <div className="mx-auto p-4">
+      <div className="text-2xl md:text-3xl font-bold text-right pb-4 mb-6 border-b border-gray-200">
         درخواست استعلام قیمت
       </div>
-      <Form
-        form={form}
-        layout="vertical"
-        className="w-full mx-auto p-[0px_5px]"
-      >
-        <Form.Item
-          name="title"
-          label="عنوان محصول"
-          className="rtl"
-          rules={[{ required: true, message: "عنوان اجباری است" }]}
+
+      <Card className="shadow-sm border-0">
+        <Form
+          form={form}
+          layout="vertical"
+          className="w-full"
+          size={isMobile ? "small" : "middle"}
         >
-          <Input showCount maxLength={80} />
-        </Form.Item>
-        <Form.Item
-          name="categoryId"
-          label="دسته بندی"
-          className="rtl"
-          rules={[{ required: true, message: "دسته بندی اجباری است" }]}
-        >
-          <TreeSelect
-            multiple
-            showSearch
-            value={selectedCategories}
-            dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
-            allowClear
-            treeCheckable
-            onChange={onCategoryChange}
-            treeData={categories}
-            treeNodeFilterProp="title"
-          />
-        </Form.Item>
-        <Form.Item
-          name="inquiryLocation"
-          label="استان و شهر"
-          className="rtl"
-          rules={[{ required: true, message: "انتخاب استان و شهر اجباری است" }]}
-        >
-          <TreeSelect
-            showSearch
-            value={selectedProvince}
-            dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
-            placeholder=""
-            allowClear
-            treeCheckable
-            onChange={onProvinceChange}
-            treeData={provinces}
-            treeNodeFilterProp="label"
-          />
-        </Form.Item>
-        <div className="flex gap-[30px] justify-between">
-          <div className="flex-1">
-            <Form.Item
-              name="productCount"
-              label="تعداد محصول"
-              className="rtl w-full"
-              initialValue={1}
-              rules={[{ required: true, message: "تعداد محصول اجباری است" }]}
-            >
-              <InputNumber
-                min={1}
-                style={{ width: "100%" }}
-                onChange={(val) => setProductCount(val || 1)}
-              />
-            </Form.Item>
-            <Form.Item
-              name="color"
-              label="رنگ محصول (اختیاری)"
-              className="rtl w-full"
-            >
-              <Select
-                style={{ width: "100%" }}
-                placeholder="انتخاب رنگ"
-                allowClear
-                onChange={(val) => setColor(val || undefined)}
+          {/* Basic Information Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="space-y-4">
+              <Form.Item
+                name="title"
+                label="عنوان محصول"
+                rules={[{ required: true, message: "عنوان اجباری است" }]}
               >
-                {colors.map((color) => (
-                  <Select.Option key={color.value} value={color.value}>
-                    <span
-                      style={{ display: "inline-flex", alignItems: "center" }}
-                    >
-                      <span
-                        style={{
-                          backgroundColor: color.hex,
-                          width: 14,
-                          height: 14,
-                          borderRadius: "50%",
-                          display: "inline-block",
-                          marginLeft: 8,
-                          border: "1px solid #ccc",
-                        }}
-                      />
-                      {color.label}
-                    </span>
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
-          <div className="w-[200px]">
-            <Form.Item label="بارگذاری تصویر (اختیاری)" className="rtl w-full">
-              <ImageUploader handleFile={(file) => setImage(file)} />
-            </Form.Item>
-            <Form.Item label="بارگذاری صوت (اختیاری)" className="rtl w-full">
-              <FileUploader handleFile={(file) => setFile(file)} />
-            </Form.Item>
-          </div>
-        </div>
-        <Form.Item label="تاریخ انقضا" className="rtl w-full">
-          <ConfigProvider locale={fa_IR}>
-            <JalaliLocaleListener />
-            <DatePickerJalali
-              style={{ width: "100%" }} // 👈 Make DatePicker full width
-              onChange={(val: any) => {
-                console.log("val is", val.$d);
-                setDateString(val ? new Date(val.$d) : "");
-              }}
-            />
-          </ConfigProvider>
-        </Form.Item>
-        <div className="flex gap-[30px] justify-between">
-          <div className="flex-1">
-            <Form.Item
-              label="توضیحات"
-              className="rtl"
-              name={"description"}
-              rules={[{ required: true, message: "توضیحات اجباری است" }]}
-            >
-              <TextArea
-                rows={6}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Form.Item>
+                <Input
+                  showCount
+                  maxLength={80}
+                  size={isMobile ? "small" : "middle"}
+                  placeholder="عنوان محصول را وارد کنید"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="categoryId"
+                label="دسته بندی"
+                rules={[{ required: true, message: "دسته بندی اجباری است" }]}
+              >
+                <TreeSelect
+                  multiple
+                  showSearch
+                  value={selectedCategories}
+                  dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
+                  allowClear
+                  treeCheckable
+                  onChange={onCategoryChange}
+                  treeData={categories}
+                  treeNodeFilterProp="title"
+                  placeholder="دسته بندی را انتخاب کنید"
+                  size={isMobile ? "small" : "middle"}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="inquiryLocation"
+                label="استان و شهر"
+                rules={[
+                  { required: true, message: "انتخاب استان و شهر اجباری است" },
+                ]}
+              >
+                <TreeSelect
+                  showSearch
+                  value={selectedProvince}
+                  dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
+                  placeholder="استان و شهر را انتخاب کنید"
+                  allowClear
+                  treeCheckable
+                  onChange={onProvinceChange}
+                  treeData={provinces}
+                  treeNodeFilterProp="label"
+                  size={isMobile ? "small" : "middle"}
+                />
+              </Form.Item>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Form.Item
+                  name="productCount"
+                  label="تعداد محصول"
+                  initialValue={1}
+                  rules={[
+                    { required: true, message: "تعداد محصول اجباری است" },
+                  ]}
+                >
+                  <InputNumber
+                    min={1}
+                    style={{ width: "100%" }}
+                    onChange={(val) => setProductCount(val || 1)}
+                    size={isMobile ? "small" : "middle"}
+                    placeholder="تعداد"
+                  />
+                </Form.Item>
+
+                <Form.Item name="color" label="رنگ محصول (اختیاری)">
+                  <Select
+                    style={{ width: "100%" }}
+                    placeholder="انتخاب رنگ"
+                    allowClear
+                    onChange={(val) => setColor(val || undefined)}
+                    size={isMobile ? "small" : "middle"}
+                  >
+                    {colors.map((color) => (
+                      <Select.Option key={color.value} value={color.value}>
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <span
+                            style={{
+                              backgroundColor: color.hex,
+                              width: 16,
+                              height: 16,
+                              borderRadius: "50%",
+                              border: "1px solid #ccc",
+                            }}
+                          />
+                          {color.label}
+                        </span>
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </div>
+
+              <Form.Item label="تاریخ انقضا">
+                <ConfigProvider locale={fa_IR}>
+                  <JalaliLocaleListener />
+                  <DatePickerJalali
+                    style={{ width: "100%" }}
+                    onChange={(val: any) => {
+                      setDateString(val ? new Date(val.$d) : "");
+                    }}
+                    size={isMobile ? "small" : "middle"}
+                  />
+                </ConfigProvider>
+              </Form.Item>
+
+              {/* Upload Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Form.Item label="بارگذاری تصویر (اختیاری)">
+                  <div
+                    className={
+                      isMobile ? "uploader-mobile" : "uploader-desktop"
+                    }
+                  >
+                    <ImageUploader handleFile={(file) => setImage(file)} />
+                  </div>
+                </Form.Item>
+                <Form.Item label="بارگذاری صوت (اختیاری)">
+                  <div
+                    className={
+                      isMobile ? "uploader-mobile" : "uploader-desktop"
+                    }
+                  >
+                    <FileUploader handleFile={(file) => setFile(file)} />
+                  </div>
+                </Form.Item>
+              </div>
+            </div>
           </div>
 
-          <div className="w-[200px]">
-            <Space direction="vertical" className="rtl mb-4">
-              <Switch
-                checked={hasGuaranteeChecked}
-                onChange={(checked) => setIsGuaranteeChecked(checked)}
-                checkedChildren={<CheckOutlined />}
-                unCheckedChildren={<CloseOutlined />}
-              />{" "}
-              گارانتی داشته باشد
-              <Switch
-                checked={deliceryChecked}
-                onChange={(checked) => setDeliveryChecked(checked)}
-                checkedChildren={<CheckOutlined />}
-                unCheckedChildren={<CloseOutlined />}
-              />{" "}
-              شامل حمل و نقل باشد
-              <Switch
-                checked={isMessageEnabled}
-                onChange={(checked) => setIsMessageEnabled(checked)}
-                checkedChildren={<CheckOutlined />}
-                unCheckedChildren={<CloseOutlined />}
-              />{" "}
-              امکان ارسال پیامک به فروشنده
-            </Space>
+          {/* Description and Settings Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2">
+              <Form.Item
+                label="توضیحات"
+                name="description"
+                rules={[{ required: true, message: "توضیحات اجباری است" }]}
+              >
+                <TextArea
+                  rows={6}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="توضیحات کامل محصول را وارد کنید..."
+                  size={isMobile ? "small" : "middle"}
+                />
+              </Form.Item>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">گارانتی داشته باشد</span>
+                  <Switch
+                    checked={hasGuaranteeChecked}
+                    onChange={(checked) => setIsGuaranteeChecked(checked)}
+                    checkedChildren={<CheckOutlined />}
+                    unCheckedChildren={<CloseOutlined />}
+                    size={isMobile ? "small" : "default"}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">شامل حمل و نقل باشد</span>
+                  <Switch
+                    checked={deliceryChecked}
+                    onChange={(checked) => setDeliveryChecked(checked)}
+                    checkedChildren={<CheckOutlined />}
+                    unCheckedChildren={<CloseOutlined />}
+                    size={isMobile ? "small" : "default"}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">امکان ارسال پیامک به فروشنده</span>
+                  <Switch
+                    checked={isMessageEnabled}
+                    onChange={(checked) => setIsMessageEnabled(checked)}
+                    checkedChildren={<CheckOutlined />}
+                    unCheckedChildren={<CloseOutlined />}
+                    size={isMobile ? "small" : "default"}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="text-[14px] mb-[5px] mt-[0px]">
-          مکان خود روی نقشه را مشخص نمایید:
-        </div>
-        {isMobile() ? (
-          <>
-            <Button onClick={() => setIsMapModalOpen(true)}>
-              باز کردن نقشه
-            </Button>
-            <Modal
-              title="انتخاب مکان روی نقشه"
-              open={isMapModalOpen}
-              onCancel={() => setIsMapModalOpen(false)}
-              footer={null}
-              width="100%"
-              style={{ top: 0, padding: 0 }}
-              bodyStyle={{ padding: 0, height: "80vh" }}
-            >
-              {mapComponent}
-            </Modal>
-          </>
-        ) : (
-          <div style={{ height: 450, overflow: "hidden" }}>{mapComponent}</div>
-        )}
-        <Form.Item>
-          <ConfigProvider theme={{ token: { colorPrimary: "#4caf50" } }}>
-            <Button
-              onClick={handleSubmit}
-              htmlType="submit"
-              className="w-full mt-[40px] h-[40px]"
-              type="primary"
-              disabled={!submittable || !isMapTouched}
-            >
-              ارسال درخواست
-            </Button>
-          </ConfigProvider>
-        </Form.Item>
-      </Form>
-    </>
+
+          {/* Map Section */}
+          <div className="mb-6">
+            <div className="text-sm mb-3 font-medium">
+              مکان خود روی نقشه را مشخص نمایید:
+            </div>
+
+            {isMobile ? (
+              <>
+                <Button
+                  onClick={() => setIsMapModalOpen(true)}
+                  block
+                  size={isMobile ? "small" : "middle"}
+                >
+                  باز کردن نقشه برای انتخاب مکان
+                </Button>
+                <Modal
+                  title="انتخاب مکان روی نقشه"
+                  open={isMapModalOpen}
+                  onCancel={() => setIsMapModalOpen(false)}
+                  footer={null}
+                  width="100%"
+                  style={{ top: 0, padding: 0 }}
+                  bodyStyle={{ padding: 0, height: "80vh" }}
+                >
+                  {mapComponent}
+                </Modal>
+              </>
+            ) : (
+              <div
+                style={{ height: isTablet ? 300 : 400, overflow: "hidden" }}
+                className="rounded-lg border"
+              >
+                {mapComponent}
+              </div>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <Form.Item>
+            <ConfigProvider theme={{ token: { colorPrimary: "#4caf50" } }}>
+              <Button
+                onClick={handleSubmit}
+                htmlType="submit"
+                className="w-full"
+                loading={loading}
+                type="primary"
+                disabled={!submittable || !isMapTouched}
+                size={isMobile ? "large" : "large"}
+                style={{ height: isMobile ? 45 : 50 }}
+              >
+                ارسال درخواست استعلام
+              </Button>
+            </ConfigProvider>
+          </Form.Item>
+        </Form>
+      </Card>
+    </div>
   );
 }
