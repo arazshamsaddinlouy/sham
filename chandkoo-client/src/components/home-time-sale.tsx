@@ -1,16 +1,5 @@
-import {
-  Modal,
-  Rate,
-  Divider,
-  Tag,
-  Avatar,
-  Input,
-  Button,
-  message,
-  Alert,
-  Spin,
-} from "antd";
-import { useEffect, useState } from "react";
+import { Modal, Rate, Divider, Tag, Avatar, Button, Alert, Spin } from "antd";
+import { useContext, useEffect, useState } from "react";
 import {
   LeftOutlined,
   RightOutlined,
@@ -20,13 +9,12 @@ import {
   CrownOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
-import {
-  getAllBids,
-  getBidById,
-  placeBidOffer,
-} from "../services/bids.service"; // Adjust import path as needed
+import { getAllBids, getBidById } from "../services/bids.service"; // Adjust import path as needed
 import formatPersianNumber from "../utils/numberPriceFormat";
 import SectionHeadings from "./section-headings";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { ShamContext } from "../App";
 interface Comment {
   id: number;
   name: string;
@@ -223,17 +211,17 @@ export function BiddingProductModal({
   open,
   onClose,
   id,
-  onBidPlaced,
 }: BiddingProductModalProps) {
   const [current, setCurrent] = useState(0);
   const [timeLeft, setTimeLeft] = useState<string>("");
-  const [bidAmount, setBidAmount] = useState<number>(0);
+  const value: any = useContext(ShamContext);
+  const navigate = useNavigate();
+  const { user } = useSelector((state: any) => state.user);
   const [isBiddingEnded, setIsBiddingEnded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [bidData, setBidData] = useState<BidData | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   // Fetch bid data when modal opens or id changes
   useEffect(() => {
     if (open && id) {
@@ -307,15 +295,6 @@ export function BiddingProductModal({
     return () => clearInterval(interval);
   }, [bidData?.endDate]);
 
-  // Initialize bid amount when bid data changes
-  useEffect(() => {
-    if (bidData) {
-      const highestBid = bidData.currentPrice || bidData.startingPrice;
-      const minimumBid = highestBid + highestBid * 0.05;
-      setBidAmount(minimumBid);
-    }
-  }, [bidData]);
-
   const nextSlide = () => {
     if (bidData?.images) {
       setCurrent((prev) => (prev + 1) % bidData.images.length);
@@ -329,69 +308,14 @@ export function BiddingProductModal({
   };
 
   const handleBidSubmit = async () => {
-    if (!bidData || !id) return;
-
-    const highestBid = bidData.currentPrice || bidData.startingPrice;
-    const minimumBid = highestBid + highestBid * 0.05;
-
-    if (bidAmount < minimumBid) {
-      message.error(
-        `مبلغ پیشنهادی باید حداقل ${formatPersianNumber(minimumBid)} تومان باشد`
-      );
-      return;
-    }
-
-    if (isBiddingEnded) {
-      message.error("مزایده به پایان رسیده است");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      // Call the actual bid placement service
-      const response = await placeBidOffer(id, bidAmount);
-
-      if (response.data.success) {
-        message.success(
-          `پیشنهاد ${formatPersianNumber(
-            bidAmount
-          )} تومانی شما با موفقیت ثبت شد`
-        );
-
-        // Refresh bid data to get updated prices and bid count
-        await fetchBidData();
-
-        // Call the callback if provided
-        if (onBidPlaced) {
-          onBidPlaced();
-        }
-
-        // Update bid amount to new minimum based on the updated data
-        const newHighestBid = response.data.data?.currentPrice || bidAmount;
-        const newMinimumBid = newHighestBid + newHighestBid * 0.05;
-        setBidAmount(newMinimumBid);
-      } else {
-        message.error(response.data.message || "خطا در ثبت پیشنهاد");
-      }
-    } catch (error: any) {
-      console.error("Error placing bid:", error);
-
-      // Handle different error types
-      if (error.response?.data?.message) {
-        message.error(error.response.data.message);
-      } else if (error.response?.status === 400) {
-        message.error("مبلغ پیشنهادی باید بیشتر از قیمت فعلی باشد");
-      } else if (error.response?.status === 401) {
-        message.error("لطفاً ابتدا وارد حساب کاربری خود شوید");
-      } else if (error.response?.status === 403) {
-        message.error("شما مجاز به ثبت پیشنهاد در این مزایده نیستید");
-      } else if (error.response?.status === 404) {
-        message.error("مزایده مورد نظر یافت نشد");
-      } else {
-        message.error("خطا در ارتباط با سرور");
-      }
-    } finally {
-      setSubmitting(false);
+    if (user) {
+      navigate("/dashboard/trades");
+    } else {
+      value.setNotif({
+        type: "error",
+        description: "جهت قرار دادن قیمت مزایده وارد سیستم شوید",
+      });
+      navigate("/login");
     }
   };
 
@@ -607,58 +531,6 @@ export function BiddingProductModal({
                 )}
               </div>
             </div>
-
-            {/* Bid Input Section */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <div className="space-y-3">
-                <div className="text-right">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    مبلغ پیشنهادی شما
-                  </label>
-                  <Input
-                    type="number"
-                    value={bidAmount}
-                    onChange={(e) => setBidAmount(Number(e.target.value))}
-                    onBlur={() => {
-                      if (bidAmount < minimumBid) {
-                        setBidAmount(minimumBid);
-                      }
-                    }}
-                    min={minimumBid}
-                    step={10000} // 10,000 Tomans step
-                    className="text-left"
-                    disabled={isBiddingEnded || submitting}
-                    addonAfter="تومان"
-                  />
-                  <div className="text-xs text-gray-500 mt-1 text-right">
-                    حداقل مبلغ: {formatCurrency(minimumBid)}
-                  </div>
-                </div>
-
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  onClick={handleBidSubmit}
-                  disabled={isBiddingEnded || submitting}
-                  loading={submitting}
-                  className="bg-green-600 hover:bg-green-700 border-green-600"
-                >
-                  {submitting
-                    ? "در حال ثبت..."
-                    : isBiddingEnded
-                    ? "مزایده پایان یافته"
-                    : "ثبت پیشنهاد"}
-                </Button>
-              </div>
-            </div>
-
-            {/* Description */}
-            {bidData.description && (
-              <p className="text-gray-700 leading-relaxed text-right">
-                {bidData.description}
-              </p>
-            )}
           </div>
 
           <Divider />

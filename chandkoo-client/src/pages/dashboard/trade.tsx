@@ -34,6 +34,7 @@ import {
   getBidOffers,
   type Bid,
   type BidOffer,
+  getAllBids,
 } from "../../services/bids.service";
 import {
   createBidComment,
@@ -47,7 +48,8 @@ const { TextArea } = Input;
 const { RangePicker } = DatePicker;
 
 export default function DashboardTrades() {
-  const [bids, setBids] = useState<Bid[]>([]);
+  const [userBids, setUserBids] = useState<Bid[]>([]);
+  const [allBids, setAllBids] = useState<Bid[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -60,12 +62,13 @@ export default function DashboardTrades() {
   const [placingBid, setPlacingBid] = useState(false);
   const [newBidAmount, setNewBidAmount] = useState<number>(0);
   const [commentForm] = Form.useForm();
-
+  const [activeTab, setActiveTab] = useState<"userBids" | "allBids">(
+    "userBids"
+  );
   useEffect(() => {
     loadUserBids();
     loadCategories();
   }, []);
-
   const loadUserBids = () => {
     setLoading(true);
     getUserBids()
@@ -75,7 +78,7 @@ export default function DashboardTrades() {
           for (let el of els) {
             el.images = JSON.parse(el.images);
           }
-          setBids(els);
+          setUserBids(els);
         }
       })
       .catch((error) => {
@@ -83,7 +86,23 @@ export default function DashboardTrades() {
         message.error("خطا در بارگذاری مزایده‌ها");
       })
       .finally(() => {
-        setLoading(false);
+        getAllBids()
+          .then((res) => {
+            if (res.status === 200) {
+              const bids = res.data.data.bids;
+              for (let el of bids) {
+                el.images = JSON.parse(el.images);
+              }
+              setAllBids(bids);
+            }
+          })
+          .catch((error) => {
+            console.error("Error loading bids:", error);
+            message.error("خطا در بارگذاری مزایده‌ها");
+          })
+          .finally(() => {
+            setLoading(false);
+          });
       });
   };
 
@@ -331,15 +350,59 @@ export default function DashboardTrades() {
           <Spin size="large" />
         </div>
       ) : (
-        <div className="flex flex-wrap">
-          {bids.map((bid) => (
-            <SaleTradeItem trade={bid} key={`bid-${bid.id}`} />
-          ))}
-          {bids.length === 0 && (
-            <div className="text-center w-full py-8 text-gray-500">
-              هیچ مزایده‌ای یافت نشد
+        <div>
+          <div className="border-b mb-4">
+            <div className="flex space-x-4 space-x-reverse">
+              <button
+                className={`py-2 px-4 font-medium ${
+                  activeTab === "userBids"
+                    ? "border-b-2 border-blue-500 text-blue-600"
+                    : "text-gray-500"
+                }`}
+                onClick={() => setActiveTab("userBids")}
+              >
+                مزایده های من ({userBids.length})
+              </button>
+              <button
+                className={`py-2 px-4 font-medium ${
+                  activeTab === "allBids"
+                    ? "border-b-2 border-blue-500 text-blue-600"
+                    : "text-gray-500"
+                }`}
+                onClick={() => setActiveTab("allBids")}
+              >
+                تمام مزایده ها ({allBids.length})
+              </button>
             </div>
-          )}
+          </div>
+
+          <div className="flex flex-wrap">
+            {activeTab === "userBids" && (
+              <>
+                {userBids.map((bid) => (
+                  <SaleTradeItem trade={bid} key={`user-bid-${bid.id}`} />
+                ))}
+                {userBids.length === 0 && (
+                  <div className="text-center w-full py-8 text-gray-500">
+                    هیچ مزایده‌ای ثبت نکرده‌اید
+                  </div>
+                )}
+              </>
+            )}
+
+            {activeTab === "allBids" && (
+              <>
+                {allBids.map((bid) => (
+                  <SaleTradeItem trade={bid} key={`all-bid-${bid.id}`} />
+                ))}
+                {allBids.length === 0 && (
+                  <div className="text-center w-full py-8 text-gray-500">
+                    هیچ مزایده‌ای یافت نشد
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
 

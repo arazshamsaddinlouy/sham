@@ -84,7 +84,7 @@ export const getAllPublishedSales = (params?: {
 // Get single sale by ID
 export const getSaleById = (id: string) => {
   const header = localStorage.getItem("accessToken");
-  return axios.get(`${config.BASE_URL}/sales/${id}`, {
+  return axios.get(`${config.BASE_URL}/sales/getById/${id}`, {
     headers: {
       authorization: `Bearer ${header}`,
       "Content-Type": "application/json; charset=UTF-8",
