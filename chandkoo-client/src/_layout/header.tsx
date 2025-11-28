@@ -100,12 +100,15 @@ export default function Header() {
         <ProductOutlined /> خرید اشتراک
       </div>
       <div
-        className="flex h-10 gap-2 items-center p-2 hover:bg-gray-100 cursor-pointer"
+        className="flex h-10 gap-2 cursor-pointer items-center p-2 hover:bg-gray-100 cursor-pointer"
         onClick={() => navigate("/dashboard/branches")}
       >
         <PlusOutlined /> افزودن غرفه
       </div>
-      <div className="flex justify-between h-10 items-center p-2 hover:bg-gray-100 cursor-pointer">
+      <div
+        onClick={() => navigate("/dashboard/charge")}
+        className="flex justify-between cursor-pointer h-10 items-center p-2 hover:bg-gray-100 cursor-pointer"
+      >
         <div className="flex gap-2">
           <WalletOutlined /> شارژ کیف پول
         </div>

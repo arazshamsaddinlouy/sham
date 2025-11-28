@@ -145,3 +145,6 @@ input[type="number"] {
 .uploader-desktop .upload-area {
   transform: scale(1);
 }
+.ant-typography {
+  font-family: "yekan" !important;
+}

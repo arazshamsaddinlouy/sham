@@ -1,4 +1,17 @@
-import { Modal, Rate, Divider, Tag, Avatar, Button, Alert, Spin } from "antd";
+import {
+  Modal,
+  Rate,
+  Tag,
+  Avatar,
+  Button,
+  Alert,
+  Spin,
+  Grid,
+  Card,
+  Badge,
+  Statistic,
+  Timeline,
+} from "antd";
 import { useContext, useEffect, useState } from "react";
 import {
   LeftOutlined,
@@ -9,6 +22,11 @@ import {
   CrownOutlined,
   ExclamationCircleOutlined,
   WarningOutlined,
+  EyeOutlined,
+  MessageOutlined,
+  GifOutlined,
+  FireOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import { getAllBids, getBidById, getBidOffers } from "../services/bids.service";
 import formatPersianNumber from "../utils/numberPriceFormat";
@@ -16,6 +34,8 @@ import SectionHeadings from "./section-headings";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ShamContext } from "../App";
+
+const { useBreakpoint } = Grid;
 
 interface Comment {
   id: number;
@@ -36,6 +56,7 @@ interface BidData {
   id: string;
   title: string;
   description: string;
+  userId: string;
   startingPrice: number;
   currentPrice: number;
   images: string[];
@@ -66,9 +87,16 @@ interface BidData {
   }>;
 }
 
-// Countdown timer component
-const CountdownTimer = ({ endDate }: { endDate: string }) => {
+// Enhanced Countdown Timer Component
+const CountdownTimer = ({
+  endDate,
+  compact = false,
+}: {
+  endDate: string;
+  compact?: boolean;
+}) => {
   const [timeLeft, setTimeLeft] = useState({
+    days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
@@ -81,6 +109,7 @@ const CountdownTimer = ({ endDate }: { endDate: string }) => {
       const difference = end - now;
 
       if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
         const hours = Math.floor(
           (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
         );
@@ -89,9 +118,9 @@ const CountdownTimer = ({ endDate }: { endDate: string }) => {
         );
         const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-        setTimeLeft({ hours, minutes, seconds });
+        setTimeLeft({ days, hours, minutes, seconds });
       } else {
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     };
 
@@ -106,18 +135,61 @@ const CountdownTimer = ({ endDate }: { endDate: string }) => {
     return num.toString().replace(/\d/g, (x) => persianDigits[parseInt(x)]);
   };
 
+  if (compact) {
+    return (
+      <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold rounded-full px-3 py-1 shadow-lg">
+        ⏳ {toPersianDigits(timeLeft.hours)}:{toPersianDigits(timeLeft.minutes)}
+        :{toPersianDigits(timeLeft.seconds)}
+      </div>
+    );
+  }
+
   return (
-    <div className="text-[11px] absolute z-[2] left-[15px] top-[15px] bg-[#f44336] text-white font-bold rounded-[5px] inline-block px-2 py-1">
-      زمان : {toPersianDigits(timeLeft.hours)} ساعت{" "}
-      {toPersianDigits(timeLeft.minutes)} دقیقه و{" "}
-      {toPersianDigits(timeLeft.seconds)} ثانیه
+    <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-sm font-bold rounded-xl px-4 py-2 shadow-lg">
+      {timeLeft.days > 0 && `${toPersianDigits(timeLeft.days)} روز و `}
+      {toPersianDigits(timeLeft.hours)}:{toPersianDigits(timeLeft.minutes)}:
+      {toPersianDigits(timeLeft.seconds)}
     </div>
+  );
+};
+
+// Status Badge Component
+const StatusBadge = ({ status }: { status: string }) => {
+  const statusConfig = {
+    completed: { label: "اتمام یافته", color: "red", icon: <TrophyOutlined /> },
+    cancelled: {
+      label: "لغو شده",
+      color: "orange",
+      icon: <ExclamationCircleOutlined />,
+    },
+    expired: {
+      label: "منقضی شده",
+      color: "gray",
+      icon: <ClockCircleOutlined />,
+    },
+    active: { label: "فعال", color: "green", icon: <FireOutlined /> },
+  };
+
+  const config =
+    statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
+
+  return (
+    <Badge.Ribbon
+      text={config.label}
+      color={config.color}
+      placement="start"
+      className="text-xs"
+    >
+      <div className="w-4 h-4" /> {/* Empty space for ribbon */}
+    </Badge.Ribbon>
   );
 };
 
 // Main HomeTimeSales Component
 export default function HomeTimeSales() {
   const [trades, setTrades] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const screens = useBreakpoint();
 
   useEffect(() => {
     getAllBids().then((res) => {
@@ -128,23 +200,47 @@ export default function HomeTimeSales() {
         }
         setTrades(bids);
       }
+      setLoading(false);
     });
   }, []);
 
+  const getGridCols = () => {
+    if (screens.xxl) return "lg:grid-cols-5 xl:grid-cols-6";
+    if (screens.xl) return "lg:grid-cols-4 xl:grid-cols-5";
+    if (screens.lg) return "md:grid-cols-3 lg:grid-cols-4";
+    if (screens.md) return "grid-cols-1 md:grid-cols-3";
+    return "grid-cols-1";
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto mb-8">
+        <SectionHeadings title="جدیدترین مزایده ها" />
+        <div className="flex justify-center items-center h-40">
+          <Spin size="large" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <SectionHeadings title="جدیدترین مزایده ها" />
-      <div className="container mx-auto mb-[20px]">
-        <div className="flex flex-wrap -mx-2">
+    <div className="bg-gradient-to-b from-gray-50 to-white py-8">
+      <div className="container mx-auto px-4">
+        <SectionHeadings title="جدیدترین مزایده ها" />
+        <div className={`grid grid-cols-1 ${getGridCols()} gap-4 md:gap-6`}>
           {trades.map((el) => (
-            <div
-              key={`all-bid-${el.id}`}
-              className="w-1/2 sm:w-1/2 lg:w-1/6 p-2 mb-[50px]"
-            >
-              <SaleTradeItem key={`trade-${el.id}`} trade={el} />
-            </div>
+            <SaleTradeItem key={`trade-${el.id}`} trade={el} />
           ))}
         </div>
+
+        {trades.length === 0 && (
+          <div className="text-center py-12">
+            <GifOutlined className="text-6xl text-gray-300 mb-4" />
+            <p className="text-gray-500 text-lg">
+              در حال حاضر مزایده‌ای موجود نیست
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -152,31 +248,10 @@ export default function HomeTimeSales() {
 
 export const SaleTradeItem = ({ trade }: { trade: any }) => {
   const [open, setOpen] = useState<boolean>(false);
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
 
-  const getStatusBadge = () => {
-    switch (trade.status) {
-      case "completed":
-        return {
-          text: "به اتمام رسید",
-          color: "bg-[#f44336]",
-        };
-      case "cancelled":
-        return {
-          text: "لغو شده",
-          color: "bg-[#ff9800]",
-        };
-      case "expired":
-        return {
-          text: "منقضی شده",
-          color: "bg-[#9e9e9e]",
-        };
-      case "active":
-      default:
-        return null;
-    }
-  };
-
-  const statusBadge = getStatusBadge();
+  const isActive = trade.status === "active";
 
   return (
     <>
@@ -184,51 +259,98 @@ export const SaleTradeItem = ({ trade }: { trade: any }) => {
         open={open}
         onClose={() => setOpen(false)}
         id={trade.id}
-        onBidPlaced={() => {
-          setOpen(false);
-        }}
+        onBidPlaced={() => setOpen(false)}
       />
-      <div className="w-full" onClick={() => setOpen(true)}>
-        <div className="relative rounded-[16px] overflow-hidden shadow-md group">
+
+      <Card
+        className="group cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl border-0 shadow-md rounded-2xl overflow-hidden"
+        onClick={() => setOpen(true)}
+        bodyStyle={{ padding: 0 }}
+      >
+        {/* Image Container */}
+        <div className="relative overflow-hidden">
           {Array.isArray(trade.images) && trade.images.length > 0 ? (
             <img
               src={`https://chandkoo.ir/api/${trade.images[0]}`}
-              className="w-full h-[220px] object-cover transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-48 md:h-56 object-cover transition-transform duration-500 group-hover:scale-110"
               alt={trade.title}
             />
           ) : (
-            <img
-              src={"/logo"}
-              className="w-full h-[220px] object-cover transition-transform duration-300 group-hover:scale-105"
-              alt={trade.product_name}
-            />
+            <div className="w-full h-48 md:h-56 bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+              <ShopOutlined className="text-4xl text-gray-400" />
+            </div>
           )}
 
-          {statusBadge ? (
-            <div
-              className={`text-[11px] absolute z-[2] left-[15px] top-[15px] ${statusBadge.color} text-white font-bold rounded-[5px] inline-block px-2 py-1`}
-            >
-              {statusBadge.text}
-            </div>
-          ) : trade.endDate ? (
-            <CountdownTimer endDate={trade.endDate} />
-          ) : null}
+          {/* Status Overlay */}
+          <div className="absolute top-3 left-[25px]">
+            <StatusBadge status={trade.status} />
+          </div>
 
-          <div className="absolute bottom-0 w-full h-full bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-3 text-white transition-all duration-300 group-hover:from-black/90 group-hover:via-black/80 group-hover:to-black/80">
-            <div className="transition-transform duration-300 transform translate-y-0 group-hover:translate-y-0">
-              <div className="text-[20px] font-semibold mb-1">
-                {trade.title}
-              </div>
-              <div className="text-[13px] text-[#ddd] mb-1">
+          {/* Countdown Timer for Active Bids */}
+          {isActive && trade.endDate && (
+            <div className="absolute top-3 right-3">
+              <CountdownTimer endDate={trade.endDate} compact={isMobile} />
+            </div>
+          )}
+
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          <h3 className="font-bold text-gray-800 text-sm md:text-base mb-2 line-clamp-2 leading-tight">
+            {trade.title}
+          </h3>
+
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Avatar
+                size="small"
+                icon={<UserOutlined />}
+                className="bg-blue-100 text-blue-600"
+              />
+              <span className="text-xs text-gray-600">
                 {trade?.user?.first_name} {trade?.user?.last_name}
-              </div>
-              <div className="text-[16px] font-medium mb-2">
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <EyeOutlined />
+              <span>{formatPersianNumber(trade.viewCount || 0)}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-left">
+              <div className="text-xs text-gray-500 mb-1">قیمت شروع</div>
+              <div className="text-sm md:text-base font-bold text-green-600">
                 {formatPersianNumber(trade.startingPrice)} تومان
               </div>
             </div>
+
+            <div className="text-right">
+              <div className="text-xs text-gray-500 mb-1">پیشنهادها</div>
+              <div className="text-sm font-semibold text-orange-600">
+                {formatPersianNumber(trade.bidCount || 0)}
+              </div>
+            </div>
           </div>
+
+          {/* Quick Action Button */}
+          <Button
+            type="primary"
+            size="small"
+            className="w-full mt-3 bg-gradient-to-r from-blue-500 to-purple-600 border-0 shadow-md"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
+          >
+            مشاهده جزئیات
+          </Button>
         </div>
-      </div>
+      </Card>
     </>
   );
 };
@@ -248,41 +370,24 @@ export function BiddingProductModal({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [bidData, setBidData] = useState<BidData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [bidHisory, setBidsHistory] = useState<any[]>([]);
-  // Check if bid is completed or cancelled
+  const [bidHistory, setBidHistory] = useState<any[]>([]);
+  const screens = useBreakpoint();
+
+  const isMobile = !screens.md;
+  const isTablet = screens.md && !screens.lg;
+
   const isCompleted = bidData?.status === "completed";
   const isCancelled = bidData?.status === "cancelled";
   const isExpired = bidData?.status === "expired";
   const isActive = bidData?.status === "active";
-
-  // Check if bidding/commenting is disabled
   const isBiddingDisabled = isCompleted || isCancelled || isExpired;
 
-  const getStatusMessage = () => {
-    if (isCompleted) return "مزایده تمام شده است";
-    if (isCancelled) return "این مزایده لغو شده است";
-    if (isExpired) return "این مزایده منقضی شده است";
-    return "";
-  };
-
-  const getStatusDescription = () => {
-    if (isCompleted)
-      return "این مزایده به اتمام رسیده و امکان ثبت پیشنهاد جدید وجود ندارد.";
-    if (isCancelled)
-      return "این مزایده لغو شده و امکان ثبت پیشنهاد جدید وجود ندارد.";
-    if (isExpired)
-      return "این مزایده منقضی شده و امکان ثبت پیشنهاد جدید وجود ندارد.";
-    return "";
-  };
-
-  // Fetch bid data when modal opens or id changes
   useEffect(() => {
     if (open && id) {
       fetchBidData();
     }
   }, [open, id]);
 
-  // Reset states when modal closes
   useEffect(() => {
     if (!open) {
       setBidData(null);
@@ -325,7 +430,6 @@ export function BiddingProductModal({
     }
   };
 
-  // Countdown effect for bid expiration - only for active bids
   useEffect(() => {
     if (!bidData?.endDate || !isActive) return;
 
@@ -439,28 +543,39 @@ export function BiddingProductModal({
               time: new Date(offer.createdAt).toLocaleDateString("fa-IR"),
             })
           );
-          setBidsHistory(transformedOffers);
+          setBidHistory(transformedOffers);
         }
       } catch (error) {
         console.error("Error fetching bid offers:", error);
-        setBidsHistory([]);
+        setBidHistory([]);
       }
     } else {
-      setBidsHistory([]);
+      setBidHistory([]);
     }
   };
 
-  // Call this function when bidData is available
   useEffect(() => {
     if (bidData?.id) {
       getBidsHistory();
     }
   }, [bidData?.id]);
 
+  const getModalWidth = () => {
+    if (isMobile) return "95vw";
+    if (isTablet) return "90vw";
+    return 1100;
+  };
+
   if (loading) {
     return (
-      <Modal open={open} onCancel={onClose} footer={null} centered>
-        <div className="flex justify-center items-center h-40">
+      <Modal
+        open={open}
+        onCancel={onClose}
+        footer={null}
+        centered
+        width={getModalWidth()}
+      >
+        <div className="flex justify-center items-center h-60">
           <Spin size="large" />
         </div>
       </Modal>
@@ -469,11 +584,19 @@ export function BiddingProductModal({
 
   if (error) {
     return (
-      <Modal open={open} onCancel={onClose} footer={null} centered>
-        <div className="flex flex-col items-center justify-center h-40 gap-4">
-          <ExclamationCircleOutlined className="text-red-500 text-2xl" />
-          <p className="text-red-500">{error}</p>
-          <Button onClick={fetchBidData}>تلاش مجدد</Button>
+      <Modal
+        open={open}
+        onCancel={onClose}
+        footer={null}
+        centered
+        width={getModalWidth()}
+      >
+        <div className="flex flex-col items-center justify-center h-60 gap-4 p-6">
+          <ExclamationCircleOutlined className="text-red-500 text-4xl" />
+          <p className="text-red-500 text-lg text-center">{error}</p>
+          <Button type="primary" onClick={fetchBidData} size="large">
+            تلاش مجدد
+          </Button>
         </div>
       </Modal>
     );
@@ -493,17 +616,19 @@ export function BiddingProductModal({
       onCancel={onClose}
       footer={null}
       centered
-      width={900}
+      width={getModalWidth()}
       bodyStyle={{ padding: 0, overflow: "hidden" }}
-      className={isBiddingDisabled ? "disabled-bid-modal" : ""}
+      className="bidding-modal"
     >
-      <div className="grid md:grid-cols-2 grid-cols-1">
-        {/* Product Image Slider */}
-        <div className="relative bg-gray-50 flex items-center justify-center">
+      <div className="flex flex-col lg:flex-row max-h-[90vh] overflow-hidden">
+        {/* Product Image Section */}
+        <div className="lg:w-1/2 relative bg-gradient-to-br from-gray-50 to-blue-50">
+          <StatusBadge status={bidData.status} />
+
           {isBiddingDisabled && (
             <div className="absolute inset-0 bg-black/50 z-10 flex items-center justify-center">
               <div
-                className={`px-4 py-2 rounded-lg font-bold text-lg text-white ${
+                className={`px-6 py-3 rounded-2xl font-bold text-xl text-white ${
                   isCompleted
                     ? "bg-red-600"
                     : isCancelled
@@ -521,11 +646,11 @@ export function BiddingProductModal({
           )}
 
           {bidData.images && bidData.images.length > 0 ? (
-            <>
+            <div className="relative h-80 lg:h-full">
               <img
                 src={`https://chandkoo.ir/api/${bidData.images[current]}`}
                 alt={bidData.title}
-                className={`object-cover w-full h-[350px] ${
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
                   isBiddingDisabled ? "filter grayscale" : ""
                 }`}
               />
@@ -534,26 +659,28 @@ export function BiddingProductModal({
                 <>
                   <button
                     onClick={prevSlide}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow z-20"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-700 rounded-full p-3 shadow-2xl z-20 transition-all duration-200 hover:scale-110"
                   >
                     <LeftOutlined />
                   </button>
                   <button
                     onClick={nextSlide}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow z-20"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-700 rounded-full p-3 shadow-2xl z-20 transition-all duration-200 hover:scale-110"
                   >
                     <RightOutlined />
                   </button>
                 </>
               )}
 
-              <div className="absolute bottom-3 w-full flex justify-center gap-2 z-20">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
                 {bidData.images.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrent(idx)}
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      idx === current ? "bg-green-600" : "bg-gray-300"
+                    className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                      idx === current
+                        ? "bg-green-500 scale-125"
+                        : "bg-white/80 hover:bg-white"
                     } ${
                       isBiddingDisabled ? "opacity-50 cursor-not-allowed" : ""
                     }`}
@@ -561,302 +688,271 @@ export function BiddingProductModal({
                   />
                 ))}
               </div>
-            </>
+            </div>
           ) : (
             <div
-              className={`w-full h-[350px] flex items-center justify-center bg-gray-200 ${
+              className={`w-full h-80 lg:h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 ${
                 isBiddingDisabled ? "filter grayscale" : ""
               }`}
             >
-              <span className="text-gray-500">تصویری موجود نیست</span>
+              <div className="text-center">
+                <ShopOutlined className="text-6xl text-gray-400 mb-4" />
+                <p className="text-gray-500">تصویری موجود نیست</p>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Product Info */}
-        <div className="p-6 flex flex-col justify-between">
-          <div>
-            {/* Danger Alert for Completed/Cancelled/Expired Bids */}
+        {/* Product Info Section */}
+        <div className="lg:w-1/2 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-gray-800 mb-2 text-right">
+                  {bidData.title}
+                </h1>
+                <div className="flex items-center gap-2 justify-end">
+                  <Avatar
+                    icon={<ShopOutlined />}
+                    className="bg-blue-100 text-blue-600"
+                  />
+                  <span
+                    onClick={() => navigate(`/seller/${bidData.userId}`)}
+                    className="text-green-600 hover:text-green-700 cursor-pointer font-medium"
+                  >
+                    {getSellerName()}
+                  </span>
+                </div>
+              </div>
+
+              {bidData.category && (
+                <Tag color="blue" className="text-sm px-3 py-1 rounded-full">
+                  {bidData.category.title}
+                </Tag>
+              )}
+            </div>
+
+            {/* Status Alerts */}
             {isBiddingDisabled && (
               <Alert
-                className="mb-[20px]"
+                className="mb-6"
                 type="error"
                 showIcon
                 icon={<WarningOutlined />}
-                message={getStatusMessage()}
-                description={getStatusDescription()}
+                message={
+                  isCompleted
+                    ? "مزایده تمام شده است"
+                    : isCancelled
+                    ? "این مزایده لغو شده است"
+                    : "این مزایده منقضی شده است"
+                }
+                description={
+                  isCompleted
+                    ? "این مزایده به اتمام رسیده و امکان ثبت پیشنهاد جدید وجود ندارد."
+                    : isCancelled
+                    ? "این مزایده لغو شده و امکان ثبت پیشنهاد جدید وجود ندارد."
+                    : "این مزایده منقضی شده و امکان ثبت پیشنهاد جدید وجود ندارد."
+                }
               />
             )}
 
-            {/* Warning Alert for Active Bids */}
             {!isBiddingDisabled && (
               <Alert
-                className="mb-[20px]"
+                className="mb-6"
                 type="warning"
                 showIcon
                 message="حداقل ۲۰ درصد قیمت مزایده باید در کیف پول شما باشد و بلوکه شود"
               />
             )}
 
-            <h2
-              className={`text-2xl font-bold mb-2 text-right ${
-                isBiddingDisabled ? "text-gray-500" : "text-gray-800"
-              }`}
-            >
-              {bidData.title}
-            </h2>
-
-            {/* Seller Info */}
-            <div className="flex justify-end items-center gap-2 mb-3">
-              <Avatar
-                icon={<ShopOutlined />}
-                className={isBiddingDisabled ? "opacity-60" : ""}
+            {/* Statistics Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <Statistic
+                title="قیمت شروع"
+                value={formatCurrency(bidData.startingPrice)}
+                valueStyle={{
+                  color: "#3f8600",
+                  fontSize: isMobile ? "14px" : "16px",
+                }}
+                prefix={<ShopOutlined />}
               />
-              <span
-                className={`text-sm ${
-                  isBiddingDisabled ? "text-gray-500" : "text-green-600"
-                }`}
-              >
-                {getSellerName()}
-              </span>
+              <Statistic
+                title="بالاترین پیشنهاد"
+                value={formatCurrency(highestBid)}
+                valueStyle={{
+                  color: "#cf1322",
+                  fontSize: isMobile ? "14px" : "16px",
+                }}
+                prefix={<CrownOutlined className="text-yellow-500" />}
+              />
+              <Statistic
+                title="تعداد پیشنهادها"
+                value={bidData.bidCount || 0}
+                valueStyle={{
+                  color: "#1890ff",
+                  fontSize: isMobile ? "14px" : "16px",
+                }}
+              />
+              <Statistic
+                title="بازدیدها"
+                value={bidData.viewCount || 0}
+                valueStyle={{
+                  color: "#722ed1",
+                  fontSize: isMobile ? "14px" : "16px",
+                }}
+                prefix={<EyeOutlined />}
+              />
             </div>
 
-            {/* Category */}
-            {bidData.category && (
-              <div className="flex justify-end mb-3">
-                <Tag
-                  color={isBiddingDisabled ? "default" : "blue"}
-                  className={isBiddingDisabled ? "opacity-60" : ""}
-                >
-                  {bidData.category.title}
-                </Tag>
+            {/* Time Information */}
+            <Card
+              size="small"
+              className="mb-6 bg-gradient-to-r from-orange-50 to-red-50 border-orange-200"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-orange-700">
+                  <ClockCircleOutlined />
+                  <span className="font-medium">{timeLeft}</span>
+                </div>
+                {!isBiddingDisabled && isActive && bidData.endDate && (
+                  <CountdownTimer
+                    endDate={bidData.endDate}
+                    compact={isMobile}
+                  />
+                )}
+              </div>
+            </Card>
+
+            {/* Minimum Bid for Active Bids */}
+            {!isBiddingDisabled && (
+              <Card
+                size="small"
+                className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-green-700 font-medium">
+                    حداقل پیشنهاد بعدی:
+                  </span>
+                  <span className="text-green-600 font-bold text-lg">
+                    {formatCurrency(minimumBid)}
+                  </span>
+                </div>
+              </Card>
+            )}
+
+            {/* Bids History */}
+            {bidHistory.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4 text-right flex items-center gap-2">
+                  <TrophyOutlined className="text-yellow-500" />
+                  تاریخچه پیشنهادها
+                </h3>
+                <Timeline className="max-h-40 overflow-y-auto">
+                  {bidHistory.slice(0, 5).map((bid) => (
+                    <Timeline.Item
+                      key={bid.id}
+                      dot={<CrownOutlined className="text-yellow-500" />}
+                      color="green"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Avatar size="small" icon={<UserOutlined />} />
+                          <span className="text-sm font-medium">
+                            {bid.bidder}
+                          </span>
+                        </div>
+                        <div className="text-left">
+                          <span className="text-sm font-bold text-green-600 block">
+                            {formatCurrency(bid.amount)}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {bid.time}
+                          </span>
+                        </div>
+                      </div>
+                    </Timeline.Item>
+                  ))}
+                </Timeline>
               </div>
             )}
 
-            <Divider className="my-3" />
-
-            {/* Bidding Information */}
-            <div className="text-right mb-4">
-              <div className="space-y-3">
-                {/* Starting Price */}
-                <div className="flex justify-between items-center">
-                  <span
-                    className={`text-sm ${
-                      isBiddingDisabled ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    قیمت شروع:
-                  </span>
-                  <span
-                    className={`font-medium ${
-                      isBiddingDisabled
-                        ? "text-gray-500 line-through"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    {formatPersianNumber(formatCurrency(bidData.startingPrice))}
-                  </span>
+            {/* Comments Section */}
+            {comments.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4 text-right flex items-center gap-2">
+                  <MessageOutlined className="text-blue-500" />
+                  نظرات کاربران
+                </h3>
+                <div className="space-y-3 max-h-40 overflow-y-auto">
+                  {comments.slice(0, 3).map((comment) => (
+                    <Card key={comment.id} size="small" className="bg-gray-50">
+                      <div className="flex items-start gap-3">
+                        <Avatar icon={<UserOutlined />} />
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-medium text-sm">
+                              {comment.name}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {comment.date}
+                            </span>
+                          </div>
+                          <Rate
+                            disabled
+                            defaultValue={comment.rating}
+                            className="text-xs mb-2"
+                          />
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {comment.text}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-
-                {/* Current Highest Bid */}
-                <div className="flex justify-between items-center">
-                  <span
-                    className={`text-sm ${
-                      isBiddingDisabled ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    بالاترین پیشنهاد:
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <CrownOutlined
-                      className={
-                        isBiddingDisabled ? "text-gray-400" : "text-yellow-500"
-                      }
-                    />
-                    <span
-                      className={`text-lg font-bold ${
-                        isBiddingDisabled ? "text-gray-600" : "text-green-600"
-                      }`}
-                    >
-                      {formatPersianNumber(formatCurrency(highestBid))}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Bid Count */}
-                <div className="flex justify-between items-center">
-                  <span
-                    className={`text-sm ${
-                      isBiddingDisabled ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    تعداد پیشنهادها:
-                  </span>
-                  <span
-                    className={`font-medium ${
-                      isBiddingDisabled ? "text-gray-500" : "text-gray-700"
-                    }`}
-                  >
-                    {formatPersianNumber(bidData.bidCount || 0)}
-                  </span>
-                </div>
-
-                {/* Minimum Next Bid - Only show for active bids */}
-                {!isBiddingDisabled && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-sm">
-                      حداقل پیشنهاد بعدی:
-                    </span>
-                    <span className="text-orange-600 font-semibold">
-                      {formatCurrency(minimumBid)}
-                    </span>
-                  </div>
-                )}
               </div>
-
-              {/* Bid Deadline */}
-              <div
-                className={`flex justify-end items-center text-sm mt-3 gap-1 ${
-                  isBiddingDisabled
-                    ? "text-gray-500"
-                    : isBiddingEnded
-                    ? "text-red-600"
-                    : "text-orange-600"
-                }`}
-              >
-                <ClockCircleOutlined />
-                <span>{timeLeft}</span>
-                {isBiddingDisabled && (
-                  <Tag color="default" className="mr-2">
-                    {isCompleted
-                      ? "اتمام یافته"
-                      : isCancelled
-                      ? "لغو شده"
-                      : "منقضی شده"}
-                  </Tag>
-                )}
-                {!isBiddingDisabled && isBiddingEnded && (
-                  <Tag color="red" className="mr-2">
-                    پایان یافته
-                  </Tag>
-                )}
-              </div>
-            </div>
+            )}
           </div>
 
-          <Divider />
+          {/* Actions Footer */}
+          <div className="border-t border-gray-200 bg-gray-50 p-6">
+            <div className="flex flex-col sm:flex-row gap-3 justify-between items-center">
+              <Button
+                onClick={onClose}
+                size="large"
+                className="flex-1 sm:flex-none px-8 border-gray-300 text-gray-600 hover:bg-gray-100"
+              >
+                بستن
+              </Button>
 
-          {/* Bids History */}
-          {bidHisory.length > 0 && (
-            <div className="text-right mb-4">
-              <h3
-                className={`text-lg font-semibold mb-3 ${
-                  isBiddingDisabled ? "text-gray-500" : "text-gray-800"
-                }`}
-              >
-                تاریخچه پیشنهادها
-              </h3>
-              <div
-                className={`space-y-2 max-h-[120px] overflow-y-auto pr-2 ${
-                  isBiddingDisabled ? "opacity-60" : ""
-                }`}
-              >
-                {bidHisory.map((bid) => (
-                  <div
-                    key={bid.id}
-                    className="flex justify-between items-center bg-gray-50 rounded-lg p-2 border border-gray-100"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Avatar size="small" icon={<UserOutlined />} />
-                      <span className="text-sm font-medium text-gray-800">
-                        {bid.bidder}
-                      </span>
-                    </div>
-                    <div className="text-left">
-                      <span className="text-sm font-bold text-green-600">
-                        {formatCurrency(bid.amount)}
-                      </span>
-                      <span className="text-xs text-gray-500 mr-2">
-                        {bid.time}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {!isBiddingDisabled && !isBiddingEnded && (
+                <Button
+                  onClick={handleBidSubmit}
+                  disabled={submitting}
+                  size="large"
+                  type="primary"
+                  className="flex-1 sm:flex-none px-8 bg-gradient-to-r from-green-500 to-emerald-600 border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+                  icon={<TrophyOutlined />}
+                >
+                  {submitting ? "در حال ثبت..." : "ثبت پیشنهاد"}
+                </Button>
+              )}
+
+              {isBiddingDisabled && (
+                <Button
+                  disabled
+                  size="large"
+                  className="flex-1 sm:flex-none px-8 bg-gray-400 border-0 text-white"
+                >
+                  {isCompleted
+                    ? "مزایده پایان یافته"
+                    : isCancelled
+                    ? "مزایده لغو شده"
+                    : "مزایده منقضی شده"}
+                </Button>
+              )}
             </div>
-          )}
-
-          {/* Comments Section */}
-          {comments.length > 0 && (
-            <div className="text-right mb-4">
-              <h3
-                className={`text-lg font-semibold mb-3 ${
-                  isBiddingDisabled ? "text-gray-500" : "text-gray-800"
-                }`}
-              >
-                نظرات کاربران
-              </h3>
-              <div
-                className={`space-y-3 max-h-[150px] overflow-y-auto pr-2 ${
-                  isBiddingDisabled ? "opacity-60" : ""
-                }`}
-              >
-                {comments.map((c) => (
-                  <div
-                    key={c.id}
-                    className="bg-gray-50 rounded-lg p-3 border border-gray-100"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <Avatar size="small" icon={<UserOutlined />} />
-                        <span className="text-sm font-medium text-gray-800">
-                          {c.name}
-                        </span>
-                      </div>
-                      <span className="text-xs text-gray-500">{c.date}</span>
-                    </div>
-                    <Rate
-                      disabled
-                      defaultValue={c.rating}
-                      className="text-xs mb-1"
-                    />
-                    <p className="text-sm text-gray-700">{c.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <Divider />
-
-          {/* Actions */}
-          <div className="flex justify-between">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 rounded-md border text-gray-600 hover:bg-gray-100 transition"
-            >
-              بستن
-            </button>
-
-            {!isBiddingDisabled && !isBiddingEnded && (
-              <button
-                onClick={handleBidSubmit}
-                disabled={submitting}
-                className="px-6 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {submitting ? "در حال ثبت..." : "ثبت پیشنهاد"}
-              </button>
-            )}
-
-            {isBiddingDisabled && (
-              <div className="px-6 py-2 rounded-md bg-gray-400 text-white cursor-not-allowed">
-                {isCompleted
-                  ? "مزایده پایان یافته"
-                  : isCancelled
-                  ? "مزایده لغو شده"
-                  : "مزایده منقضی شده"}
-              </div>
-            )}
           </div>
         </div>
       </div>

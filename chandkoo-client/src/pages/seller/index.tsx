@@ -1,4 +1,4 @@
-import { Card, Divider, Avatar, Spin } from "antd";
+import { Card, Divider, Avatar, Spin, Carousel, Tag } from "antd";
 import {
   FacebookOutlined,
   InstagramOutlined,
@@ -9,6 +9,8 @@ import {
   EnvironmentOutlined,
   PhoneOutlined,
   UserOutlined,
+  ShoppingOutlined,
+  FireOutlined,
 } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -17,6 +19,7 @@ import {
   getSellerDetails,
   type SellerData,
 } from "../../services/seller.service";
+
 // Generate avatar based on name
 const generateAvatar = (firstName: string, lastName: string) => {
   const colors = [
@@ -40,6 +43,20 @@ const generateAvatar = (firstName: string, lastName: string) => {
   return `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=${color.slice(
     1
   )}&color=fff&size=256&bold=true`;
+};
+
+// Format price with Persian numbers
+const formatPersianNumber = (number: number | string) => {
+  const persianDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
+  return number
+    .toString()
+    .replace(/\d/g, (digit) => persianDigits[parseInt(digit)]);
+};
+
+// Format price with commas
+const formatPrice = (price: number | string) => {
+  const num = typeof price === "string" ? parseFloat(price) : price;
+  return formatPersianNumber(num.toLocaleString("fa-IR"));
 };
 
 export default function SellerPage() {
@@ -197,6 +214,7 @@ export default function SellerPage() {
               </div>
             )}
           </div>
+
           {/* Social Media */}
           {hasSocialMedia && (
             <>
@@ -262,6 +280,148 @@ export default function SellerPage() {
                     <WhatsAppOutlined />
                   </a>
                 )}
+              </div>
+            </>
+          )}
+
+          {/* Active Bids Section */}
+          {seller.bids && seller.bids.length > 0 && (
+            <>
+              <Divider>
+                <div className="flex items-center gap-2">
+                  <FireOutlined className="text-orange-500" />
+                  <span>مزایده‌های فعال</span>
+                </div>
+              </Divider>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {seller.bids.map((bid) => (
+                  <Card
+                    key={bid.id}
+                    hoverable
+                    cover={
+                      bid.images && bid.images.length > 0 ? (
+                        <Carousel dotPosition="top" autoplay>
+                          {bid.images.map((image, index) => (
+                            <div key={index}>
+                              <img
+                                alt={bid.title}
+                                src={`https://chandkoo.ir/api/${image}`}
+                                className="w-full h-48 object-cover"
+                              />
+                            </div>
+                          ))}
+                        </Carousel>
+                      ) : (
+                        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-500">بدون تصویر</span>
+                        </div>
+                      )
+                    }
+                    className="rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all"
+                  >
+                    <Card.Meta
+                      title={bid.title}
+                      description={
+                        <div className="space-y-2">
+                          <p className="text-gray-600 text-sm line-clamp-2">
+                            {bid.description}
+                          </p>
+                          <div className="flex justify-between items-center">
+                            <span className="text-green-600 font-bold text-lg">
+                              {formatPrice(bid.currentPrice)} تومان
+                            </span>
+                            <Tag color="blue">مزایده فعال</Tag>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>{bid.bidCount || 0} پیشنهاد</span>
+                            <span>{bid.viewCount || 0} بازدید</span>
+                          </div>
+                        </div>
+                      }
+                    />
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Active Sales Section */}
+          {seller.sales && seller.sales.length > 0 && (
+            <>
+              <Divider>
+                <div className="flex items-center gap-2">
+                  <ShoppingOutlined className="text-green-500" />
+                  <span>فروش‌های ویژه</span>
+                </div>
+              </Divider>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {seller.sales.map((sale) => (
+                  <Card
+                    key={sale.id}
+                    hoverable
+                    cover={
+                      sale.images && sale.images.length > 0 ? (
+                        <Carousel dotPosition="top" autoplay>
+                          {sale.images.map((image, index) => (
+                            <div key={index}>
+                              <img
+                                alt={sale.title || "فروش ویژه"}
+                                src={`https://chandkoo.ir/api/${image}`}
+                                className="w-full h-48 object-cover"
+                              />
+                            </div>
+                          ))}
+                        </Carousel>
+                      ) : (
+                        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-500">بدون تصویر</span>
+                        </div>
+                      )
+                    }
+                    className="rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all"
+                  >
+                    <Card.Meta
+                      title={sale.title || "فروش ویژه"}
+                      description={
+                        <div className="space-y-2">
+                          <p className="text-gray-600 text-sm line-clamp-2">
+                            {sale.description}
+                          </p>
+                          <div className="flex justify-between items-center">
+                            {sale.primaryPrice && sale.salePrice ? (
+                              <div className="flex flex-col items-start">
+                                <span className="text-red-500 line-through text-xs">
+                                  {formatPrice(sale.primaryPrice)} تومان
+                                </span>
+                                <span className="text-green-600 font-bold text-lg">
+                                  {formatPrice(sale.salePrice)} تومان
+                                </span>
+                              </div>
+                            ) : sale.salePercentFrom && sale.salePercentTo ? (
+                              <span className="text-green-600 font-bold text-lg">
+                                تخفیف {sale.salePercentFrom}% تا{" "}
+                                {sale.salePercentTo}%
+                              </span>
+                            ) : (
+                              <span className="text-green-600 font-bold">
+                                فروش ویژه
+                              </span>
+                            )}
+                            <Tag color="green">
+                              {sale.saleType === "market"
+                                ? "فروش بازار"
+                                : "فروش محصول"}
+                            </Tag>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>{sale.viewCount || 0} بازدید</span>
+                            <span>{sale.likeCount || 0} پسند</span>
+                          </div>
+                        </div>
+                      }
+                    />
+                  </Card>
+                ))}
               </div>
             </>
           )}
@@ -391,6 +551,40 @@ export default function SellerPage() {
             </div>
           )}
 
+          {/* Statistics Section */}
+          {seller.statistics && (
+            <>
+              <Divider>آمار فروشنده</Divider>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-blue-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {seller.statistics.total_branches || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">شعبه فعال</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {seller?.statistics.active_bids || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">مزایده فعال</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {seller.statistics.active_sales || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">فروش ویژه</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {(seller.statistics.total_bids || 0) +
+                      (seller.statistics.total_sales || 0)}
+                  </div>
+                  <div className="text-sm text-gray-600">کل آگهی‌ها</div>
+                </div>
+              </div>
+            </>
+          )}
+
           {/* About Section */}
           <Divider>درباره فروشنده</Divider>
           <div className="text-center text-gray-600 bg-gray-50 rounded-lg p-6">
@@ -401,7 +595,9 @@ export default function SellerPage() {
               📞 برای استعلام قیمت و اطلاعات بیشتر با شماره‌های فوق تماس بگیرید
             </p>
             <p className="text-sm text-gray-500">
-              این فروشنده دارای {seller.branches?.length || 0} شعبه فعال می‌باشد
+              این فروشنده دارای {seller.statistics?.total_branches || 0} شعبه
+              فعال، {seller.statistics?.active_bids || 0} مزایده فعال و{" "}
+              {seller.statistics?.active_sales || 0} فروش ویژه می‌باشد
             </p>
           </div>
         </div>

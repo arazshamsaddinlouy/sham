@@ -9,6 +9,7 @@ import {
   ConfigProvider,
   InputNumber,
   Grid,
+  Typography,
 } from "antd";
 import {
   DatePicker as DatePickerJalali,
@@ -32,6 +33,7 @@ import ImageUploader from "./image-uploader";
 import { Moment } from "moment";
 
 const { useBreakpoint } = Grid;
+const { Text, Paragraph } = Typography;
 
 export const FormPriceInquiry = ({
   request,
@@ -46,6 +48,7 @@ export const FormPriceInquiry = ({
   const [isSubmittable, setIsSubmittable] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const value: any = useContext(ShamContext);
+  const screens = useBreakpoint();
 
   useEffect(() => {
     form
@@ -86,11 +89,11 @@ export const FormPriceInquiry = ({
       onFinish={handleSubmit}
       className="w-full"
     >
-      <div className="flex flex-col lg:flex-row gap-4 mb-4">
+      <div className="flex flex-col gap-4 mb-4">
         <Form.Item
           name="suggestedPrice"
           label="قیمت پیشنهادی"
-          className="flex-1 rtl"
+          className="flex-1"
           rules={[
             { required: true, message: "لطفا قیمت پیشنهادی را وارد کنید" },
           ]}
@@ -107,21 +110,17 @@ export const FormPriceInquiry = ({
             addonAfter="ریال"
             style={{ width: "100%" }}
             placeholder="مثال: 100,000,000"
-            size="large"
+            size={screens.xs ? "middle" : "large"}
           />
         </Form.Item>
 
-        <Form.Item
-          name="expiredAt"
-          label="زمان اعتبار قیمت"
-          className="flex-1 rtl"
-        >
+        <Form.Item name="expiredAt" label="زمان اعتبار قیمت" className="flex-1">
           <JalaliLocaleListener />
           <ConfigProvider locale={fa_IR} direction="rtl">
             <DatePickerJalali
               showTime
               className="w-full"
-              size="large"
+              size={screens.xs ? "middle" : "large"}
               onChange={(d: Moment | null) =>
                 setDateString(d?.toISOString() || "")
               }
@@ -140,8 +139,9 @@ export const FormPriceInquiry = ({
           type="primary"
           disabled={!isSubmittable || loading}
           loading={loading}
-          className="w-full h-12 rounded-lg text-lg font-medium shadow-sm hover:shadow-md transition-all duration-300"
-          size="large"
+          className="w-full rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-300"
+          size={screens.xs ? "middle" : "large"}
+          style={{ height: screens.xs ? "40px" : "48px" }}
         >
           {loading ? "در حال ارسال..." : "ارسال قیمت پیشنهادی"}
         </Button>
@@ -164,6 +164,7 @@ export const FormSendMessage = ({
   const [isSubmittable, setIsSubmittable] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const value: any = useContext(ShamContext);
+  const screens = useBreakpoint();
 
   useEffect(() => {
     form
@@ -211,33 +212,32 @@ export const FormSendMessage = ({
       <Form.Item
         name="message"
         label="متن پیام"
-        className="rtl"
         rules={[
           { required: true, message: "لطفا پیام خود را وارد کنید" },
           { min: 10, message: "پیام باید حداقل ۱۰ کاراکتر باشد" },
         ]}
       >
         <TextArea
-          rows={4}
+          rows={screens.xs ? 3 : 4}
           maxLength={500}
           showCount
           className="resize-none"
           placeholder="پیام خود را برای خریدار بنویسید..."
-          size="large"
+          size={screens.xs ? "middle" : "large"}
         />
       </Form.Item>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="flex flex-col gap-4 mb-6">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
+          <Text strong className="text-sm">
             بارگذاری فایل صوتی (اختیاری)
-          </label>
+          </Text>
           <FileUploader handleFile={setFile} />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
+          <Text strong className="text-sm">
             بارگذاری تصویر (اختیاری)
-          </label>
+          </Text>
           <ImageUploader handleFile={setImage} />
         </div>
       </div>
@@ -248,8 +248,9 @@ export const FormSendMessage = ({
           type="primary"
           disabled={!isSubmittable || loading || !request.has_message}
           loading={loading}
-          className="w-full h-12 rounded-lg text-lg font-medium shadow-sm hover:shadow-md transition-all duration-300"
-          size="large"
+          className="w-full rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-300"
+          size={screens.xs ? "middle" : "large"}
+          style={{ height: screens.xs ? "40px" : "48px" }}
         >
           {loading ? "در حال ارسال..." : "ارسال پیام"}
         </Button>
@@ -274,7 +275,6 @@ export default function CustomerRequestCard({
   const [isMessageModalOpen, setIsMessageModalOpen] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const screens = useBreakpoint();
-  const isMobile = !screens.md;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fa-IR", {
@@ -286,53 +286,94 @@ export default function CustomerRequestCard({
     });
   };
 
+  const getCardPadding = () => {
+    if (screens.xs) return "12px";
+    if (screens.sm) return "16px";
+    return "20px";
+  };
+
+  const getImageSize = () => {
+    if (screens.xs) return 60;
+    if (screens.sm) return 80;
+    return 100;
+  };
+
+  const getIconSize = () => {
+    if (screens.xs) return 16;
+    if (screens.sm) return 18;
+    return 22;
+  };
+
+  const getButtonSize = () => {
+    return screens.xs ? "small" : screens.sm ? "middle" : "large";
+  };
+
   return (
     <>
       <Card
-        className={`w-full mb-6 shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl border-0 ${
+        className={`w-full mb-4 shadow-sm hover:shadow-md transition-all duration-300 rounded-xl border-0 ${
           request.hasResponse
-            ? "bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-l-green-500"
+            ? "bg-gradient-to-r from-green-50 to-emerald-50 border-r-4 border-r-green-500"
             : "bg-white"
         }`}
-        bodyStyle={{ padding: isMobile ? "12px" : "20px" }}
+        bodyStyle={{
+          padding: getCardPadding(),
+          paddingBottom: screens.xs ? "8px" : getCardPadding(),
+        }}
       >
         {/* Header Section */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="flex flex-col gap-3 mb-3">
+          <div className="flex items-start gap-3">
             <div
-              className={`p-2 rounded-lg ${
+              className={`p-2 rounded-lg flex-shrink-0 ${
                 request.hasResponse
                   ? "bg-green-100 text-green-600"
                   : "bg-blue-100 text-blue-600"
               }`}
             >
-              <AiFillProduct size={isMobile ? 18 : 22} />
+              <AiFillProduct size={getIconSize()} />
             </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-bold text-gray-800 text-lg truncate">
+
+            <div className="flex-1 min-w-0">
+              <Text
+                strong
+                className="text-gray-800 block"
+                style={{
+                  fontSize: screens.xs ? "14px" : screens.sm ? "16px" : "18px",
+                  lineHeight: 1.3,
+                }}
+                ellipsis={{ tooltip: request.title }}
+              >
                 {request.title}
-              </h3>
-              <div className="flex items-center gap-2 text-orange-500 text-sm mt-1">
-                <BsClock size={14} />
-                <span>اعتبار تا: {formatDate(request.expiredAt)}</span>
+              </Text>
+
+              <div className="flex items-center gap-1 text-orange-500 mt-1">
+                <BsClock size={screens.xs ? 12 : 14} />
+                <Text
+                  className="text-xs sm:text-sm"
+                  style={{ lineHeight: 1.2 }}
+                >
+                  اعتبار تا: {formatDate(request.expiredAt)}
+                </Text>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-2 w-full lg:w-auto">
+          {/* Action Buttons - Mobile optimized */}
+          <div className="flex gap-2 w-full">
             <Button
               type="primary"
               icon={<IoBagCheckOutline />}
               onClick={() => setIsModalOpen(true)}
               disabled={request.hasResponse}
-              className={`flex-1 lg:flex-none ${
+              className={`flex-1 ${
                 request.hasResponse
                   ? "bg-gray-400 border-gray-400"
                   : "bg-green-600 hover:bg-green-700 border-green-600"
               }`}
-              size={isMobile ? "middle" : "large"}
+              size={getButtonSize()}
             >
-              {isMobile ? "قیمت" : "ارسال قیمت"}
+              {screens.xs ? "" : "ارسال قیمت"}
             </Button>
 
             <Badge
@@ -340,41 +381,42 @@ export default function CustomerRequestCard({
               overflowCount={99}
               style={{ backgroundColor: "#1890ff" }}
               size="small"
+              className="flex-1"
             >
               <Button
                 icon={<BiMessage />}
                 onClick={() => setIsMessageModalOpen(true)}
                 disabled={!request.hasResponse}
                 type={request.hasResponse ? "default" : "dashed"}
-                className="flex-1 lg:flex-none"
-                size={isMobile ? "middle" : "large"}
+                className="w-full"
+                size={getButtonSize()}
               >
-                {isMobile ? "پیام" : "پیام ها"}
+                {screens.xs ? "" : "پیام ها"}
               </Button>
             </Badge>
           </div>
         </div>
 
         {/* Content Section */}
-        <div className="flex flex-col md:flex-row gap-4 items-start">
+        <div className="flex flex-col sm:flex-row gap-3 items-start">
           {/* Image */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 mx-auto sm:mx-0">
             {request.attachedImage ? (
               <Image
                 src={`${config.BACKEND_IMAGE_URL}/api/${request.attachedImage}`}
-                width={isMobile ? 80 : 100}
-                height={isMobile ? 80 : 100}
+                width={getImageSize()}
+                height={getImageSize()}
                 className="rounded-lg object-cover border"
                 preview={false}
                 alt={request.title}
               />
             ) : (
               <Avatar
-                size={isMobile ? 80 : 100}
+                size={getImageSize()}
                 className="rounded-lg bg-gray-100 border flex items-center justify-center"
                 icon={
                   <IoImageOutline
-                    size={isMobile ? 24 : 30}
+                    size={screens.xs ? 20 : screens.sm ? 24 : 30}
                     className="text-gray-400"
                   />
                 }
@@ -383,14 +425,25 @@ export default function CustomerRequestCard({
           </div>
 
           {/* Description */}
-          <div className="flex-1 min-w-0">
-            <p className="text-gray-600 leading-relaxed text-justify line-clamp-3">
+          <div className="flex-1 min-w-0 text-center sm:text-right">
+            <Paragraph
+              className="text-gray-600 leading-relaxed text-justify"
+              ellipsis={{
+                rows: screens.xs ? 2 : screens.sm ? 3 : 4,
+                expandable: true,
+                symbol: "بیشتر",
+              }}
+              style={{
+                fontSize: screens.xs ? "13px" : "14px",
+                marginBottom: screens.xs ? "8px" : "12px",
+              }}
+            >
               {request.description}
-            </p>
+            </Paragraph>
 
             {/* Status Badge */}
             {request.hasResponse && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs sm:text-sm">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 پاسخ داده شده
               </div>
@@ -405,15 +458,22 @@ export default function CustomerRequestCard({
         onCancel={() => setIsModalOpen(false)}
         footer={null}
         title={
-          <div className="text-right text-xl font-bold text-gray-800">
+          <div
+            className="text-right font-bold text-gray-800"
+            style={{
+              fontSize: screens.xs ? "16px" : "20px",
+            }}
+          >
             ارسال قیمت پیشنهادی
           </div>
         }
-        width={isMobile ? "90vw" : 600}
+        width={screens.xs ? "95vw" : screens.sm ? "90vw" : 600}
         centered
-        className="rtl-modal"
         styles={{
-          body: { padding: "24px" },
+          body: {
+            padding: screens.xs ? "16px" : "24px",
+            paddingTop: screens.xs ? "12px" : "20px",
+          },
         }}
       >
         <FormPriceInquiry request={request} refetch={refetch} />
@@ -425,15 +485,22 @@ export default function CustomerRequestCard({
         onCancel={() => setIsMessageModalOpen(false)}
         footer={null}
         title={
-          <div className="text-right text-xl font-bold text-gray-800">
+          <div
+            className="text-right font-bold text-gray-800"
+            style={{
+              fontSize: screens.xs ? "16px" : "20px",
+            }}
+          >
             ارسال پیام به خریدار
           </div>
         }
-        width={isMobile ? "90vw" : 700}
+        width={screens.xs ? "95vw" : screens.sm ? "90vw" : 700}
         centered
-        className="rtl-modal"
         styles={{
-          body: { padding: "24px" },
+          body: {
+            padding: screens.xs ? "16px" : "24px",
+            paddingTop: screens.xs ? "12px" : "20px",
+          },
         }}
       >
         <FormSendMessage request={request} refetch={refetch} />

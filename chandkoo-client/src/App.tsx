@@ -26,6 +26,9 @@ import EditProfile from "./pages/dashboard/edit-profile";
 import Admin from "./pages/admin/page";
 import SellerPage from "./pages/seller";
 import ScrollToTop from "./components/scroll-to-top";
+import MoneyBagCharge from "./pages/dashboard/money-bag-charge";
+import Callback from "./pages/dashboard/callback";
+import PaymentHistory from "./pages/dashboard/payment-history";
 
 export const ShamContext = createContext({ name: "ShamApp" });
 function App() {
@@ -88,6 +91,12 @@ function App() {
                   </ProtectedRoute>
                 }
               >
+                <Route
+                  path="/dashboard/transactions"
+                  element={<PaymentHistory />}
+                />
+                <Route path="/dashboard/callback" element={<Callback />} />
+                <Route path="/dashboard/charge" element={<MoneyBagCharge />} />
                 <Route path="request-price" element={<RequestPrice />} />
                 <Route path="my-requests" element={<MyRequests />} />
                 <Route path="responses/:id" element={<Responses />} />

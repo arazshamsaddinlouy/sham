@@ -22,6 +22,7 @@ import {
 } from "@ant-design/icons";
 import { getBidById, getBidOffers } from "../services/bids.service";
 import formatPersianNumber from "../utils/numberPriceFormat";
+import { useNavigate } from "react-router-dom";
 
 interface Comment {
   id: number;
@@ -48,6 +49,7 @@ interface BidData {
   id: string;
   title: string;
   description: string;
+  userId: string;
   startingPrice: number;
   currentPrice: number;
   images: string[];
@@ -92,6 +94,7 @@ export default function BiddingProductModal({
   const [error, setError] = useState<string | null>(null);
   const [bidOffers, setBidOffers] = useState<Bid[]>([]);
   const [offersLoading, setOffersLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   // Fetch bid data when modal opens or id changes
   useEffect(() => {
@@ -368,7 +371,12 @@ export default function BiddingProductModal({
             {/* Seller Info */}
             <div className="flex justify-end items-center gap-2 mb-3">
               <Avatar icon={<ShopOutlined />} />
-              <span className="text-green-600 text-sm">{getSellerName()}</span>
+              <span
+                className="text-green-600 text-sm"
+                onClick={() => navigate(`/seller/${bidData.userId}`)}
+              >
+                {getSellerName()}
+              </span>
             </div>
 
             {/* Category */}
