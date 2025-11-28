@@ -57,6 +57,9 @@ export default function SellerPage() {
         const response: any = await getSellerDetails(id);
         if (response.status === 200 && response.data.success) {
           setSeller(response.data.data);
+          setTimeout(() => {
+            window.scrollTo(0, 0);
+          }, 100);
         } else {
           setError("فروشنده یافت نشد");
         }
