@@ -77,6 +77,8 @@ export default function Dashboard() {
   const sidebarItems = [
     ...(user.customerType == "1"
       ? [
+          { title: "مزایده ها", to: "/dashboard/trades" },
+          { title: "حراج ها", to: "/dashboard/sales" },
           {
             title: "استعلام های قیمت",
             to: "/dashboard/my-requests",

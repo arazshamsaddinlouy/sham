@@ -142,8 +142,8 @@ export const deleteBid = (id: string) => {
 // Update bid status
 export const updateBidStatus = (id: string, status: string) => {
   const header = localStorage.getItem("accessToken");
-  return axios.patch(
-    `${config.BASE_URL}/bids/${id}/status`,
+  return axios.put(
+    `${config.BASE_URL}/bids/${id}/toggle-status`,
     { status },
     {
       headers: {

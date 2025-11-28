@@ -8,13 +8,15 @@ import {
   UserOutlined,
   CrownOutlined,
   ExclamationCircleOutlined,
+  WarningOutlined,
 } from "@ant-design/icons";
-import { getAllBids, getBidById } from "../services/bids.service"; // Adjust import path as needed
+import { getAllBids, getBidById, getBidOffers } from "../services/bids.service";
 import formatPersianNumber from "../utils/numberPriceFormat";
 import SectionHeadings from "./section-headings";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ShamContext } from "../App";
+
 interface Comment {
   id: number;
   name: string;
@@ -23,18 +25,11 @@ interface Comment {
   date: string;
 }
 
-interface Bid {
-  id: number;
-  bidder: string;
-  amount: number;
-  time: string;
-}
-
 interface BiddingProductModalProps {
   open: boolean;
   onClose: () => void;
-  id?: string; // Bid ID to fetch data
-  onBidPlaced?: () => void; // Callback when bid is successfully placed
+  id?: string;
+  onBidPlaced?: () => void;
 }
 
 interface BidData {
@@ -100,16 +95,12 @@ const CountdownTimer = ({ endDate }: { endDate: string }) => {
       }
     };
 
-    // Calculate immediately
     calculateTimeLeft();
-
-    // Update every second
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
   }, [endDate]);
 
-  // Convert numbers to Persian digits
   const toPersianDigits = (num: number) => {
     const persianDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
     return num.toString().replace(/\d/g, (x) => persianDigits[parseInt(x)]);
@@ -123,6 +114,7 @@ const CountdownTimer = ({ endDate }: { endDate: string }) => {
     </div>
   );
 };
+
 // Main HomeTimeSales Component
 export default function HomeTimeSales() {
   const [trades, setTrades] = useState<any[]>([]);
@@ -145,16 +137,47 @@ export default function HomeTimeSales() {
       <div className="container mx-auto mb-[20px]">
         <div className="flex flex-wrap -mx-2">
           {trades.map((el) => (
-            <SaleTradeItem key={`trade-${el.id}`} trade={el} />
+            <div
+              key={`all-bid-${el.id}`}
+              className="w-1/2 sm:w-1/2 lg:w-1/6 p-2 mb-[50px]"
+            >
+              <SaleTradeItem key={`trade-${el.id}`} trade={el} />
+            </div>
           ))}
         </div>
       </div>
     </div>
   );
 }
-// SaleTradeItem Component - This is what you're importing
+
 export const SaleTradeItem = ({ trade }: { trade: any }) => {
   const [open, setOpen] = useState<boolean>(false);
+
+  const getStatusBadge = () => {
+    switch (trade.status) {
+      case "completed":
+        return {
+          text: "به اتمام رسید",
+          color: "bg-[#f44336]",
+        };
+      case "cancelled":
+        return {
+          text: "لغو شده",
+          color: "bg-[#ff9800]",
+        };
+      case "expired":
+        return {
+          text: "منقضی شده",
+          color: "bg-[#9e9e9e]",
+        };
+      case "active":
+      default:
+        return null;
+    }
+  };
+
+  const statusBadge = getStatusBadge();
+
   return (
     <>
       <BiddingProductModal
@@ -165,12 +188,8 @@ export const SaleTradeItem = ({ trade }: { trade: any }) => {
           setOpen(false);
         }}
       />
-      <div
-        className="w-1/2 sm:w-1/2 lg:w-1/6 p-2"
-        onClick={() => setOpen(true)}
-      >
+      <div className="w-full" onClick={() => setOpen(true)}>
         <div className="relative rounded-[16px] overflow-hidden shadow-md group">
-          {/* Full Image */}
           {Array.isArray(trade.images) && trade.images.length > 0 ? (
             <img
               src={`https://chandkoo.ir/api/${trade.images[0]}`}
@@ -185,10 +204,16 @@ export const SaleTradeItem = ({ trade }: { trade: any }) => {
             />
           )}
 
-          {/* Countdown Timer */}
-          {trade.endDate && <CountdownTimer endDate={trade.endDate} />}
+          {statusBadge ? (
+            <div
+              className={`text-[11px] absolute z-[2] left-[15px] top-[15px] ${statusBadge.color} text-white font-bold rounded-[5px] inline-block px-2 py-1`}
+            >
+              {statusBadge.text}
+            </div>
+          ) : trade.endDate ? (
+            <CountdownTimer endDate={trade.endDate} />
+          ) : null}
 
-          {/* Gradient Overlay */}
           <div className="absolute bottom-0 w-full h-full bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-3 text-white transition-all duration-300 group-hover:from-black/90 group-hover:via-black/80 group-hover:to-black/80">
             <div className="transition-transform duration-300 transform translate-y-0 group-hover:translate-y-0">
               <div className="text-[20px] font-semibold mb-1">
@@ -207,6 +232,7 @@ export const SaleTradeItem = ({ trade }: { trade: any }) => {
     </>
   );
 };
+
 export function BiddingProductModal({
   open,
   onClose,
@@ -222,6 +248,33 @@ export function BiddingProductModal({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [bidData, setBidData] = useState<BidData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [bidHisory, setBidsHistory] = useState<any[]>([]);
+  // Check if bid is completed or cancelled
+  const isCompleted = bidData?.status === "completed";
+  const isCancelled = bidData?.status === "cancelled";
+  const isExpired = bidData?.status === "expired";
+  const isActive = bidData?.status === "active";
+
+  // Check if bidding/commenting is disabled
+  const isBiddingDisabled = isCompleted || isCancelled || isExpired;
+
+  const getStatusMessage = () => {
+    if (isCompleted) return "مزایده تمام شده است";
+    if (isCancelled) return "این مزایده لغو شده است";
+    if (isExpired) return "این مزایده منقضی شده است";
+    return "";
+  };
+
+  const getStatusDescription = () => {
+    if (isCompleted)
+      return "این مزایده به اتمام رسیده و امکان ثبت پیشنهاد جدید وجود ندارد.";
+    if (isCancelled)
+      return "این مزایده لغو شده و امکان ثبت پیشنهاد جدید وجود ندارد.";
+    if (isExpired)
+      return "این مزایده منقضی شده و امکان ثبت پیشنهاد جدید وجود ندارد.";
+    return "";
+  };
+
   // Fetch bid data when modal opens or id changes
   useEffect(() => {
     if (open && id) {
@@ -250,6 +303,17 @@ export function BiddingProductModal({
         const bid = response.data.data;
         bid.images = JSON.parse(bid.images);
         setBidData(bid);
+
+        if (bid.status !== "active") {
+          setIsBiddingEnded(true);
+          if (bid.status === "completed") {
+            setTimeLeft("مزایده به اتمام رسیده است");
+          } else if (bid.status === "cancelled") {
+            setTimeLeft("مزایده لغو شده است");
+          } else if (bid.status === "expired") {
+            setTimeLeft("مزایده منقضی شده است");
+          }
+        }
       } else {
         setError("Failed to fetch bid data");
       }
@@ -261,9 +325,9 @@ export function BiddingProductModal({
     }
   };
 
-  // 🕒 Countdown effect for bid expiration
+  // Countdown effect for bid expiration - only for active bids
   useEffect(() => {
-    if (!bidData?.endDate) return;
+    if (!bidData?.endDate || !isActive) return;
 
     const updateCountdown = () => {
       const now = new Date().getTime();
@@ -289,25 +353,39 @@ export function BiddingProductModal({
       }
     };
 
-    updateCountdown(); // Initial call
+    updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
-  }, [bidData?.endDate]);
+  }, [bidData?.endDate, isActive]);
 
   const nextSlide = () => {
-    if (bidData?.images) {
+    if (bidData?.images && !isBiddingDisabled) {
       setCurrent((prev) => (prev + 1) % bidData.images.length);
     }
   };
 
   const prevSlide = () => {
-    if (bidData?.images) {
+    if (bidData?.images && !isBiddingDisabled) {
       setCurrent((prev) => (prev === 0 ? bidData.images.length - 1 : prev - 1));
     }
   };
 
   const handleBidSubmit = async () => {
+    if (isBiddingDisabled) {
+      const message = isCompleted
+        ? "این مزایده به اتمام رسیده و امکان ثبت پیشنهاد وجود ندارد"
+        : isCancelled
+        ? "این مزایده لغو شده و امکان ثبت پیشنهاد وجود ندارد"
+        : "این مزایده منقضی شده و امکان ثبت پیشنهاد وجود ندارد";
+
+      value.setNotif({
+        type: "error",
+        description: message,
+      });
+      return;
+    }
+
     if (user) {
       navigate("/dashboard/trades");
     } else {
@@ -323,18 +401,15 @@ export function BiddingProductModal({
     return formatPersianNumber(amount) + " تومان";
   };
 
-  // Format date to Persian
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fa-IR");
   };
 
-  // Get seller name
   const getSellerName = () => {
     if (!bidData?.user) return "فروشگاه چندکو";
     return `${bidData.user.first_name} ${bidData.user.last_name}`;
   };
 
-  // Transform comments to the expected format
   const getComments = (): Comment[] => {
     if (!bidData?.comments) return [];
 
@@ -343,18 +418,44 @@ export function BiddingProductModal({
       name: comment.user
         ? `${comment.user.first_name} ${comment.user.last_name}`
         : "کاربر ناشناس",
-      rating: 5, // Default rating since your API doesn't have ratings
+      rating: 5,
       text: comment.text,
       date: formatDate(comment.createdAt),
     }));
   };
 
-  // Transform bids history (you'll need to implement getBidOffers service)
-  const getBidsHistory = (): Bid[] => {
-    // This would come from your getBidOffers service
-    // For now, returning empty array - implement this when you have the service
-    return [];
+  const getBidsHistory = async () => {
+    if (bidData?.id) {
+      try {
+        const offersResponse = await getBidOffers(bidData.id);
+        if (offersResponse.data.success) {
+          const transformedOffers = offersResponse.data.data.offers.map(
+            (offer: any) => ({
+              id: offer.id,
+              bidder:
+                `${offer.user?.first_name} ${offer.user?.last_name}` ||
+                "کاربر ناشناس",
+              amount: offer.amount,
+              time: new Date(offer.createdAt).toLocaleDateString("fa-IR"),
+            })
+          );
+          setBidsHistory(transformedOffers);
+        }
+      } catch (error) {
+        console.error("Error fetching bid offers:", error);
+        setBidsHistory([]);
+      }
+    } else {
+      setBidsHistory([]);
+    }
   };
+
+  // Call this function when bidData is available
+  useEffect(() => {
+    if (bidData?.id) {
+      getBidsHistory();
+    }
+  }, [bidData?.id]);
 
   if (loading) {
     return (
@@ -385,7 +486,6 @@ export function BiddingProductModal({
   const highestBid = bidData.currentPrice || bidData.startingPrice;
   const minimumBid = highestBid + highestBid * 0.05;
   const comments = getComments();
-  const bidsHistory = getBidsHistory();
 
   return (
     <Modal
@@ -395,49 +495,79 @@ export function BiddingProductModal({
       centered
       width={900}
       bodyStyle={{ padding: 0, overflow: "hidden" }}
+      className={isBiddingDisabled ? "disabled-bid-modal" : ""}
     >
       <div className="grid md:grid-cols-2 grid-cols-1">
         {/* Product Image Slider */}
         <div className="relative bg-gray-50 flex items-center justify-center">
+          {isBiddingDisabled && (
+            <div className="absolute inset-0 bg-black/50 z-10 flex items-center justify-center">
+              <div
+                className={`px-4 py-2 rounded-lg font-bold text-lg text-white ${
+                  isCompleted
+                    ? "bg-red-600"
+                    : isCancelled
+                    ? "bg-orange-600"
+                    : "bg-gray-600"
+                }`}
+              >
+                {isCompleted
+                  ? "به اتمام رسیده"
+                  : isCancelled
+                  ? "لغو شده"
+                  : "منقضی شده"}
+              </div>
+            </div>
+          )}
+
           {bidData.images && bidData.images.length > 0 ? (
             <>
               <img
                 src={`https://chandkoo.ir/api/${bidData.images[current]}`}
                 alt={bidData.title}
-                className="object-cover w-full h-[350px]"
+                className={`object-cover w-full h-[350px] ${
+                  isBiddingDisabled ? "filter grayscale" : ""
+                }`}
               />
 
-              {bidData.images.length > 1 && (
+              {bidData.images.length > 1 && !isBiddingDisabled && (
                 <>
                   <button
                     onClick={prevSlide}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow z-20"
                   >
                     <LeftOutlined />
                   </button>
                   <button
                     onClick={nextSlide}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-700 rounded-full p-2 shadow z-20"
                   >
                     <RightOutlined />
                   </button>
                 </>
               )}
 
-              <div className="absolute bottom-3 w-full flex justify-center gap-2">
+              <div className="absolute bottom-3 w-full flex justify-center gap-2 z-20">
                 {bidData.images.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrent(idx)}
                     className={`w-2.5 h-2.5 rounded-full ${
                       idx === current ? "bg-green-600" : "bg-gray-300"
+                    } ${
+                      isBiddingDisabled ? "opacity-50 cursor-not-allowed" : ""
                     }`}
+                    disabled={isBiddingDisabled}
                   />
                 ))}
               </div>
             </>
           ) : (
-            <div className="w-full h-[350px] flex items-center justify-center bg-gray-200">
+            <div
+              className={`w-full h-[350px] flex items-center justify-center bg-gray-200 ${
+                isBiddingDisabled ? "filter grayscale" : ""
+              }`}
+            >
               <span className="text-gray-500">تصویری موجود نیست</span>
             </div>
           )}
@@ -446,26 +576,60 @@ export function BiddingProductModal({
         {/* Product Info */}
         <div className="p-6 flex flex-col justify-between">
           <div>
-            <Alert
-              className="mb-[20px]"
-              type="warning"
-              showIcon
-              message="حداقل ۲۰ درصد قیمت مزایده باید در کیف پول شما باشد و بلوکه شود"
-            />
-            <h2 className="text-2xl font-bold mb-2 text-gray-800 text-right">
+            {/* Danger Alert for Completed/Cancelled/Expired Bids */}
+            {isBiddingDisabled && (
+              <Alert
+                className="mb-[20px]"
+                type="error"
+                showIcon
+                icon={<WarningOutlined />}
+                message={getStatusMessage()}
+                description={getStatusDescription()}
+              />
+            )}
+
+            {/* Warning Alert for Active Bids */}
+            {!isBiddingDisabled && (
+              <Alert
+                className="mb-[20px]"
+                type="warning"
+                showIcon
+                message="حداقل ۲۰ درصد قیمت مزایده باید در کیف پول شما باشد و بلوکه شود"
+              />
+            )}
+
+            <h2
+              className={`text-2xl font-bold mb-2 text-right ${
+                isBiddingDisabled ? "text-gray-500" : "text-gray-800"
+              }`}
+            >
               {bidData.title}
             </h2>
 
             {/* Seller Info */}
             <div className="flex justify-end items-center gap-2 mb-3">
-              <Avatar icon={<ShopOutlined />} />
-              <span className="text-green-600 text-sm">{getSellerName()}</span>
+              <Avatar
+                icon={<ShopOutlined />}
+                className={isBiddingDisabled ? "opacity-60" : ""}
+              />
+              <span
+                className={`text-sm ${
+                  isBiddingDisabled ? "text-gray-500" : "text-green-600"
+                }`}
+              >
+                {getSellerName()}
+              </span>
             </div>
 
             {/* Category */}
             {bidData.category && (
               <div className="flex justify-end mb-3">
-                <Tag color="blue">{bidData.category.title}</Tag>
+                <Tag
+                  color={isBiddingDisabled ? "default" : "blue"}
+                  className={isBiddingDisabled ? "opacity-60" : ""}
+                >
+                  {bidData.category.title}
+                </Tag>
               </div>
             )}
 
@@ -476,55 +640,102 @@ export function BiddingProductModal({
               <div className="space-y-3">
                 {/* Starting Price */}
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">قیمت شروع:</span>
-                  <span className="text-gray-700 font-medium">
-                    {formatCurrency(bidData.startingPrice)}
+                  <span
+                    className={`text-sm ${
+                      isBiddingDisabled ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    قیمت شروع:
+                  </span>
+                  <span
+                    className={`font-medium ${
+                      isBiddingDisabled
+                        ? "text-gray-500 line-through"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {formatPersianNumber(formatCurrency(bidData.startingPrice))}
                   </span>
                 </div>
 
                 {/* Current Highest Bid */}
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">
+                  <span
+                    className={`text-sm ${
+                      isBiddingDisabled ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
                     بالاترین پیشنهاد:
                   </span>
                   <div className="flex items-center gap-2">
-                    <CrownOutlined className="text-yellow-500" />
-                    <span className="text-lg font-bold text-green-600">
-                      {formatCurrency(highestBid)}
+                    <CrownOutlined
+                      className={
+                        isBiddingDisabled ? "text-gray-400" : "text-yellow-500"
+                      }
+                    />
+                    <span
+                      className={`text-lg font-bold ${
+                        isBiddingDisabled ? "text-gray-600" : "text-green-600"
+                      }`}
+                    >
+                      {formatPersianNumber(formatCurrency(highestBid))}
                     </span>
                   </div>
                 </div>
 
                 {/* Bid Count */}
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">
+                  <span
+                    className={`text-sm ${
+                      isBiddingDisabled ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
                     تعداد پیشنهادها:
                   </span>
-                  <span className="text-gray-700 font-medium">
+                  <span
+                    className={`font-medium ${
+                      isBiddingDisabled ? "text-gray-500" : "text-gray-700"
+                    }`}
+                  >
                     {formatPersianNumber(bidData.bidCount || 0)}
                   </span>
                 </div>
 
-                {/* Minimum Next Bid */}
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">
-                    حداقل پیشنهاد بعدی:
-                  </span>
-                  <span className="text-orange-600 font-semibold">
-                    {formatCurrency(minimumBid)}
-                  </span>
-                </div>
+                {/* Minimum Next Bid - Only show for active bids */}
+                {!isBiddingDisabled && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 text-sm">
+                      حداقل پیشنهاد بعدی:
+                    </span>
+                    <span className="text-orange-600 font-semibold">
+                      {formatCurrency(minimumBid)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Bid Deadline */}
               <div
                 className={`flex justify-end items-center text-sm mt-3 gap-1 ${
-                  isBiddingEnded ? "text-red-600" : "text-orange-600"
+                  isBiddingDisabled
+                    ? "text-gray-500"
+                    : isBiddingEnded
+                    ? "text-red-600"
+                    : "text-orange-600"
                 }`}
               >
                 <ClockCircleOutlined />
                 <span>{timeLeft}</span>
-                {isBiddingEnded && (
+                {isBiddingDisabled && (
+                  <Tag color="default" className="mr-2">
+                    {isCompleted
+                      ? "اتمام یافته"
+                      : isCancelled
+                      ? "لغو شده"
+                      : "منقضی شده"}
+                  </Tag>
+                )}
+                {!isBiddingDisabled && isBiddingEnded && (
                   <Tag color="red" className="mr-2">
                     پایان یافته
                   </Tag>
@@ -536,13 +747,21 @@ export function BiddingProductModal({
           <Divider />
 
           {/* Bids History */}
-          {bidsHistory.length > 0 && (
+          {bidHisory.length > 0 && (
             <div className="text-right mb-4">
-              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+              <h3
+                className={`text-lg font-semibold mb-3 ${
+                  isBiddingDisabled ? "text-gray-500" : "text-gray-800"
+                }`}
+              >
                 تاریخچه پیشنهادها
               </h3>
-              <div className="space-y-2 max-h-[120px] overflow-y-auto pr-2">
-                {bidsHistory.map((bid) => (
+              <div
+                className={`space-y-2 max-h-[120px] overflow-y-auto pr-2 ${
+                  isBiddingDisabled ? "opacity-60" : ""
+                }`}
+              >
+                {bidHisory.map((bid) => (
                   <div
                     key={bid.id}
                     className="flex justify-between items-center bg-gray-50 rounded-lg p-2 border border-gray-100"
@@ -570,10 +789,18 @@ export function BiddingProductModal({
           {/* Comments Section */}
           {comments.length > 0 && (
             <div className="text-right mb-4">
-              <h3 className="text-lg font-semibold mb-3 text-gray-800">
+              <h3
+                className={`text-lg font-semibold mb-3 ${
+                  isBiddingDisabled ? "text-gray-500" : "text-gray-800"
+                }`}
+              >
                 نظرات کاربران
               </h3>
-              <div className="space-y-3 max-h-[150px] overflow-y-auto pr-2">
+              <div
+                className={`space-y-3 max-h-[150px] overflow-y-auto pr-2 ${
+                  isBiddingDisabled ? "opacity-60" : ""
+                }`}
+              >
                 {comments.map((c) => (
                   <div
                     key={c.id}
@@ -607,11 +834,11 @@ export function BiddingProductModal({
             <button
               onClick={onClose}
               className="px-6 py-2 rounded-md border text-gray-600 hover:bg-gray-100 transition"
-              disabled={submitting}
             >
               بستن
             </button>
-            {!isBiddingEnded && (
+
+            {!isBiddingDisabled && !isBiddingEnded && (
               <button
                 onClick={handleBidSubmit}
                 disabled={submitting}
@@ -619,6 +846,16 @@ export function BiddingProductModal({
               >
                 {submitting ? "در حال ثبت..." : "ثبت پیشنهاد"}
               </button>
+            )}
+
+            {isBiddingDisabled && (
+              <div className="px-6 py-2 rounded-md bg-gray-400 text-white cursor-not-allowed">
+                {isCompleted
+                  ? "مزایده پایان یافته"
+                  : isCancelled
+                  ? "مزایده لغو شده"
+                  : "مزایده منقضی شده"}
+              </div>
             )}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useContext } from "react";
 import {
   Button,
   Modal,
@@ -12,8 +12,9 @@ import {
   Avatar,
   TreeSelect,
   Rate,
-  message,
   type UploadFile,
+  Spin,
+  Tabs,
 } from "antd";
 import type { RcFile } from "antd/es/upload/interface";
 import { UserOutlined } from "@ant-design/icons";
@@ -23,6 +24,7 @@ import { getAllCategories } from "../../services/categories.service";
 import {
   createSale,
   getUserSales,
+  getAllPublishedSales,
   deleteSale,
   toggleSaleStatus,
   type Sale,
@@ -32,6 +34,8 @@ import {
   createComment,
   type SaleComment,
 } from "../../services/sales-comments.service";
+import { ShamContext } from "../../App";
+import { useSelector } from "react-redux";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -59,6 +63,7 @@ type SaleCardProps = {
   onAddComment: (sale: Sale) => void;
   onToggleStatus: (id: string, current: boolean) => void;
   onDelete: (id: string) => void;
+  currentUserId?: string;
 };
 
 function SaleCard({
@@ -67,7 +72,10 @@ function SaleCard({
   onAddComment,
   onToggleStatus,
   onDelete,
+  currentUserId,
 }: SaleCardProps) {
+  const isOwner = currentUserId && sale.sellerId === currentUserId;
+
   return (
     <div className="w-full flex flex-col md:flex-row md:items-start md:justify-between gap-4 p-4 border rounded-lg bg-white">
       <div className="flex-1 w-full">
@@ -75,15 +83,17 @@ function SaleCard({
       </div>
 
       <div className="flex flex-wrap gap-2 w-full md:w-auto items-center md:items-start">
+        {/* Comments button - always visible */}
         <Button
           icon={<PiChat />}
           type="text"
           onClick={() => onShowComments(sale)}
           className="w-full md:w-auto"
         >
-          نظرات ({sale.comments?.length || 0})
+          نظرات
         </Button>
 
+        {/* Add comment button - always visible */}
         <Button
           type="primary"
           onClick={() => onAddComment(sale)}
@@ -92,21 +102,26 @@ function SaleCard({
           افزودن نظر
         </Button>
 
-        <Button
-          type="dashed"
-          onClick={() => onToggleStatus(sale.id!, sale.isActive)}
-          className="w-full md:w-auto"
-        >
-          {sale.isActive ? "غیرفعال" : "فعال"}
-        </Button>
+        {/* Management actions - only for owner */}
+        {isOwner && (
+          <>
+            <Button
+              type="dashed"
+              onClick={() => onToggleStatus(sale.id!, sale.isActive)}
+              className="w-full md:w-auto"
+            >
+              {sale.isActive ? "غیرفعال" : "فعال"}
+            </Button>
 
-        <Button
-          danger
-          onClick={() => onDelete(sale.id!)}
-          className="w-full md:w-auto"
-        >
-          حذف
-        </Button>
+            <Button
+              danger
+              onClick={() => onDelete(sale.id!)}
+              className="w-full md:w-auto"
+            >
+              حذف
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -129,6 +144,7 @@ function SaleModal({ visible, onCancel, onCreated }: SaleModalProps) {
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [fileList, setFileList] = useState<UploadFile<any>[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const value: any = useContext(ShamContext);
 
   useEffect(() => {
     getAllCategories().then((res) => {
@@ -151,7 +167,10 @@ function SaleModal({ visible, onCancel, onCreated }: SaleModalProps) {
   const handleUpload = (file: RcFile) => {
     const isImage = file.type.startsWith("image/");
     if (!isImage) {
-      message.error("فقط می‌توانید فایل تصویر آپلود کنید!");
+      value.setNotif({
+        type: "error",
+        description: "فقط می‌توانید فایل تصویر آپلود کنید!",
+      });
       return false;
     }
 
@@ -192,15 +211,23 @@ function SaleModal({ visible, onCancel, onCreated }: SaleModalProps) {
 
       const response = await createSale(formData);
       if (response?.data?.success) {
-        message.success("حراج با موفقیت ایجاد شد");
+        value.setNotif({
+          type: "success",
+          description: "حراج با موفقیت ایجاد شد",
+        });
         resetState();
         onCreated();
       } else {
-        message.error("خطا در ایجاد حراج");
+        value.setNotif({
+          type: "success",
+          description: "خطا در ایجاد حراج",
+        });
       }
     } catch (e) {
-      console.error(e);
-      message.error("خطا در ایجاد حراج");
+      value.setNotif({
+        type: "success",
+        description: "خطا در ایجاد حراج",
+      });
     } finally {
       setLoading(false);
     }
@@ -535,7 +562,7 @@ function AddCommentModal({
 }: AddCommentModalProps) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-
+  const value: any = useContext(ShamContext);
   const onFinish = async (values: any) => {
     if (!sale) return;
     setLoading(true);
@@ -546,15 +573,23 @@ function AddCommentModal({
         text: values.text,
       });
       if (response?.data?.success) {
-        message.success("نظر شما با موفقیت ثبت شد");
+        value.setNotif({
+          type: "success",
+          description: "نظر شما با موفقیت ثبت شد",
+        });
         form.resetFields();
         onSubmitted();
       } else {
-        message.error("خطا در ثبت نظر");
+        value.setNotif({
+          type: "success",
+          description: "خطا در ثبت نظر",
+        });
       }
-    } catch (e) {
-      console.error(e);
-      message.error("خطا در ثبت نظر");
+    } catch {
+      value.setNotif({
+        type: "success",
+        description: "خطا در ثبت نظر",
+      });
     } finally {
       setLoading(false);
     }
@@ -625,44 +660,70 @@ function AddCommentModal({
 /* -------------------------------------------------------------------------- */
 
 export default function DashboardSalesRefactor() {
-  const [sales, setSales] = useState<Sale[]>([]);
+  const value: any = useContext(ShamContext);
+  const [userSales, setUserSales] = useState<Sale[]>([]);
+  const [allSales, setAllSales] = useState<Sale[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("userSales");
+  const [loading, setLoading] = useState<boolean>(true);
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isAddCommentOpen, setIsAddCommentOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [comments, setComments] = useState<SaleComment[]>([]);
+  const { user } = useSelector((state: any) => state.user);
 
-  const loadUserSales = useCallback(() => {
-    getUserSales()
-      .then((res) => {
-        if (res?.data?.success) {
-          const data = res.data.data as Sale[];
-          const parsed = data.map((s) => ({
-            ...s,
-            images:
-              typeof s.images === "string" ? JSON.parse(s.images) : s.images,
-          }));
-          setSales(parsed);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        message.error("خطا در بارگذاری حراج‌ها");
+  const currentUserId = user?.id;
+
+  const loadSales = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Load user sales
+      const userSalesResponse = await getUserSales();
+      if (userSalesResponse?.data?.success) {
+        const userData = userSalesResponse.data.data as Sale[];
+        const parsedUserSales = userData.map((s) => ({
+          ...s,
+          images:
+            typeof s.images === "string" ? JSON.parse(s.images) : s.images,
+        }));
+        setUserSales(parsedUserSales);
+      }
+
+      // Load all sales
+      const allSalesResponse = await getAllPublishedSales();
+      if (allSalesResponse?.data?.success) {
+        const allData = allSalesResponse.data.data.sales as Sale[];
+        const parsedAllSales = allData.map((s) => ({
+          ...s,
+          images:
+            typeof s.images === "string" ? JSON.parse(s.images) : s.images,
+        }));
+        setAllSales(parsedAllSales);
+      }
+    } catch (error) {
+      value.setNotif({
+        type: "error",
+        description: "خطا در بارگذاری حراج‌ها",
       });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    loadUserSales();
-  }, [loadUserSales]);
+    loadSales();
+  }, [loadSales]);
 
   const loadSaleComments = async (saleId: string) => {
     try {
       const res = await getSaleComments(saleId);
       if (res?.data?.success)
         setComments(res.data.data.comments || res.data.data || []);
-    } catch (e) {
-      console.error(e);
-      message.error("خطا در بارگذاری نظرات");
+    } catch {
+      value.setNotif({
+        type: "error",
+        description: "خطا در بارگذاری نظرات",
+      });
     }
   };
 
@@ -687,12 +748,17 @@ export default function DashboardSalesRefactor() {
         try {
           const res = await deleteSale(saleId);
           if (res?.data?.success) {
-            message.success("حراج با موفقیت حذف شد");
-            loadUserSales();
+            value.setNotif({
+              type: "success",
+              description: "حراج با موفقیت حذف شد",
+            });
+            loadSales();
           }
-        } catch (e) {
-          console.error(e);
-          message.error("خطا در حذف حراج");
+        } catch {
+          value.setNotif({
+            type: "error",
+            description: "خطا در حذف حراج",
+          });
         }
       },
     });
@@ -705,14 +771,70 @@ export default function DashboardSalesRefactor() {
     try {
       const res = await toggleSaleStatus(saleId);
       if (res?.data?.success) {
-        message.success(`حراج ${!currentStatus ? "فعال" : "غیرفعال"} شد`);
-        loadUserSales();
+        value.setNotif({
+          type: "success",
+          description: `حراج ${!currentStatus ? "فعال" : "غیرفعال"} شد`,
+        });
+        loadSales();
       }
-    } catch (e) {
-      console.error(e);
-      message.error("خطا در تغییر وضعیت حراج");
+    } catch {
+      value.setNotif({
+        type: "error",
+        description: "خطا در تغییر وضعیت حراج",
+      });
     }
   };
+
+  const tabItems = [
+    {
+      key: "userSales",
+      label: `حراج های من (${userSales.length})`,
+      children: (
+        <div className="flex flex-col gap-4">
+          {userSales.length === 0 && !loading && (
+            <div className="text-center text-gray-500 py-8">
+              هیچ حراجی ایجاد نکرده‌اید.
+            </div>
+          )}
+          {userSales.map((sale) => (
+            <SaleCard
+              key={`user-sale-${sale.id}`}
+              sale={sale}
+              onShowComments={openComments}
+              onAddComment={openAddComment}
+              onToggleStatus={handleToggleSaleStatus}
+              onDelete={handleDeleteSale}
+              currentUserId={currentUserId}
+            />
+          ))}
+        </div>
+      ),
+    },
+    {
+      key: "allSales",
+      label: `همه حراج ها (${allSales.length})`,
+      children: (
+        <div className="flex flex-col gap-4">
+          {allSales.length === 0 && !loading && (
+            <div className="text-center text-gray-500 py-8">
+              هیچ حراجی وجود ندارد.
+            </div>
+          )}
+          {allSales.map((sale) => (
+            <SaleCard
+              key={`all-sale-${sale.id}`}
+              sale={sale}
+              onShowComments={openComments}
+              onAddComment={openAddComment}
+              onToggleStatus={handleToggleSaleStatus}
+              onDelete={handleDeleteSale}
+              currentUserId={currentUserId}
+            />
+          ))}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div>
@@ -728,31 +850,25 @@ export default function DashboardSalesRefactor() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {sales.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
-            حراجی وجود ندارد.
-          </div>
-        )}
-
-        {sales.map((sale) => (
-          <SaleCard
-            key={`sale-${sale.id}`}
-            sale={sale}
-            onShowComments={openComments}
-            onAddComment={openAddComment}
-            onToggleStatus={handleToggleSaleStatus}
-            onDelete={handleDeleteSale}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <Spin size="large" />
+        </div>
+      ) : (
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={tabItems}
+          className="sales-tabs"
+        />
+      )}
 
       <SaleModal
         visible={isSaleModalOpen}
         onCancel={() => setIsSaleModalOpen(false)}
         onCreated={() => {
           setIsSaleModalOpen(false);
-          loadUserSales();
+          loadSales();
         }}
       />
 

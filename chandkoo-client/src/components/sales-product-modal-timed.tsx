@@ -20,8 +20,8 @@ import {
   CrownOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
-import { getBidById } from "../services/bids.service"; // Adjust import path as needed
-import formatPersianNumber from "../utils/numberPriceFormat"; // Adjust import path as needed
+import { getBidById, getBidOffers } from "../services/bids.service";
+import formatPersianNumber from "../utils/numberPriceFormat";
 
 interface Comment {
   id: number;
@@ -41,7 +41,7 @@ interface Bid {
 interface BiddingProductModalProps {
   open: boolean;
   onClose: () => void;
-  id?: string; // Bid ID to fetch data
+  id?: string;
 }
 
 interface BidData {
@@ -90,6 +90,8 @@ export default function BiddingProductModal({
   const [loading, setLoading] = useState<boolean>(false);
   const [bidData, setBidData] = useState<BidData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [bidOffers, setBidOffers] = useState<Bid[]>([]);
+  const [offersLoading, setOffersLoading] = useState<boolean>(false);
 
   // Fetch bid data when modal opens or id changes
   useEffect(() => {
@@ -104,6 +106,7 @@ export default function BiddingProductModal({
       setBidData(null);
       setError(null);
       setCurrent(0);
+      setBidOffers([]);
     }
   }, [open]);
 
@@ -118,6 +121,8 @@ export default function BiddingProductModal({
         const bid = response.data.data;
         bid.images = JSON.parse(bid.images);
         setBidData(bid);
+        // Fetch offers after bid data is loaded
+        await fetchBidOffers(bid.id);
       } else {
         setError("Failed to fetch bid data");
       }
@@ -126,6 +131,25 @@ export default function BiddingProductModal({
       setError("Error loading bid information");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch bid offers
+  const fetchBidOffers = async (bidId: string) => {
+    setOffersLoading(true);
+    try {
+      const offersResponse = await getBidOffers(bidId);
+      if (offersResponse.data.success) {
+        setBidOffers(offersResponse.data.data.offers || []);
+      } else {
+        setBidOffers([]);
+        console.warn("Failed to fetch bid offers:", offersResponse.data);
+      }
+    } catch (err) {
+      console.error("Error fetching bid offers:", err);
+      setBidOffers([]);
+    } finally {
+      setOffersLoading(false);
     }
   };
 
@@ -157,7 +181,7 @@ export default function BiddingProductModal({
       }
     };
 
-    updateCountdown(); // Initial call
+    updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
@@ -236,17 +260,10 @@ export default function BiddingProductModal({
       name: comment.user
         ? `${comment.user.first_name} ${comment.user.last_name}`
         : "کاربر ناشناس",
-      rating: 5, // Default rating since your API doesn't have ratings
+      rating: 5,
       text: comment.text,
       date: formatDate(comment.createdAt),
     }));
-  };
-
-  // Transform bids history (you'll need to implement getBidOffers service)
-  const getBidsHistory = (): Bid[] => {
-    // This would come from your getBidOffers service
-    // For now, returning empty array - implement this when you have the service
-    return [];
   };
 
   if (loading) {
@@ -278,7 +295,6 @@ export default function BiddingProductModal({
   const highestBid = bidData.currentPrice || bidData.startingPrice;
   const minimumBid = highestBid + highestBid * 0.05;
   const comments = getComments();
-  const bidsHistory = getBidsHistory();
 
   return (
     <Modal
@@ -442,7 +458,7 @@ export default function BiddingProductModal({
                       }
                     }}
                     min={minimumBid}
-                    step={10000} // 10,000 Tomans step
+                    step={10000}
                     className="text-left"
                     disabled={isBiddingEnded}
                     addonAfter="تومان"
@@ -476,13 +492,14 @@ export default function BiddingProductModal({
           <Divider />
 
           {/* Bids History */}
-          {bidsHistory.length > 0 && (
-            <div className="text-right mb-4">
-              <h3 className="text-lg font-semibold mb-3 text-gray-800">
-                تاریخچه پیشنهادها
-              </h3>
+          <div className="text-right mb-4">
+            <h3 className="text-lg font-semibold mb-3 text-gray-800">
+              تاریخچه پیشنهادها
+              {offersLoading && <Spin size="small" className="mr-2" />}
+            </h3>
+            {bidOffers.length > 0 ? (
               <div className="space-y-2 max-h-[120px] overflow-y-auto pr-2">
-                {bidsHistory.map((bid) => (
+                {bidOffers.map((bid) => (
                   <div
                     key={bid.id}
                     className="flex justify-between items-center bg-gray-50 rounded-lg p-2 border border-gray-100"
@@ -504,8 +521,14 @@ export default function BiddingProductModal({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                {offersLoading
+                  ? "در حال بارگذاری..."
+                  : "هنوز پیشنهادی ثبت نشده است"}
+              </div>
+            )}
+          </div>
 
           {/* Comments Section */}
           {comments.length > 0 && (

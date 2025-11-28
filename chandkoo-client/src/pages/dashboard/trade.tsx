@@ -11,11 +11,13 @@ import {
   Avatar,
   Rate,
   Divider,
-  message,
   Spin,
   DatePicker,
+  Tabs,
+  Alert,
+  Grid,
 } from "antd";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { SaleTradeItem } from "../../components/home-time-sale";
 import {
   PiCalendar,
@@ -23,6 +25,9 @@ import {
   PiPlusThin,
   PiUpload,
   PiUser,
+  PiChat,
+  PiHandCoins,
+  PiWarning,
 } from "react-icons/pi";
 import { getAllCategories } from "../../services/categories.service";
 import {
@@ -42,10 +47,14 @@ import {
   type BidComment,
 } from "../../services/bidscomment.service";
 import dayjs from "dayjs";
+import { ShamContext } from "../../App";
+import { useSelector } from "react-redux";
+import formatPersianNumber from "../../utils/numberPriceFormat";
 
 const { SHOW_PARENT } = TreeSelect;
 const { TextArea } = Input;
 const { RangePicker } = DatePicker;
+const { useBreakpoint } = Grid;
 
 export default function DashboardTrades() {
   const [userBids, setUserBids] = useState<Bid[]>([]);
@@ -62,15 +71,40 @@ export default function DashboardTrades() {
   const [placingBid, setPlacingBid] = useState(false);
   const [newBidAmount, setNewBidAmount] = useState<number>(0);
   const [commentForm] = Form.useForm();
-  const [activeTab, setActiveTab] = useState<"userBids" | "allBids">(
-    "userBids"
-  );
+  const value: any = useContext(ShamContext);
+  const { user } = useSelector((state: any) => state.user);
+  const [activeTab, setActiveTab] = useState<"allBids" | "userBids">("allBids");
+  const screens = useBreakpoint();
+
   useEffect(() => {
-    loadUserBids();
+    loadAllBids();
     loadCategories();
   }, []);
-  const loadUserBids = () => {
+
+  const loadAllBids = () => {
     setLoading(true);
+    getAllBids()
+      .then((res) => {
+        if (res.status === 200) {
+          const bids = res.data.data.bids;
+          for (let el of bids) {
+            el.images = JSON.parse(el.images);
+          }
+          setAllBids(bids);
+        }
+      })
+      .catch(() => {
+        value.setNotif({
+          type: "error",
+          description: "خطا در بارگذاری مزایده‌ها",
+        });
+      })
+      .finally(() => {
+        loadUserBids();
+      });
+  };
+
+  const loadUserBids = () => {
     getUserBids()
       .then((res) => {
         if (res.data.success) {
@@ -81,28 +115,14 @@ export default function DashboardTrades() {
           setUserBids(els);
         }
       })
-      .catch((error) => {
-        console.error("Error loading bids:", error);
-        message.error("خطا در بارگذاری مزایده‌ها");
+      .catch(() => {
+        value.setNotif({
+          type: "error",
+          description: "خطا در بارگذاری مزایده‌های شما",
+        });
       })
       .finally(() => {
-        getAllBids()
-          .then((res) => {
-            if (res.status === 200) {
-              const bids = res.data.data.bids;
-              for (let el of bids) {
-                el.images = JSON.parse(el.images);
-              }
-              setAllBids(bids);
-            }
-          })
-          .catch((error) => {
-            console.error("Error loading bids:", error);
-            message.error("خطا در بارگذاری مزایده‌ها");
-          })
-          .finally(() => {
-            setLoading(false);
-          });
+        setLoading(false);
       });
   };
 
@@ -128,7 +148,7 @@ export default function DashboardTrades() {
       // Load bid offers
       const offersResponse = await getBidOffers(bidId);
       if (offersResponse.data.success) {
-        setBidOffers(offersResponse.data.data);
+        setBidOffers(offersResponse.data.data.offers);
       }
 
       // Load bid comments
@@ -138,9 +158,11 @@ export default function DashboardTrades() {
       if (commentsResponse.data.success) {
         setBidComments(commentsResponse.data.data);
       }
-    } catch (error) {
-      console.error("Error loading bid details:", error);
-      message.error("خطا در بارگذاری جزئیات مزایده");
+    } catch {
+      value.setNotif({
+        type: "error",
+        description: "خطا در بارگذاری جزئیات مزایده",
+      });
     } finally {
       setDetailLoading(false);
     }
@@ -184,26 +206,32 @@ export default function DashboardTrades() {
         }
       });
 
-      console.log("Submitting bid with form data:");
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
-
       const response = await createBid(formData);
       if (response.data.success) {
-        message.success("مزایده با موفقیت ایجاد شد");
+        value.setNotif({
+          type: "success",
+          description: "مزایده با موفقیت ایجاد شد",
+        });
         setIsModalVisible(false);
         form.resetFields();
-        loadUserBids(); // Refresh the list
+        loadAllBids(); // Refresh both lists
       } else {
-        message.error("خطا در ایجاد مزایده");
+        value.setNotif({
+          type: "error",
+          description: "خطا در ایجاد مزایده",
+        });
       }
     } catch (error: any) {
-      console.error("Error submitting bid:", error);
       if (error.response?.data?.message) {
-        message.error(error.response.data.message);
+        value.setNotif({
+          type: "error",
+          description: error.response.data.message,
+        });
       } else {
-        message.error("خطا در ایجاد مزایده");
+        value.setNotif({
+          type: "error",
+          description: "خطا در ایجاد مزایده",
+        });
       }
     } finally {
       setLoading(false);
@@ -228,7 +256,9 @@ export default function DashboardTrades() {
   };
 
   const formatPrice = (price: number) => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return formatPersianNumber(
+      price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -252,7 +282,10 @@ export default function DashboardTrades() {
     if (!selectedBid || !newBidAmount) return;
 
     if (newBidAmount <= selectedBid.currentPrice) {
-      message.error("مبلغ پیشنهادی باید بیشتر از قیمت فعلی باشد");
+      value.setNotif({
+        type: "error",
+        description: "مبلغ پیشنهادی باید بیشتر از قیمت فعلی باشد",
+      });
       return;
     }
 
@@ -260,15 +293,24 @@ export default function DashboardTrades() {
     try {
       const response = await placeBidOffer(selectedBid.id!, newBidAmount);
       if (response.data.success) {
-        message.success("پیشنهاد شما با موفقیت ثبت شد");
+        value.setNotif({
+          type: "success",
+          description: "پیشنهاد شما با موفقیت ثبت شد",
+        });
         setNewBidAmount(0);
         loadBidDetails(selectedBid.id!); // Refresh details
+        loadAllBids(); // Refresh the lists
       } else {
-        message.error("خطا در ثبت پیشنهاد");
+        value.setNotif({
+          type: "error",
+          description: "خطا در ثبت پیشنهاد",
+        });
       }
     } catch (error) {
-      console.error("Error placing bid:", error);
-      message.error("خطا در ثبت پیشنهاد");
+      value.setNotif({
+        type: "error",
+        description: "خطا در ثبت پیشنهاد",
+      });
     } finally {
       setPlacingBid(false);
     }
@@ -285,15 +327,24 @@ export default function DashboardTrades() {
       });
 
       if (response.data.success) {
-        message.success("نظر شما با موفقیت ثبت شد");
+        value.setNotif({
+          type: "success",
+          description: "نظر شما با موفقیت ثبت شد",
+        });
         commentForm.resetFields();
         loadBidDetails(selectedBid.id!); // Refresh comments
+        loadAllBids(); // Refresh the lists
       } else {
-        message.error("خطا در ثبت نظر");
+        value.setNotif({
+          type: "error",
+          description: "خطا در ثبت نظر",
+        });
       }
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      message.error("خطا در ثبت نظر");
+    } catch {
+      value.setNotif({
+        type: "error",
+        description: "خطا در ثبت نظر",
+      });
     }
   };
 
@@ -303,15 +354,23 @@ export default function DashboardTrades() {
     try {
       const response = await updateBidStatus(selectedBid.id!, "completed");
       if (response.data.success) {
-        message.success("مزایده با موفقیت به اتمام رسید");
+        value.setNotif({
+          type: "success",
+          description: "مزایده با موفقیت به اتمام رسید",
+        });
         handleDetailCancel();
-        loadUserBids(); // Refresh the list
+        loadAllBids(); // Refresh both lists
       } else {
-        message.error("خطا در اتمام مزایده");
+        value.setNotif({
+          type: "error",
+          description: "خطا در اتمام مزایده",
+        });
       }
     } catch (error) {
-      console.error("Error ending bid:", error);
-      message.error("خطا در اتمام مزایده");
+      value.setNotif({
+        type: "error",
+        description: "خطا در اتمام مزایده",
+      });
     }
   };
 
@@ -325,7 +384,7 @@ export default function DashboardTrades() {
   };
 
   const getFormattedAverageRating = (): string => {
-    return calculateAverageRating().toFixed(1);
+    return formatPersianNumber(calculateAverageRating().toFixed(1));
   };
 
   // Date range validation
@@ -334,12 +393,140 @@ export default function DashboardTrades() {
     return current && current < dayjs().startOf("day");
   };
 
+  const isUserBidOwner = (bid: Bid) => {
+    return user?.id && bid.userId === user.id;
+  };
+
+  const showBidDetails = (bid: Bid) => {
+    setSelectedBid(bid);
+    setIsDetailModalVisible(true);
+    loadBidDetails(bid.id!);
+  };
+
+  // Responsive grid columns
+  const getGridColumns = () => {
+    if (screens.xxl) return "w-1/6";
+    if (screens.xl) return "w-1/5";
+    if (screens.lg) return "w-1/4";
+    if (screens.md) return "w-1/3";
+    if (screens.sm) return "w-1/2";
+    return "w-1/2";
+  };
+
+  const tabItems = [
+    {
+      key: "allBids",
+      label: (
+        <span className="text-xs sm:text-sm">
+          تمام مزایده ها ({allBids.length})
+        </span>
+      ),
+      children: (
+        <div className="flex flex-wrap -mx-1 sm:-mx-2">
+          {allBids.map((bid) => (
+            <div
+              key={`all-bid-${bid.id}`}
+              className={`${getGridColumns()} p-1 sm:p-2 mb-12 sm:mb-[50px]`}
+            >
+              <div className="relative">
+                <SaleTradeItem trade={bid} />
+                {/* Action buttons for non-owner bids */}
+                {!isUserBidOwner(bid) && bid.status === "active" && (
+                  <div className="absolute bottom-[-35px] sm:bottom-[-40px] left-1 right-1 sm:left-2 sm:right-2 flex gap-1">
+                    <Button
+                      icon={<PiChat />}
+                      size="small"
+                      type="primary"
+                      className="flex-1 text-xs h-7 sm:h-8"
+                      onClick={() => showBidDetails(bid)}
+                    >
+                      نظر
+                    </Button>
+                    <Button
+                      icon={<PiHandCoins />}
+                      size="small"
+                      type="default"
+                      className="flex-1 text-xs bg-green-600 text-white border-green-600 hover:bg-green-700 hover:border-green-700 h-7 sm:h-8"
+                      onClick={() => showBidDetails(bid)}
+                    >
+                      پیشنهاد
+                    </Button>
+                  </div>
+                )}
+                {/* View details button for owner or inactive bids */}
+                {(isUserBidOwner(bid) || bid.status !== "active") && (
+                  <div className="absolute bottom-[-35px] sm:bottom-[-40px] left-1 right-1 sm:left-2 sm:right-2">
+                    <Button
+                      size="small"
+                      type="default"
+                      className="w-full text-xs h-7 sm:h-8"
+                      onClick={() => showBidDetails(bid)}
+                    >
+                      مشاهده جزئیات
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          {allBids.length === 0 && !loading && (
+            <div className="text-center w-full py-8 text-gray-500">
+              هیچ مزایده‌ای یافت نشد
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "userBids",
+      label: (
+        <span className="text-xs sm:text-sm">
+          مزایده های من ({userBids.length})
+        </span>
+      ),
+      children: (
+        <div className="flex flex-wrap -mx-1 sm:-mx-2">
+          {userBids.map((bid) => (
+            <div
+              key={`user-bid-${bid.id}`}
+              className={`${getGridColumns()} p-1 sm:p-2 mb-12 sm:mb-[50px]`}
+            >
+              <div className="relative">
+                <SaleTradeItem trade={bid} />
+                {/* View details button for user's bids */}
+                <div className="absolute bottom-[-35px] sm:bottom-[-40px] left-1 right-1 sm:left-2 sm:right-2">
+                  <Button
+                    size="small"
+                    type="default"
+                    className="w-full text-xs h-7 sm:h-8"
+                    onClick={() => showBidDetails(bid)}
+                  >
+                    مدیریت مزایده
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {userBids.length === 0 && !loading && (
+            <div className="text-center w-full py-8 text-gray-500">
+              هیچ مزایده‌ای ثبت نکرده‌اید
+            </div>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <>
-      <div className="text-[26px] pb-[15px] flex justify-between items-center mb-[30px] border-b-[1px] border-b-[#ccc]">
+      <div className="text-[20px] sm:text-[26px] pb-[10px] sm:pb-[15px] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-[20px] sm:mb-[30px] border-b-[1px] border-b-[#ccc]">
         <div>مزایده ها</div>
         <div>
-          <Button icon={<PiPlusThin />} onClick={showModal}>
+          <Button
+            icon={<PiPlusThin />}
+            onClick={showModal}
+            size={screens.xs ? "small" : "middle"}
+          >
             افزودن مزایده
           </Button>
         </div>
@@ -350,81 +537,35 @@ export default function DashboardTrades() {
           <Spin size="large" />
         </div>
       ) : (
-        <div>
-          <div className="border-b mb-4">
-            <div className="flex space-x-4 space-x-reverse">
-              <button
-                className={`py-2 px-4 font-medium ${
-                  activeTab === "userBids"
-                    ? "border-b-2 border-blue-500 text-blue-600"
-                    : "text-gray-500"
-                }`}
-                onClick={() => setActiveTab("userBids")}
-              >
-                مزایده های من ({userBids.length})
-              </button>
-              <button
-                className={`py-2 px-4 font-medium ${
-                  activeTab === "allBids"
-                    ? "border-b-2 border-blue-500 text-blue-600"
-                    : "text-gray-500"
-                }`}
-                onClick={() => setActiveTab("allBids")}
-              >
-                تمام مزایده ها ({allBids.length})
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap">
-            {activeTab === "userBids" && (
-              <>
-                {userBids.map((bid) => (
-                  <SaleTradeItem trade={bid} key={`user-bid-${bid.id}`} />
-                ))}
-                {userBids.length === 0 && (
-                  <div className="text-center w-full py-8 text-gray-500">
-                    هیچ مزایده‌ای ثبت نکرده‌اید
-                  </div>
-                )}
-              </>
-            )}
-
-            {activeTab === "allBids" && (
-              <>
-                {allBids.map((bid) => (
-                  <SaleTradeItem trade={bid} key={`all-bid-${bid.id}`} />
-                ))}
-                {allBids.length === 0 && (
-                  <div className="text-center w-full py-8 text-gray-500">
-                    هیچ مزایده‌ای یافت نشد
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+        <Tabs
+          activeKey={activeTab}
+          onChange={(key) => setActiveTab(key as "allBids" | "userBids")}
+          items={tabItems}
+          className="trades-tabs"
+          size={screens.xs ? "small" : "middle"}
+        />
       )}
 
       {/* Create Bid Modal */}
       <Modal
         title={
-          <div className="text-right text-[20px] font-bold">
+          <div className="text-right text-[18px] sm:text-[20px] font-bold">
             ایجاد مزایده جدید
           </div>
         }
         open={isModalVisible}
         onCancel={handleCancel}
         footer={null}
-        width={600}
+        width={screens.xs ? "95vw" : 600}
         centered
         className="rtl-modal"
+        style={{ maxWidth: "95vw" }}
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          className="mt-6"
+          className="mt-4 sm:mt-6"
           dir="rtl"
         >
           <Form.Item
@@ -437,7 +578,7 @@ export default function DashboardTrades() {
           >
             <Input
               placeholder="عنوان محصول را وارد کنید..."
-              size="large"
+              size={screens.xs ? "middle" : "large"}
               className="rounded-[8px]"
             />
           </Form.Item>
@@ -445,7 +586,7 @@ export default function DashboardTrades() {
           <Form.Item name="description" label="توضیحات محصول (اختیاری)">
             <TextArea
               placeholder="توضیحات محصول را وارد کنید..."
-              rows={4}
+              rows={3}
               className="rounded-[8px]"
             />
           </Form.Item>
@@ -464,7 +605,7 @@ export default function DashboardTrades() {
           >
             <InputNumber
               placeholder="قیمت شروع را وارد کنید"
-              size="large"
+              size={screens.xs ? "middle" : "large"}
               className="w-full rounded-[8px]"
               formatter={(value) =>
                 `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -484,7 +625,7 @@ export default function DashboardTrades() {
             ]}
           >
             <RangePicker
-              size="large"
+              size={screens.xs ? "middle" : "large"}
               className="w-full rounded-[8px]"
               placeholder={["تاریخ شروع", "تاریخ پایان (اختیاری)"]}
               disabledDate={disabledDate}
@@ -504,7 +645,7 @@ export default function DashboardTrades() {
           >
             <TreeSelect
               treeData={categories}
-              size="large"
+              size={screens.xs ? "middle" : "large"}
               placeholder="دسته‌بندی را انتخاب کنید"
               className="w-full rounded-[8px]"
               treeDefaultExpandAll
@@ -528,21 +669,21 @@ export default function DashboardTrades() {
               {...uploadProps}
               className="rounded-[8px] border-dashed"
             >
-              <div className="py-8">
-                <PiUpload className="text-[32px] text-[#1890ff] mb-2 mx-auto" />
-                <p className="text-[14px] text-gray-600">
+              <div className="py-6 sm:py-8">
+                <PiUpload className="text-[24px] sm:text-[32px] text-[#1890ff] mb-2 mx-auto" />
+                <p className="text-[12px] sm:text-[14px] text-gray-600">
                   تصاویر محصول را اینجا رها کنید یا برای آپلود کلیک کنید
                 </p>
-                <p className="text-[12px] text-gray-400 mt-1">
+                <p className="text-[10px] sm:text-[12px] text-gray-400 mt-1">
                   فقط فایل‌های تصویری (حداکثر ۱۰ فایل)
                 </p>
               </div>
             </Upload.Dragger>
           </Form.Item>
 
-          <div className="flex gap-3 justify-start mt-8">
+          <div className="flex flex-col sm:flex-row gap-3 justify-start mt-6 sm:mt-8">
             <Button
-              size="large"
+              size={screens.xs ? "middle" : "large"}
               onClick={handleCancel}
               className="min-w-[120px] rounded-[8px]"
             >
@@ -551,7 +692,7 @@ export default function DashboardTrades() {
             <Button
               type="primary"
               htmlType="submit"
-              size="large"
+              size={screens.xs ? "middle" : "large"}
               loading={loading}
               className="min-w-[120px] rounded-[8px] bg-blue-600 hover:bg-blue-700"
             >
@@ -564,14 +705,17 @@ export default function DashboardTrades() {
       {/* Bid Details Modal */}
       <Modal
         title={
-          <div className="text-right text-[20px] font-bold">جزئیات مزایده</div>
+          <div className="text-right text-[18px] sm:text-[20px] font-bold">
+            جزئیات مزایده
+          </div>
         }
         open={isDetailModalVisible}
         onCancel={handleDetailCancel}
         footer={null}
-        width={800}
+        width={screens.xs ? "95vw" : 800}
         centered
         className="rtl-modal"
+        style={{ maxWidth: "95vw" }}
       >
         {detailLoading ? (
           <div className="flex justify-center items-center h-40">
@@ -579,33 +723,55 @@ export default function DashboardTrades() {
           </div>
         ) : (
           selectedBid && (
-            <div className="mt-6" dir="rtl">
+            <div className="mt-4 sm:mt-6" dir="rtl">
+              {/* Completed Bid Alert */}
+              {selectedBid.status === "completed" && (
+                <Alert
+                  message="مزایده تمام شده است"
+                  description="این مزایده به اتمام رسیده و امکان ثبت پیشنهاد جدید وجود ندارد."
+                  type="error"
+                  showIcon
+                  icon={<PiWarning />}
+                  className="mb-4"
+                />
+              )}
+
               {/* Product Header */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-[18px] font-bold mb-2">
+              <div
+                className={`bg-gray-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 relative ${
+                  selectedBid.status !== "active" ? "opacity-80" : ""
+                }`}
+              >
+                {selectedBid.status !== "active" && (
+                  <div className="absolute inset-0 bg-black/20 rounded-lg z-10"></div>
+                )}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 relative z-20">
+                  <div className="flex-1">
+                    <h3
+                      className={`text-[16px] sm:text-[18px] font-bold mb-2 ${
+                        selectedBid.status !== "active" ? "text-gray-600" : ""
+                      }`}
+                    >
                       {selectedBid.title}
                     </h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <PiCalendar />
-                        <span>
-                          تاریخ شروع: {formatDate(selectedBid.startDate)}
+                        <span className="text-xs sm:text-sm">
+                          شروع: {formatDate(selectedBid.startDate)}
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <PiCurrencyDollar />
-                        <span>
-                          قیمت شروع: {formatPrice(selectedBid.startingPrice)}{" "}
-                          تومان
+                        <span className="text-xs sm:text-sm">
+                          قیمت: {formatPrice(selectedBid.startingPrice)} تومان
                         </span>
                       </div>
                       {selectedBid.endDate && (
                         <div className="flex items-center gap-1">
                           <PiCalendar />
-                          <span>
-                            تاریخ پایان: {formatDate(selectedBid.endDate)}
+                          <span className="text-xs sm:text-sm">
+                            پایان: {formatDate(selectedBid.endDate)}
                           </span>
                         </div>
                       )}
@@ -616,12 +782,12 @@ export default function DashboardTrades() {
                       selectedBid.status === "active"
                         ? "blue"
                         : selectedBid.status === "completed"
-                        ? "green"
+                        ? "red"
                         : selectedBid.status === "cancelled"
                         ? "red"
                         : "orange"
                     }
-                    className="text-[14px] px-3 py-1"
+                    className="text-[12px] sm:text-[14px] px-2 sm:px-3 py-1 mt-2 sm:mt-0"
                   >
                     {selectedBid.status === "active"
                       ? "فعال"
@@ -634,31 +800,41 @@ export default function DashboardTrades() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Latest Bids Section */}
                 <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-[16px] font-bold">آخرین پیشنهادها</h4>
-                    <span className="text-sm text-gray-500">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4">
+                    <h4
+                      className={`text-[14px] sm:text-[16px] font-bold ${
+                        selectedBid.status !== "active" ? "text-gray-500" : ""
+                      }`}
+                    >
+                      آخرین پیشنهادها
+                    </h4>
+                    <span className="text-xs sm:text-sm text-gray-500">
                       تعداد: {bidOffers.length}
                     </span>
                   </div>
 
-                  <div className="border rounded-lg max-h-[400px] overflow-y-auto">
+                  <div
+                    className={`border rounded-lg max-h-[300px] sm:max-h-[400px] overflow-y-auto ${
+                      selectedBid.status !== "active" ? "opacity-60" : ""
+                    }`}
+                  >
                     {bidOffers.length > 0 ? (
                       <List
                         dataSource={bidOffers}
                         renderItem={(offer, index) => (
-                          <List.Item className="!px-4 !py-3 border-b last:border-b-0">
+                          <List.Item className="!px-3 sm:!px-4 !py-2 sm:!py-3 border-b last:border-b-0">
                             <div className="flex justify-between items-center w-full">
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 sm:gap-3">
                                 <Avatar
                                   icon={<PiUser />}
-                                  size="small"
+                                  size={screens.xs ? "small" : "default"}
                                   className="bg-blue-100 text-blue-600"
                                 />
                                 <div>
-                                  <div className="font-medium">
+                                  <div className="font-medium text-xs sm:text-sm">
                                     {offer.user?.first_name}{" "}
                                     {offer.user?.last_name}
                                   </div>
@@ -670,7 +846,7 @@ export default function DashboardTrades() {
                               </div>
                               <div className="text-left">
                                 <div
-                                  className={`font-bold text-[16px] ${
+                                  className={`font-bold text-[14px] sm:text-[16px] ${
                                     index === 0
                                       ? "text-green-600"
                                       : "text-gray-700"
@@ -689,87 +865,121 @@ export default function DashboardTrades() {
                         )}
                       />
                     ) : (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-6 sm:py-8 text-gray-500">
                         هنوز پیشنهادی ثبت نشده است
                       </div>
                     )}
                   </div>
 
                   {/* Place Bid Section */}
-                  {selectedBid.status === "active" && (
-                    <div className="mt-4 p-4 border rounded-lg bg-green-50">
-                      <div className="flex gap-2 items-end">
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium mb-2">
-                            مبلغ پیشنهادی شما (تومان)
-                          </label>
-                          <InputNumber
-                            value={newBidAmount}
-                            onChange={(value) => setNewBidAmount(value || 0)}
-                            formatter={(value) =>
-                              `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  {selectedBid.status === "active" &&
+                    !isUserBidOwner(selectedBid) && (
+                      <div className="mt-4 p-3 sm:p-4 border rounded-lg bg-green-50">
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 items-end">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium mb-2">
+                              مبلغ پیشنهادی شما (تومان)
+                            </label>
+                            <InputNumber
+                              value={newBidAmount}
+                              onChange={(value) => setNewBidAmount(value || 0)}
+                              formatter={(value) =>
+                                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                              }
+                              parser={(value) =>
+                                value?.replace(/\$\s?|(,*)/g, "") as any
+                              }
+                              placeholder="مبلغ پیشنهادی را وارد کنید"
+                              className="w-full"
+                              min={selectedBid.currentPrice + 1000}
+                              size={screens.xs ? "middle" : "large"}
+                            />
+                            <div className="text-xs text-gray-500 mt-1">
+                              حداقل مبلغ:{" "}
+                              {formatPrice(selectedBid.currentPrice + 1000)}{" "}
+                              تومان
+                            </div>
+                          </div>
+                          <Button
+                            type="primary"
+                            loading={placingBid}
+                            onClick={handlePlaceBid}
+                            disabled={
+                              !newBidAmount ||
+                              newBidAmount <= selectedBid.currentPrice
                             }
-                            parser={(value) =>
-                              value?.replace(/\$\s?|(,*)/g, "") as any
-                            }
-                            placeholder="مبلغ پیشنهادی را وارد کنید"
-                            className="w-full"
-                            min={selectedBid.currentPrice + 1000}
-                          />
-                          <div className="text-xs text-gray-500 mt-1">
-                            حداقل مبلغ:{" "}
-                            {formatPrice(selectedBid.currentPrice + 1000)} تومان
+                            className="bg-green-600 hover:bg-green-700 mt-2 sm:mt-0"
+                            size={screens.xs ? "middle" : "large"}
+                          >
+                            ثبت پیشنهاد
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Disabled Bid Message */}
+                  {selectedBid.status !== "active" &&
+                    !isUserBidOwner(selectedBid) && (
+                      <div className="mt-4 p-3 sm:p-4 border rounded-lg bg-gray-100">
+                        <div className="text-center text-gray-600">
+                          <div className="font-medium mb-2 text-sm sm:text-base">
+                            {selectedBid.status === "completed" &&
+                              "این مزایده به اتمام رسیده است"}
+                            {selectedBid.status === "cancelled" &&
+                              "این مزایده لغو شده است"}
+                            {selectedBid.status === "expired" &&
+                              "این مزایده منقضی شده است"}
+                          </div>
+                          <div className="text-xs sm:text-sm">
+                            امکان ثبت پیشنهاد جدید وجود ندارد
                           </div>
                         </div>
-                        <Button
-                          type="primary"
-                          loading={placingBid}
-                          onClick={handlePlaceBid}
-                          disabled={
-                            !newBidAmount ||
-                            newBidAmount <= selectedBid.currentPrice
-                          }
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          ثبت پیشنهاد
-                        </Button>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
 
                 {/* Comments & Ratings Section */}
                 <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-[16px] font-bold">نظرات و امتیازات</h4>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4">
+                    <h4
+                      className={`text-[14px] sm:text-[16px] font-bold ${
+                        selectedBid.status !== "active" ? "text-gray-500" : ""
+                      }`}
+                    >
+                      نظرات و امتیازات
+                    </h4>
                     <div className="flex items-center gap-2">
                       <Rate
                         disabled
                         value={calculateAverageRating()}
                         className="text-sm"
                       />
-                      <span className="text-sm text-gray-500">
+                      <span className="text-xs sm:text-sm text-gray-500">
                         ({getFormattedAverageRating()} از ۵)
                       </span>
                     </div>
                   </div>
 
-                  <div className="border rounded-lg max-h-[400px] overflow-y-auto">
+                  <div
+                    className={`border rounded-lg max-h-[300px] sm:max-h-[400px] overflow-y-auto ${
+                      selectedBid.status !== "active" ? "opacity-60" : ""
+                    }`}
+                  >
                     {bidComments.length > 0 ? (
                       <List
                         dataSource={bidComments}
                         renderItem={(comment) => (
-                          <List.Item className="!px-4 !py-3 border-b last:border-b-0">
+                          <List.Item className="!px-3 sm:!px-4 !py-2 sm:!py-3 border-b last:border-b-0">
                             <div className="w-full">
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="flex items-center gap-3">
+                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-2 sm:gap-0 mb-2">
+                                <div className="flex items-center gap-2 sm:gap-3">
                                   <Avatar
                                     icon={<PiUser />}
-                                    size="small"
+                                    size={screens.xs ? "small" : "default"}
                                     className="bg-orange-100 text-orange-600"
                                   />
                                   <div>
-                                    <div className="font-medium">
+                                    <div className="font-medium text-xs sm:text-sm">
                                       {comment.user?.first_name}{" "}
                                       {comment.user?.last_name}
                                     </div>
@@ -784,7 +994,7 @@ export default function DashboardTrades() {
                                   className="text-sm"
                                 />
                               </div>
-                              <div className="text-gray-700 text-sm pr-12">
+                              <div className="text-gray-700 text-xs sm:text-sm pr-2 sm:pr-12">
                                 {comment.comment}
                               </div>
                             </div>
@@ -792,110 +1002,137 @@ export default function DashboardTrades() {
                         )}
                       />
                     ) : (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-6 sm:py-8 text-gray-500">
                         هنوز نظری ثبت نشده است
                       </div>
                     )}
                   </div>
 
                   {/* Add Comment Section */}
-                  <div className="mt-4 p-4 border rounded-lg bg-blue-50">
-                    <Form
-                      form={commentForm}
-                      layout="vertical"
-                      onFinish={handleAddComment}
-                    >
-                      <Form.Item
-                        name="rating"
-                        label="امتیاز دهید"
-                        rules={[
-                          { required: true, message: "لطفاً امتیاز دهید" },
-                        ]}
+                  {selectedBid.status === "active" ? (
+                    <div className="mt-4 p-3 sm:p-4 border rounded-lg bg-blue-50">
+                      <Form
+                        form={commentForm}
+                        layout="vertical"
+                        onFinish={handleAddComment}
                       >
-                        <Rate />
-                      </Form.Item>
-                      <Form.Item
-                        name="comment"
-                        label="نظر شما"
-                        rules={[
-                          {
-                            required: true,
-                            message: "لطفاً نظر خود را وارد کنید",
-                          },
-                          {
-                            min: 10,
-                            message: "نظر باید حداقل ۱۰ کاراکتر باشد",
-                          },
-                        ]}
-                      >
-                        <TextArea
-                          rows={3}
-                          placeholder="نظر خود را درباره این مزایده بنویسید..."
-                        />
-                      </Form.Item>
-                      <Button
-                        type="primary"
-                        htmlType="submit"
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        ثبت نظر
-                      </Button>
-                    </Form>
-                  </div>
+                        <Form.Item
+                          name="rating"
+                          label="امتیاز دهید"
+                          rules={[
+                            {
+                              required: true,
+                              message: "لطفاً امتیاز دهید",
+                            },
+                          ]}
+                        >
+                          <Rate />
+                        </Form.Item>
+                        <Form.Item
+                          name="comment"
+                          label="نظر شما"
+                          rules={[
+                            {
+                              required: true,
+                              message: "لطفاً نظر خود را وارد کنید",
+                            },
+                            {
+                              min: 10,
+                              message: "نظر باید حداقل ۱۰ کاراکتر باشد",
+                            },
+                          ]}
+                        >
+                          <TextArea
+                            rows={2}
+                            placeholder="نظر خود را درباره این مزایده بنویسید..."
+                          />
+                        </Form.Item>
+                        <Button
+                          type="primary"
+                          htmlType="submit"
+                          className="bg-blue-600 hover:bg-blue-700"
+                          size={screens.xs ? "middle" : "large"}
+                        >
+                          ثبت نظر
+                        </Button>
+                      </Form>
+                    </div>
+                  ) : (
+                    <div className="mt-4 p-3 sm:p-4 border rounded-lg bg-gray-100">
+                      <div className="text-center text-gray-600">
+                        <div className="font-medium mb-2 text-sm sm:text-base">
+                          امکان ثبت نظر جدید وجود ندارد
+                        </div>
+                        <div className="text-xs sm:text-sm">
+                          {selectedBid.status === "completed" &&
+                            "این مزایده به اتمام رسیده است"}
+                          {selectedBid.status === "cancelled" &&
+                            "این مزایده لغو شده است"}
+                          {selectedBid.status === "expired" &&
+                            "این مزایده منقضی شده است"}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Statistics Section */}
               <Divider />
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div
+                className={`grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center ${
+                  selectedBid.status !== "active" ? "opacity-60" : ""
+                }`}
+              >
                 <div className="bg-blue-50 p-3 rounded-lg">
-                  <div className="text-[12px] text-gray-600 mb-1">
+                  <div className="text-[10px] sm:text-[12px] text-gray-600 mb-1">
                     تعداد پیشنهادها
                   </div>
-                  <div className="text-[18px] font-bold text-blue-600">
-                    {bidOffers.length}
+                  <div className="text-[16px] sm:text-[18px] font-bold text-blue-600">
+                    {formatPersianNumber(`${bidOffers.length || 0}`)}
                   </div>
                 </div>
                 <div className="bg-green-50 p-3 rounded-lg">
-                  <div className="text-[12px] text-gray-600 mb-1">
+                  <div className="text-[10px] sm:text-[12px] text-gray-600 mb-1">
                     بالاترین پیشنهاد
                   </div>
-                  <div className="text-[18px] font-bold text-green-600">
+                  <div className="text-[16px] sm:text-[18px] font-bold text-green-600">
                     {bidOffers.length > 0
-                      ? formatPrice(bidOffers[0]?.amount)
-                      : 0}{" "}
+                      ? formatPersianNumber(formatPrice(bidOffers[0]?.amount))
+                      : formatPersianNumber("0")}{" "}
                     تومان
                   </div>
                 </div>
                 <div className="bg-orange-50 p-3 rounded-lg">
-                  <div className="text-[12px] text-gray-600 mb-1">
+                  <div className="text-[10px] sm:text-[12px] text-gray-600 mb-1">
                     میانگین امتیاز
                   </div>
-                  <div className="text-[18px] font-bold text-orange-600">
+                  <div className="text-[16px] sm:text-[18px] font-bold text-orange-600">
                     {getFormattedAverageRating()} از ۵
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 justify-start mt-6 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row gap-3 justify-start mt-4 sm:mt-6 pt-4 border-t">
                 <Button
-                  size="large"
+                  size={screens.xs ? "middle" : "large"}
                   onClick={handleDetailCancel}
                   className="min-w-[120px] rounded-[8px]"
                 >
                   بستن
                 </Button>
-                {selectedBid.status === "active" && (
-                  <Button
-                    type="primary"
-                    size="large"
-                    onClick={handleEndBid}
-                    className="min-w-[120px] rounded-[8px] bg-red-600 hover:!bg-red-700"
-                  >
-                    اتمام مزایده
-                  </Button>
-                )}
+                {selectedBid.status === "active" &&
+                  isUserBidOwner(selectedBid) && (
+                    <Button
+                      type="primary"
+                      size={screens.xs ? "middle" : "large"}
+                      onClick={handleEndBid}
+                      className="min-w-[120px] rounded-[8px] bg-red-600 hover:!bg-red-700"
+                    >
+                      اتمام مزایده
+                    </Button>
+                  )}
               </div>
             </div>
           )

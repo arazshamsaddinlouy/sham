@@ -22,6 +22,15 @@ export const getEditUserMobile = () => {
     },
   });
 };
+export const getHomeSellers = () => {
+  const header = localStorage.getItem("accessToken");
+  return axios.get(`${config.BASE_URL}/user/getHomeSellers`, {
+    headers: {
+      authorization: `Bearer ${header}`,
+      "Content-Type": "application/json; charset=UTF-8",
+    },
+  });
+};
 export const editUserInfo = (params: any) => {
   const header = localStorage.getItem("accessToken");
   return axios.put(`${config.BASE_URL}/user/edit`, params, {

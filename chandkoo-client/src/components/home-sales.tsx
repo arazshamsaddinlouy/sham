@@ -10,7 +10,7 @@ export const SaleItem = ({ sale }: { sale: any }) => {
     <>
       <div
         onClick={() => setOpen(true)}
-        className="w-full max-[768px]:px-[15px] relative"
+        className="w-full max-[768px]:px-[15px] relative cursor-pointer"
       >
         <div className="flex items-center border rounded-[12px] overflow-hidden shadow-sm bg-white">
           <div
