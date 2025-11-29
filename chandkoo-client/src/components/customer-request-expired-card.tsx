@@ -1,10 +1,21 @@
-import { Avatar, Card, Image, Tag, Grid } from "antd";
-import { BiUser } from "react-icons/bi";
-import { BsClock } from "react-icons/bs";
-import { IoImageOutline } from "react-icons/io5";
+import {
+  Avatar,
+  Card,
+  Image,
+  Tag,
+  Grid,
+  Typography,
+  Space,
+  Divider,
+} from "antd";
+import { BiCalendarExclamation } from "react-icons/bi";
+import { BsCurrencyDollar } from "react-icons/bs";
+import { IoImageOutline, IoTimeOutline } from "react-icons/io5";
+import { TbClockOff } from "react-icons/tb";
 import { config } from "../services/config.service";
 
 const { useBreakpoint } = Grid;
+const { Text, Paragraph } = Typography;
 
 export default function CustomerRequestExpireCard({
   request,
@@ -12,8 +23,6 @@ export default function CustomerRequestExpireCard({
   request: any;
 }) {
   const screens = useBreakpoint();
-  const isMobile = !screens.md;
-  const isTablet = !screens.lg;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fa-IR", {
@@ -26,143 +35,231 @@ export default function CustomerRequestExpireCard({
   };
 
   const getEstimatedPrice = () => {
-    // You can replace this with actual price calculation from your data
     return "۶ میلیون تومان";
+  };
+
+  const getCardStyle = () => {
+    if (request.hasResponse) {
+      return {
+        background: "linear-gradient(135deg, #fefce8 0%, #fef3c7 100%)",
+        border: "1px solid #fcd34d",
+        borderLeft: "4px solid #d97706",
+      };
+    }
+    return {
+      background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+      border: "1px solid #e2e8f0",
+      borderLeft: "4px solid #94a3b8",
+    };
   };
 
   return (
     <Card
-      className={`w-full mb-6 shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl border-0 ${
-        request.hasResponse
-          ? "bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-l-green-500"
-          : "bg-gradient-to-r from-gray-50 to-slate-50 border-l-4 border-l-gray-400"
-      }`}
+      className="w-full mb-6 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden relative"
       bodyStyle={{
-        padding: isMobile ? "12px" : "20px",
+        padding: screens.xs ? "16px" : "24px",
         position: "relative",
       }}
+      style={getCardStyle()}
     >
-      {/* Expired Badge */}
-      <div className="absolute -top-2 -left-2 z-10">
-        <Tag color="red" className="text-xs font-bold px-3 py-1 shadow-md">
-          منقضی شده
-        </Tag>
-      </div>
-
       {/* Header Section */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4 pt-2">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div
-            className={`p-2 rounded-lg ${
-              request.hasResponse
-                ? "bg-green-100 text-green-600"
-                : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            <BsClock size={isMobile ? 16 : 20} />
+      <div className="flex flex-col lg:flex-row gap-4 items-start mb-4">
+        {/* Title and Info */}
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="p-3 rounded-xl bg-amber-100 text-amber-600 flex-shrink-0">
+            <BiCalendarExclamation size={screens.xs ? 18 : 22} />
           </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-gray-800 text-lg lg:text-xl truncate">
+
+          <div className="flex-1 min-w-0">
+            <Text
+              strong
+              className="text-gray-800 block text-lg lg:text-xl leading-tight mb-2"
+              ellipsis={{ tooltip: request.title }}
+            >
               {request.title}
-            </h3>
-            <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
-              <BsClock size={12} />
-              <span>تاریخ ارسال قیمت: {formatDate(request.expiredAt)}</span>
+            </Text>
+
+            <div className="flex items-center gap-2 text-amber-600">
+              <IoTimeOutline size={screens.xs ? 14 : 16} />
+              <Text className="text-sm font-medium">
+                تاریخ انقضا: {formatDate(request.expiredAt)}
+              </Text>
             </div>
           </div>
         </div>
 
-        {/* Status Indicator */}
+        {/* Status Badge */}
         {request.hasResponse && (
-          <Tag color="green" className="text-sm font-medium px-3 py-1">
-            پاسخ داده شده
-          </Tag>
+          <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 text-green-700">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <Text strong className="text-sm">
+                پاسخ داده شده
+              </Text>
+            </div>
+          </div>
         )}
       </div>
 
+      <Divider className="my-4" />
+
       {/* Content Section */}
-      <div className="flex flex-col md:flex-row gap-4 items-start">
+      <div className="flex flex-col xl:flex-row gap-6 items-start">
         {/* Image Section */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 mx-auto xl:mx-0">
           {request.attachedImage ? (
-            <Image
-              src={`${config.BACKEND_IMAGE_URL}/api/${request.attachedImage}`}
-              width={isMobile ? 80 : 120}
-              height={isMobile ? 80 : 120}
-              className="rounded-lg object-cover border shadow-sm"
-              preview={false}
-              alt={request.title}
-            />
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <Image
+                src={`${config.BACKEND_IMAGE_URL}/api/${request.attachedImage}`}
+                width={screens.xs ? 100 : screens.sm ? 120 : 140}
+                height={screens.xs ? 100 : screens.sm ? 120 : 140}
+                className="rounded-xl object-cover border-2 border-white shadow-md group-hover:shadow-lg transition-all duration-300"
+                preview={{
+                  mask: <div className="text-white text-sm">مشاهده تصویر</div>,
+                }}
+                alt={request.title}
+              />
+              <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-1 shadow-lg">
+                <TbClockOff size={12} />
+              </div>
+            </div>
           ) : (
             <div className="relative">
               <Avatar
-                size={isMobile ? 80 : 120}
-                className="rounded-lg bg-gray-100 border flex items-center justify-center"
+                size={screens.xs ? 100 : screens.sm ? 120 : 140}
+                className="rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white shadow-md flex items-center justify-center"
                 icon={
                   <IoImageOutline
-                    size={isMobile ? 24 : 32}
+                    size={screens.xs ? 32 : 40}
                     className="text-gray-400"
                   />
                 }
               />
-              <div className="absolute -bottom-1 -right-1 bg-gray-500 text-white rounded-full p-1">
-                <BsClock size={10} />
+              <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-2 shadow-lg">
+                <TbClockOff size={screens.xs ? 12 : 14} />
               </div>
             </div>
           )}
         </div>
 
         {/* Description Section */}
-        <div className="flex-1 min-w-0">
-          <p className="text-gray-600 leading-relaxed text-justify text-sm lg:text-base line-clamp-3 lg:line-clamp-4">
-            {request.description}
-          </p>
+        <div className="flex-1 min-w-0 space-y-4">
+          {/* Description */}
+          <div className="bg-white/80 rounded-xl p-4 border border-gray-100 shadow-sm">
+            <Paragraph
+              className="text-gray-600 leading-relaxed text-justify"
+              ellipsis={{
+                rows: screens.xs ? 3 : 4,
+                expandable: true,
+                symbol: (expanded) => (
+                  <Tag color="orange" className="cursor-pointer mt-2">
+                    {expanded ? "کمتر" : "بیشتر"}
+                  </Tag>
+                ),
+              }}
+              style={{
+                fontSize: screens.xs ? "14px" : "15px",
+                lineHeight: "1.7",
+              }}
+            >
+              {request.description}
+            </Paragraph>
+          </div>
 
-          {/* Additional Info - Mobile Layout */}
-          {isMobile && (
-            <div className="mt-3 space-y-2">
-              <div className="flex items-center gap-2 text-gray-700 text-sm">
-                <BiUser size={14} />
-                <span>قیمت تخمینی: {getEstimatedPrice()}</span>
+          {/* Info Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Price Card */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <BsCurrencyDollar className="text-green-600" />
+                <Text strong className="text-green-800 text-sm">
+                  قیمت تخمینی
+                </Text>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Info Section - Desktop */}
-        {!isMobile && (
-          <div className="flex-shrink-0 w-full md:w-[200px] lg:w-[250px]">
-            <div className="bg-white rounded-lg p-4 border space-y-3 shadow-sm">
-              <div className="flex items-center gap-2 text-gray-700 text-sm lg:text-base">
-                <BiUser size={16} className="text-blue-500" />
-                <span className="font-medium">قیمت تخمینی:</span>
-              </div>
-              <div className="text-lg font-bold text-green-600 text-center">
+              <div className="text-lg font-bold text-green-700 text-center">
                 {getEstimatedPrice()}
               </div>
+            </div>
 
-              <div className="border-t pt-2">
-                <div className="flex items-center gap-2 text-red-500 text-sm">
-                  <BsClock size={12} />
-                  <span>وضعیت: منقضی شده</span>
+            {/* Status Card */}
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <TbClockOff className="text-amber-600" />
+                <Text strong className="text-amber-800 text-sm">
+                  وضعیت درخواست
+                </Text>
+              </div>
+              <div className="text-center">
+                <Tag color="orange" className="font-bold text-xs">
+                  منقضی شده
+                </Tag>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Side Info Panel - Desktop */}
+        {!screens.xs && (
+          <div className="flex-shrink-0 w-full xl:w-[200px] space-y-4">
+            {/* Summary Card */}
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <Text strong className="text-gray-800 block mb-3 text-center">
+                خلاصه درخواست
+              </Text>
+
+              <Space direction="vertical" className="w-full" size="small">
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <Text className="text-gray-600 text-sm">وضعیت:</Text>
+                  <Tag color="red">منقضی شده</Tag>
                 </div>
+
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <Text className="text-gray-600 text-sm">پاسخ:</Text>
+                  <Tag color={request.hasResponse ? "green" : "default"}>
+                    {request.hasResponse ? "دارد" : "ندارد"}
+                  </Tag>
+                </div>
+
+                <div className="flex justify-between items-center py-2">
+                  <Text className="text-gray-600 text-sm">قیمت:</Text>
+                  <Text strong className="text-green-600 text-sm">
+                    {getEstimatedPrice()}
+                  </Text>
+                </div>
+              </Space>
+            </div>
+
+            {/* Warning Card */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+              <div className="flex items-start gap-2">
+                <TbClockOff className="text-amber-600 mt-0.5 flex-shrink-0" />
+                <Text className="text-amber-800 text-xs leading-relaxed">
+                  این درخواست منقضی شده است. امکان ارسال پاسخ جدید وجود ندارد.
+                </Text>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Additional Info - Tablet Layout */}
-      {isTablet && !isMobile && (
-        <div className="mt-4 pt-3 border-t border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-gray-700">
-              <BiUser size={14} />
-              <span>قیمت تخمینی: {getEstimatedPrice()}</span>
+      {/* Mobile Bottom Info */}
+      {screens.xs && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="text-center">
+              <Text strong className="text-gray-600 text-xs block mb-1">
+                قیمت تخمینی
+              </Text>
+              <Text strong className="text-green-600 text-sm">
+                {getEstimatedPrice()}
+              </Text>
             </div>
-            <div className="flex items-center gap-2 text-red-500 text-sm">
-              <BsClock size={12} />
-              <span>منقضی شده</span>
+            <div className="text-center">
+              <Text strong className="text-gray-600 text-xs block mb-1">
+                وضعیت
+              </Text>
+              <Tag color="red">منقضی شده</Tag>
             </div>
           </div>
         </div>

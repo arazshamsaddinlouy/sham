@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Home from "./pages/home";
 import Layout from "./_layout";
 import Login from "./pages/login";
@@ -29,6 +34,7 @@ import ScrollToTop from "./components/scroll-to-top";
 import MoneyBagCharge from "./pages/dashboard/money-bag-charge";
 import Callback from "./pages/dashboard/callback";
 import PaymentHistory from "./pages/dashboard/payment-history";
+import NotFoundPage from "./pages/not-found";
 
 export const ShamContext = createContext({ name: "ShamApp" });
 function App() {
@@ -109,6 +115,8 @@ function App() {
 
               <Route path="admin" element={<Admin />} />
             </Route>
+            <Route path="/404" element={<NotFoundPage />} />
+            <Route path="*" element={<Navigate to={"/404"} />} />
           </Routes>
         </Router>
       </ShamContext.Provider>

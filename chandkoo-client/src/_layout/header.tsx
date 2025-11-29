@@ -1,8 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Popover, Button, Alert } from "antd";
-import { FaHeadset } from "react-icons/fa"; // inside return JSX:
-
+import { Popover, Button, Badge, Avatar, Drawer, Divider } from "antd";
 import {
   LogoutOutlined,
   UserOutlined,
@@ -11,19 +9,23 @@ import {
   PlusOutlined,
   WalletOutlined,
   ProductOutlined,
+  MenuOutlined,
+  CloseOutlined,
+  CustomerServiceOutlined,
+  CrownOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import { ShamContext } from "../App";
 import { getUserInfo } from "../services/auth.service";
 import { setUser } from "../store/slices/userSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { CgChevronLeft } from "react-icons/cg";
-import { GiHamburgerMenu, GiMedal } from "react-icons/gi";
 import { getAllMenus } from "../services/content.service";
-import { BiLogIn, BiUserCheck } from "react-icons/bi";
 
 export default function Header() {
   const [menus, setMenus] = useState<any[]>([]);
-  const [openMenu, setOpenMenu] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
+  const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
   const { user } = useSelector((state: any) => state.user);
   const dispatch = useDispatch();
   const location = useLocation();
@@ -31,11 +33,19 @@ export default function Header() {
   const value: any = useContext(ShamContext);
   const navigate = useNavigate();
 
+  // Close all popovers on route change
+  useEffect(() => {
+    setUserMenuOpen(false);
+    setNotificationsOpen(false);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const handleSignOut = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     value.setNotif({ type: "success", description: "خروج با موفقیت" });
     navigate("/");
+    setUserMenuOpen(false);
   };
 
   useEffect(() => {
@@ -45,7 +55,6 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    setOpenMenu(false);
     const storageToken = localStorage.getItem("accessToken");
     if (storageToken) {
       setToken(storageToken);
@@ -69,283 +78,391 @@ export default function Header() {
     }
   }, [location.pathname]);
 
-  const MenuItems = () => (
-    <div className="w-[250px]">
-      <div className="flex items-center relative overflow-hidden rounded-lg mb-2 p-3 justify-between bg-yellow-400">
-        <div className="absolute right-[-45px] top-[-11px] w-[70px] h-[70px] rotate-[45deg] bg-yellow-500 rounded-lg" />
-        <div className="absolute left-[-45px] top-[-11px] w-[70px] h-[70px] rotate-[45deg] bg-yellow-500 rounded-lg" />
-        <div className="text-[13px] relative z-[2] font-bold flex items-center">
-          امتیاز شما : ۳۲۱
-        </div>
-        <div className="flex gap-1 relative z-[5] items-center bg-white text-[#333] text-[10px] p-1 rounded-full">
-          <GiMedal size={15} />
-          کاربر طلایی
-        </div>
-      </div>
-      <div onClick={() => navigate("/dashboard/profile/edit")}>
-        <div className="flex h-14 justify-between items-center border-b border-gray-200 p-2 hover:bg-gray-100 cursor-pointer">
-          <div className="flex items-center gap-2">
-            <UserAddOutlined className="text-2xl text-gray-600" />
-            <div className="text-[15px] text-gray-900">
+  const UserMenuContent = () => (
+    <div className="w-80">
+      {/* User Header */}
+      <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg mb-3">
+        <div className="flex items-center gap-3">
+          <Avatar
+            size={48}
+            icon={<UserOutlined />}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-md"
+          />
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 truncate">
               {user?.first_name} {user?.last_name}
+            </h3>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-1 bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs">
+                <CrownOutlined />
+                <span>کاربر طلایی</span>
+              </div>
+              <span className="text-xs text-gray-500">امتیاز: ۳۲۱</span>
             </div>
           </div>
-          <CgChevronLeft size={20} />
         </div>
       </div>
-      <div
-        className="flex h-10 gap-2 items-center p-2 hover:bg-gray-100 cursor-pointer"
-        onClick={() => navigate("/dashboard/branches")}
-      >
-        <ProductOutlined /> خرید اشتراک
-      </div>
-      <div
-        className="flex h-10 gap-2 cursor-pointer items-center p-2 hover:bg-gray-100 cursor-pointer"
-        onClick={() => navigate("/dashboard/branches")}
-      >
-        <PlusOutlined /> افزودن غرفه
-      </div>
-      <div
-        onClick={() => navigate("/dashboard/charge")}
-        className="flex justify-between cursor-pointer h-10 items-center p-2 hover:bg-gray-100 cursor-pointer"
-      >
-        <div className="flex gap-2">
-          <WalletOutlined /> شارژ کیف پول
+
+      {/* Menu Items */}
+      <div className="space-y-1">
+        <div
+          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+          onClick={() => {
+            navigate("/dashboard/profile/edit");
+            setUserMenuOpen(false);
+          }}
+        >
+          <UserAddOutlined className="text-blue-600 text-lg" />
+          <div>
+            <div className="font-medium text-gray-900">ویرایش پروفایل</div>
+            <div className="text-xs text-gray-500">مدیریت اطلاعات شخصی</div>
+          </div>
         </div>
-        <div className="bg-green-500 text-white text-xs rounded-full px-2">
-          22,300 تومان
+
+        <div
+          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+          onClick={() => {
+            navigate("/dashboard/branches");
+            setUserMenuOpen(false);
+          }}
+        >
+          <ProductOutlined className="text-green-600 text-lg" />
+          <div className="font-medium text-gray-900">خرید اشتراک</div>
         </div>
-      </div>
-      <div
-        className="flex h-10 gap-2 items-center p-2 hover:bg-gray-100 cursor-pointer"
-        onClick={handleSignOut}
-      >
-        <LogoutOutlined /> خروج
+
+        <div
+          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+          onClick={() => {
+            navigate("/dashboard/branches");
+            setUserMenuOpen(false);
+          }}
+        >
+          <PlusOutlined className="text-purple-600 text-lg" />
+          <div className="font-medium text-gray-900">افزودن غرفه</div>
+        </div>
+
+        <div
+          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+          onClick={() => {
+            navigate("/dashboard/charge");
+            setUserMenuOpen(false);
+          }}
+        >
+          <WalletOutlined className="text-emerald-600 text-lg" />
+          <div className="flex-1">
+            <div className="font-medium text-gray-900">شارژ کیف پول</div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-gray-500">موجودی:</span>
+              <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-xs font-medium">
+                ۲۲,۳۰۰ تومان
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <Divider className="my-3" />
+
+        <div
+          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+          onClick={() => {
+            navigate("/dashboard/settings");
+            setUserMenuOpen(false);
+          }}
+        >
+          <SettingOutlined className="text-gray-600 text-lg" />
+          <div className="font-medium text-gray-900">تنظیمات</div>
+        </div>
+
+        <div
+          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-red-50 rounded-lg transition-colors text-red-600"
+          onClick={handleSignOut}
+        >
+          <LogoutOutlined className="text-red-600 text-lg" />
+          <div className="font-medium">خروج از حساب</div>
+        </div>
       </div>
     </div>
   );
 
-  const NotificationItems = () => (
-    <div className="w-[300px] space-y-2">
-      <Alert
-        message="فلانی تخمین قیمت ارسال کرد"
-        type="success"
-        showIcon
-        closable
-      />
-      <Alert
-        message="قلانی پیامی برای شما ارسال کرد"
-        type="info"
-        showIcon
-        closable
-      />
-      <Alert
-        message="تخمین قیمت فلانی به پایان رسید"
-        type="warning"
-        showIcon
-        closable
-      />
-      <Alert
-        message="فعالیت شما در این کارتابل کم بود"
-        type="error"
-        showIcon
-        closable
-      />
+  const NotificationContent = () => (
+    <div className="w-96 max-h-96 overflow-y-auto">
+      <div className="p-4 border-b border-gray-200">
+        <h3 className="font-semibold text-gray-900 text-lg">اعلان‌ها</h3>
+        <p className="text-gray-500 text-sm">آخرین فعالیت‌های سیستم</p>
+      </div>
+
+      <div className="p-2 space-y-2">
+        {[
+          {
+            type: "success",
+            message: "فلانی تخمین قیمت ارسال کرد",
+            time: "۲ دقیقه پیش",
+          },
+          {
+            type: "info",
+            message: "قلانی پیامی برای شما ارسال کرد",
+            time: "۱ ساعت پیش",
+          },
+          {
+            type: "warning",
+            message: "تخمین قیمت فلانی به پایان رسید",
+            time: "۲ ساعت پیش",
+          },
+          {
+            type: "error",
+            message: "فعالیت شما در این کارتابل کم بود",
+            time: "۱ روز پیش",
+          },
+        ].map((notification, index) => (
+          <div
+            key={index}
+            className={`p-3 rounded-lg border-l-4 ${
+              notification.type === "success"
+                ? "border-l-green-500 bg-green-50"
+                : notification.type === "info"
+                ? "border-l-blue-500 bg-blue-50"
+                : notification.type === "warning"
+                ? "border-l-amber-500 bg-amber-50"
+                : "border-l-red-500 bg-red-50"
+            }`}
+          >
+            <div className="flex justify-between items-start">
+              <p className="text-gray-800 text-sm flex-1">
+                {notification.message}
+              </p>
+              <Button
+                type="text"
+                size="small"
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <CloseOutlined />
+              </Button>
+            </div>
+            <p className="text-gray-500 text-xs mt-1">{notification.time}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="p-3 border-t border-gray-200">
+        <Button type="link" block className="text-blue-600">
+          مشاهده همه اعلان‌ها
+        </Button>
+      </div>
     </div>
   );
 
   return (
-    <header className="bg-white fixed top-0 z-[200] left-0 right-0 shadow-md backdrop-blur-sm">
-      <nav className="container mx-auto flex items-center justify-between h-24 px-4">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div
-            className="block sm:hidden w-[45px] h-[45px] bg-[#fff] rounded-[4px] border-[1px] border-[#f0f0f0] cursor-pointer text-center"
-            onClick={() => setOpenMenu(true)}
-          >
-            <GiHamburgerMenu
-              size={23}
-              className="relative top-[10px] right-[10px]"
-            />
-          </div>
-          <img src="/logo.png" className="h-10 w-auto" />
-          <div className="hidden sm:flex flex-col">
-            <div className="text-lg font-bold">چندکو</div>
-            <div className="text-xs text-gray-500">
-              سامانه خرید فروش منطقه ای
-            </div>
-          </div>
-        </Link>
-        {/* Desktop Menu */}
-        <div className="hidden lg:flex gap-6 items-center">
-          {menus.map((el) => (
-            <a
-              key={el.id}
-              href={el.url}
-              className="text-gray-900 font-semibold hover:text-blue-600"
-            >
-              {el.title}
-            </a>
-          ))}
-        </div>
-        {/* Right Actions */}
-        <div className="flex items-center gap-4">
-          {token && (
-            <Popover content={<NotificationItems />} trigger="click">
-              <div className="relative cursor-pointer">
-                <div className="absolute top-[-8px] right-[-8px] bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                  3
-                </div>
-                <BellOutlined className="text-2xl text-gray-600" />
-              </div>
-            </Popover>
-          )}
-
-          {token ? (
-            <Popover content={<MenuItems />} trigger="click">
+    <>
+      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4">
+          {/* Increased header height to 90px */}
+          <div className="flex items-center justify-between h-[90px]">
+            {/* Left Section - Logo & Mobile Menu */}
+            <div className="flex items-center gap-4">
+              {/* Mobile Menu Button */}
               <Button
-                icon={<UserOutlined />}
-                className="border-none bg-transparent"
+                type="text"
+                icon={<MenuOutlined />}
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden h-12 w-12 flex items-center justify-center"
               />
-            </Popover>
-          ) : (
-            <div className="flex gap-2 items-center">
-              <Button
-                icon={<BiLogIn />}
-                onClick={() => navigate("/login")}
-                className="rounded-full border border-gray-300 px-4 py-4 text-gray-700 hover:bg-gray-100 h-[45px]"
-              >
-                ورود
-              </Button>
-              <Button
-                icon={<BiUserCheck />}
-                onClick={() => navigate("/register")}
-                className="rounded-full bg-blue-600 text-white px-4 py-4 h-[45px]"
-              >
-                ثبت نام
-              </Button>
-              <div
-                onClick={() => navigate("/support")}
-                className="border-r-[1px] hidden sm:flex items-center gap-[3px] border-r-[#ccc] pr-[10px] mr-[10px] h-[45px]"
-              >
-                <div>
-                  <FaHeadset />
-                </div>
-                <div>پشتیبانی</div>
-              </div>
-            </div>
-          )}
-          {/* Mobile Overlay */}
-          {openMenu && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-60 z-[250] h-[100vh]"
-              onClick={() => setOpenMenu(false)}
-            />
-          )}
 
-          {/* Mobile Slide Menu */}
-          <div
-            className={`fixed top-0 right-0 h-[100vh] w-72 bg-white z-[300] transform transition-transform ${
-              openMenu ? "translate-x-0" : "translate-x-full"
-            }`}
-          >
-            <div className="flex justify-between items-center p-4 border-b">
-              <div>منو</div>
-              <button onClick={() => setOpenMenu(false)}>
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
+              {/* Logo */}
+              <Link to="/" className="flex items-center gap-3 group">
+                <div className="relative">
+                  <img
+                    src="/logo.png"
+                    alt="چندکو"
+                    className="h-12 w-auto transition-transform group-hover:scale-105"
                   />
-                </svg>
-              </button>
+                </div>
+                <div className="hidden sm:flex flex-col">
+                  <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    چندکو
+                  </div>
+                  <div className="text-xs text-gray-500 font-medium">
+                    سامانه خرید و فروش منطقه‌ای
+                  </div>
+                </div>
+              </Link>
             </div>
-            <div className="p-4 space-y-2">
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-8">
               {menus.map((el) => (
-                <a
+                <Link
                   key={el.id}
-                  href={el.url}
-                  className="block py-2 px-3 rounded hover:bg-gray-100"
+                  to={el.url}
+                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 relative group py-2"
                 >
                   {el.title}
-                </a>
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-200 group-hover:w-full"></span>
+                </Link>
               ))}
+            </div>
+
+            {/* Right Section - Actions */}
+            <div className="flex items-center gap-3">
+              {/* Support Button */}
               <Button
-                icon={<FaHeadset />}
-                block
+                type="text"
+                icon={<CustomerServiceOutlined />}
                 onClick={() => navigate("/support")}
-                className="my-2 py-[20px] rounded-full border border-gray-300"
+                className="hidden sm:flex items-center gap-2 text-gray-600 hover:text-blue-600 h-12 px-4"
               >
-                پشتیبانی
+                <span className="hidden md:inline">پشتیبانی</span>
               </Button>
+
+              {token ? (
+                <>
+                  {/* Notifications */}
+                  <Popover
+                    content={<NotificationContent />}
+                    trigger="click"
+                    open={notificationsOpen}
+                    onOpenChange={setNotificationsOpen}
+                    placement="bottomRight"
+                  >
+                    <Badge count={3} size="small" offset={[-2, 2]}>
+                      <Button
+                        type="text"
+                        icon={<BellOutlined />}
+                        className="h-12 w-12 flex items-center justify-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                      />
+                    </Badge>
+                  </Popover>
+
+                  {/* User Menu */}
+                  <Popover
+                    content={<UserMenuContent />}
+                    trigger="click"
+                    open={userMenuOpen}
+                    onOpenChange={setUserMenuOpen}
+                    placement="bottomRight"
+                  >
+                    <Button
+                      type="text"
+                      className="h-12 px-4 flex items-center gap-3 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                    >
+                      <Avatar
+                        size="default"
+                        icon={<UserOutlined />}
+                        className="bg-gradient-to-r from-blue-500 to-purple-600"
+                      />
+                      <div className="hidden md:flex flex-col items-start">
+                        <span className="text-gray-700 font-medium text-sm">
+                          {user?.first_name}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          کاربر طلایی
+                        </span>
+                      </div>
+                    </Button>
+                  </Popover>
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="default"
+                    onClick={() => navigate("/login")}
+                    className="h-12 px-6 border-gray-300 hover:border-blue-500 text-gray-700 rounded-lg font-medium"
+                  >
+                    ورود
+                  </Button>
+                  <Button
+                    type="primary"
+                    onClick={() => navigate("/register")}
+                    className="h-12 px-6 bg-gradient-to-r from-blue-600 to-purple-600 border-0 hover:shadow-lg rounded-lg font-medium transition-all duration-200"
+                  >
+                    ثبت نام
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* Mobile Slide Menu */}
-      <div
-        className={`fixed top-0 right-0 h-[100vh] w-72 bg-white z-50 transform transition-transform ${
-          openMenu ? "translate-x-0" : "translate-x-full"
-        }`}
+      {/* Mobile Drawer */}
+      <Drawer
+        title={
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="چندکو" className="h-8 w-auto" />
+            <div>
+              <div className="font-bold text-lg">چندکو</div>
+              <div className="text-xs text-gray-500">منو</div>
+            </div>
+          </div>
+        }
+        placement="right"
+        onClose={() => setMobileMenuOpen(false)}
+        open={mobileMenuOpen}
+        width={320}
+        className="lg:hidden"
       >
-        <div className="flex justify-between items-center p-4 border-b">
-          <div>منو</div>
-          <button onClick={() => setOpenMenu(false)}>
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="p-4 space-y-2">
-          {menus.map((el) => (
-            <a
-              key={el.id}
-              href={el.url}
-              className="block py-2 px-3 rounded hover:bg-gray-100"
-            >
-              {el.title}
-            </a>
-          ))}
-          {!token && (
-            <>
+        <div className="flex flex-col h-full">
+          {/* Navigation Links */}
+          <div className="flex-1 space-y-2">
+            {menus.map((el) => (
               <Button
-                icon={<BiLogIn />}
+                key={el.id}
+                type="text"
                 block
-                onClick={() => navigate("/login")}
-                className="my-2 py-[20px] rounded-full border border-gray-300"
+                onClick={() => {
+                  navigate(el.url);
+                  setMobileMenuOpen(false);
+                }}
+                className="h-12 text-right justify-start text-gray-700 hover:text-blue-600 hover:bg-blue-50"
               >
-                ورود
+                {el.title}
               </Button>
-              <Button
-                icon={<BiUserCheck />}
-                block
-                onClick={() => navigate("/register")}
-                className="my-2 py-[20px] rounded-full bg-blue-600 text-white"
-              >
-                ثبت نام
-              </Button>
-            </>
-          )}
+            ))}
+          </div>
+
+          {/* Bottom Actions */}
+          <div className="border-t border-gray-200 pt-4 space-y-2">
+            <Button
+              type="text"
+              icon={<CustomerServiceOutlined />}
+              block
+              onClick={() => {
+                navigate("/support");
+                setMobileMenuOpen(false);
+              }}
+              className="h-12 text-right justify-start text-gray-700"
+            >
+              پشتیبانی
+            </Button>
+
+            {!token && (
+              <>
+                <Button
+                  type="default"
+                  block
+                  onClick={() => {
+                    navigate("/login");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="h-12 border-gray-300 text-gray-700"
+                >
+                  ورود به حساب
+                </Button>
+                <Button
+                  type="primary"
+                  block
+                  onClick={() => {
+                    navigate("/register");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="h-12 bg-gradient-to-r from-blue-600 to-purple-600 border-0"
+                >
+                  ثبت نام جدید
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </Drawer>
+    </>
   );
 }

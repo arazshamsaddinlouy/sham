@@ -1,6 +1,15 @@
-import { Badge } from "antd";
+import { Badge, Drawer, Button } from "antd";
 import { useEffect, useState, useRef } from "react";
-import { LuList } from "react-icons/lu";
+import {
+  HiOutlineChartBar,
+  HiOutlineCog,
+  HiOutlineClipboardList,
+  HiOutlineTag,
+  HiOutlineCurrencyDollar,
+  HiOutlineUserGroup,
+  HiOutlineViewGrid,
+  HiOutlineChevronLeft,
+} from "react-icons/hi";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import {
@@ -42,161 +51,303 @@ export default function Dashboard() {
     }
   }, [location.pathname, user.customerType]);
 
-  // Sticky sidebar logic for desktop only
+  // Close sidebar when route changes on mobile
   useEffect(() => {
-    if (isMobile) return;
-
-    const handleScroll = () => {
-      const sidebar = sidebarRef.current;
-      const footer = document.querySelector("footer");
-      if (!sidebar || !footer) return;
-
-      const footerRect = footer.getBoundingClientRect();
-      const sidebarHeight = sidebar.offsetHeight;
-      const topOffset = 90;
-
-      if (footerRect.top <= sidebarHeight + topOffset) {
-        sidebar.style.position = "absolute";
-        sidebar.style.top = `${footer.offsetTop - sidebarHeight}px`;
-      } else {
-        sidebar.style.position = "fixed";
-        sidebar.style.top = `${topOffset}px`;
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleScroll);
-    handleScroll();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-    };
-  }, [isMobile]);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
   const sidebarItems = [
     ...(user.customerType == "1"
       ? [
-          { title: "مزایده ها", to: "/dashboard/trades" },
-          { title: "حراج ها", to: "/dashboard/sales" },
+          {
+            title: "مزایده ها",
+            to: "/dashboard/trades",
+            icon: HiOutlineCurrencyDollar,
+            color: "text-blue-400",
+          },
+          {
+            title: "حراج ها",
+            to: "/dashboard/sales",
+            icon: HiOutlineTag,
+            color: "text-green-400",
+          },
           {
             title: "استعلام های قیمت",
             to: "/dashboard/my-requests",
             count: activeRequests,
+            icon: HiOutlineClipboardList,
+            color: "text-purple-400",
           },
-          { title: "درخواست استعلام قیمت", to: "/dashboard/request-price" },
+          {
+            title: "درخواست استعلام قیمت",
+            to: "/dashboard/request-price",
+            icon: HiOutlineViewGrid,
+            color: "text-orange-400",
+          },
         ]
       : []),
     ...(user.customerType == "0"
       ? [
-          { title: "مزایده ها", to: "/dashboard/trades" },
-          { title: "حراج ها", to: "/dashboard/sales" },
-          { title: "تنظیمات غرفه", to: "/dashboard/branches" },
+          {
+            title: "مزایده ها",
+            to: "/dashboard/trades",
+            icon: HiOutlineCurrencyDollar,
+            color: "text-blue-400",
+          },
+          {
+            title: "حراج ها",
+            to: "/dashboard/sales",
+            icon: HiOutlineTag,
+            color: "text-green-400",
+          },
+          {
+            title: "تنظیمات غرفه",
+            to: "/dashboard/branches",
+            icon: HiOutlineCog,
+            color: "text-gray-400",
+          },
           {
             title: "استعلام های دریافتی",
             to: "/dashboard/customer-request",
             count: requestCount,
+            icon: HiOutlineUserGroup,
+            color: "text-red-400",
           },
         ]
       : []),
   ];
 
-  return (
-    <div className="flex w-full min-h-screen bg-gray-50 pt-[90px] relative">
-      {/* Sidebar */}
-      <div
-        ref={sidebarRef}
-        className={`
-          bg-gradient-to-b from-purple-700 to-purple-500 text-white flex flex-col overflow-hidden
-          ${
-            isMobile
-              ? `fixed top-[90px] left-0 h-[calc(100vh-90px)] z-50 transition-width duration-300 ease-in-out ${
-                  sidebarOpen ? "w-64" : "w-0"
-                }`
-              : "w-64 h-[calc(100vh-90px)] relative"
-          }
-        `}
-      >
-        <div className="absolute inset-0 opacity-20">
-          <img
-            src="/images/middle-wallpaper.jpg"
-            className="w-full h-full object-cover min-h-[100%]"
-          />
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Sidebar Header */}
+      <div className="p-6 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+            <HiOutlineChartBar className="text-white text-xl" />
+          </div>
+          <div>
+            <h1 className="text-white font-bold text-lg">پنل کاربری چندکو</h1>
+            <p className="text-white/60 text-sm">
+              {user.customerType == "1" ? "خریدار" : "فروشنده"}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center relative z-[20] justify-between p-6 border-b border-white/20">
-          <h1 className="text-xl font-bold">پنل مدیریت</h1>
-          {isMobile && sidebarOpen && (
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="text-white text-2xl focus:outline-none"
-            >
-              &times;
-            </button>
-          )}
-        </div>
-        <ul className="mt-6 flex flex-col gap-2 pr-2 relative z-[20]">
-          {sidebarItems.map((item, index) => (
-            <li key={index} className="hover:bg-white/20 rounded-lg">
-              <Link
-                to={item.to}
-                className="flex justify-between items-center p-4 font-medium"
-                onClick={() => isMobile && setSidebarOpen(false)} // close sidebar on link click (mobile)
-              >
-                <div className="flex items-center gap-2">
-                  <LuList />
-                  <span>{item.title}</span>
-                </div>
-                {item.count !== undefined && (
-                  <Badge
-                    count={item.count}
-                    style={{
-                      backgroundColor: "#52c41a",
-                      borderColor: "#52c41a",
-                    }}
-                  />
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
       </div>
 
-      {/* Overlay for mobile */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* User Info */}
+      <div className="p-4 bg-white/5 mx-4 mt-4 rounded-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+            <span className="text-white font-bold text-sm">
+              {user?.first_name?.[0]}
+              {user?.last_name?.[0]}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-medium text-sm truncate">
+              {user?.first_name} {user?.last_name}
+            </p>
+            <p className="text-white/60 text-xs">خوش آمدید</p>
+          </div>
+        </div>
+      </div>
 
-      {/* Main content */}
-      <div
-        className={`flex-1 transition-all duration-300 relative z-[20] px-[10px] pt-[30px] md:px-[30px] sm:!mr-[260px]
-    ${isMobile ? "w-full" : "w-[calc(100vw-256px)]"}
-  `}
-      >
-        {isMobile && !sidebarOpen && (
-          <div className="w-full flex  shadow-md items-center bg-[#fff] z-[10] right-[0px] fixed top-[97px]">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="mb-4 px-4 py-2"
+      {/* Navigation Items */}
+      <nav className="flex-1 p-4 space-y-2 mt-4">
+        {sidebarItems.map((item, index) => {
+          const IconComponent = item.icon;
+          const isActive = location.pathname === item.to;
+
+          return (
+            <Link
+              key={index}
+              to={item.to}
+              className={`
+                flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group
+                ${
+                  isActive
+                    ? "bg-white/20 text-white shadow-lg"
+                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                }
+              `}
+              onClick={() => isMobile && setSidebarOpen(false)}
             >
-              <div className="flex gap-[8px] items-center">
-                <div>
-                  <GiHamburgerMenu
-                    size={22}
-                    className="text-[#222] relative top-[7px]"
+              <div
+                className={`
+                w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200
+                ${
+                  isActive
+                    ? "bg-white text-purple-600"
+                    : "bg-white/10 group-hover:bg-white/20"
+                }
+              `}
+              >
+                <IconComponent
+                  className={`text-lg ${
+                    isActive ? "text-purple-600" : item.color
+                  }`}
+                />
+              </div>
+
+              <div className="flex-1 flex items-center justify-between">
+                <span className="font-medium text-sm">{item.title}</span>
+
+                <div className="flex items-center gap-2">
+                  {item.count !== undefined && item.count > 0 && (
+                    <Badge
+                      count={item.count}
+                      className="ml-2"
+                      style={{
+                        backgroundColor: "#10b981",
+                        borderColor: "#10b981",
+                      }}
+                    />
+                  )}
+                  <HiOutlineChevronLeft
+                    className={`
+                    text-lg transition-transform duration-200
+                    ${isActive ? "text-white" : "text-white/40"}
+                  `}
                   />
                 </div>
-                <div className="text-[12px] relative top-[6px] text-[#222]">
-                  منوی کاربری
-                </div>
               </div>
-            </button>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Sidebar Footer */}
+      <div className="p-4 border-t border-white/10">
+        <div className="bg-white/5 rounded-xl p-3">
+          <p className="text-white/60 text-xs text-center">نسخه ۱.۰.۰</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex w-full min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 pt-[0px]">
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <div
+          ref={sidebarRef}
+          className="w-80 bg-gradient-to-b from-purple-600 to-purple-700 text-white h-[calc(100vh-90px)] sticky top-[90px] shadow-xl border-l border-white/10"
+        >
+          <SidebarContent />
+        </div>
+      )}
+
+      {/* Mobile Drawer */}
+      <Drawer
+        placement="right"
+        onClose={() => setSidebarOpen(false)}
+        open={sidebarOpen}
+        width={320}
+        bodyStyle={{ padding: 0 }}
+        closable={false}
+        className="md:hidden"
+      >
+        <div className="bg-gradient-to-b from-purple-600 to-purple-700 text-white h-full">
+          <SidebarContent />
+        </div>
+      </Drawer>
+
+      {/* Main Content Area */}
+      <div
+        className={`
+        flex-1 min-h-[calc(100vh-90px)] transition-all duration-300
+        ${isMobile ? "w-full" : "max-w-[calc(100vw-320px)]"}
+      `}
+      >
+        {/* Mobile Header */}
+        {isMobile && (
+          <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-[90px] z-30 shadow-sm">
+            <div className="flex items-center justify-between p-4">
+              <div>
+                <h1 className="text-lg font-bold text-gray-800">
+                  {sidebarItems.find((item) => item.to === location.pathname)
+                    ?.title || "داشبورد"}
+                </h1>
+                <p className="text-gray-500 text-sm mt-1">
+                  مدیریت و نظارت بر فعالیت‌ها
+                </p>
+              </div>
+
+              <Button
+                icon={<GiHamburgerMenu className="text-lg" />}
+                onClick={() => setSidebarOpen(true)}
+                className="border-0 h-12 w-12 flex items-center justify-center rounded-xl"
+              />
+            </div>
           </div>
         )}
-        <div className="pt-[50px] sm:pt-[0px]">
-          <Outlet />
+
+        {/* Content Container */}
+        <div
+          className={`
+          p-4 md:p-6 lg:p-8
+          ${isMobile ? "pt-6" : "pt-8"}
+        `}
+        >
+          {/* Welcome Card */}
+          {!isMobile && (
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg mb-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold mb-2">
+                    سلام، {user?.first_name} {user?.last_name} 👋
+                  </h1>
+                  <p className="text-blue-100 text-lg">
+                    به پنل کاربری چندکو{" "}
+                    {user.customerType == "1" ? "خریدار" : "فروشنده"} خوش آمدید
+                  </p>
+                </div>
+                <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center">
+                  <HiOutlineChartBar className="text-3xl" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Page Content */}
+          <div
+            className={`
+            bg-white rounded-2xl shadow-sm border border-gray-200/60
+            ${isMobile ? "p-4" : "p-6"}
+          `}
+          >
+            <Outlet />
+          </div>
+
+          {/* Quick Stats Footer */}
+          {!isMobile && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200/60 text-center">
+                <div className="text-2xl font-bold text-purple-600 mb-1">
+                  {activeRequests + requestCount}
+                </div>
+                <div className="text-gray-600 text-sm">کل درخواست‌ها</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200/60 text-center">
+                <div className="text-2xl font-bold text-green-600 mb-1">
+                  {user.customerType == "1" ? activeRequests : requestCount}
+                </div>
+                <div className="text-gray-600 text-sm">
+                  {user.customerType == "1"
+                    ? "استعلام‌های فعال"
+                    : "درخواست‌های جدید"}
+                </div>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200/60 text-center">
+                <div className="text-2xl font-bold text-blue-600 mb-1">
+                  {sidebarItems.length}
+                </div>
+                <div className="text-gray-600 text-sm">ماژول‌های فعال</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

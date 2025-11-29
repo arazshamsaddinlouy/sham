@@ -1,4 +1,14 @@
-import { Modal, Form, Select, ConfigProvider, Button, Alert } from "antd";
+import {
+  Modal,
+  Form,
+  Select,
+  ConfigProvider,
+  Button,
+  Alert,
+  Steps,
+  Card,
+  message,
+} from "antd";
 import { Status, Wrapper } from "@googlemaps/react-wrapper";
 import MapComponent from "../../components/google-map";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -12,7 +22,16 @@ import TextArea from "antd/es/input/TextArea";
 import { convertLocationToAddress } from "../../services/map.service";
 import { InputOTP } from "antd-input-otp";
 import { sendOtp } from "../../services/auth.service";
+import {
+  UserOutlined,
+  SafetyCertificateOutlined,
+  ShopOutlined,
+  CustomerServiceOutlined,
+  EnvironmentOutlined,
+} from "@ant-design/icons";
+
 let cityList: any[] = [];
+
 export default function Register() {
   const value: any = useContext(ShamContext);
   const [cityName, setCityName] = useState<string>("");
@@ -27,9 +46,13 @@ export default function Register() {
   }>({ lat: 35.6892, lng: 51.389 });
   const [otp, setOtp] = useState<string[]>([]);
   const [isSubmittable, setSubmittable] = useState<boolean>(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [otpCountdown, setOtpCountdown] = useState(0);
 
   const [form] = Form.useForm();
   const values = Form.useWatch([], form);
+
   useEffect(() => {
     form
       .validateFields({ validateOnly: true })
@@ -45,13 +68,23 @@ export default function Register() {
         setSubmittable(false);
       });
   }, [form, values]);
+
   const [cities, setCities] = useState<any[]>([]);
   const navigate = useNavigate();
   const [_error, setError] = useState<string | null>(null);
+
+  // OTP Countdown timer
+  useEffect(() => {
+    if (otpCountdown > 0) {
+      const timer = setTimeout(() => setOtpCountdown(otpCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpCountdown]);
+
   const handleCityCheck = () => {
     const city = cityList.find(
       (el) => el.id == form.getFieldValue("city")
-    ).name;
+    )?.name;
     if (cityName !== city) {
       setSubmittable(false);
       value.setNotif({
@@ -60,6 +93,7 @@ export default function Register() {
       });
     }
   };
+
   const getLocation = () => {
     if (!navigator.geolocation) {
       value.setNotif({
@@ -88,6 +122,7 @@ export default function Register() {
       }
     );
   };
+
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const fetchCities = useCallback((province_id: string) => {
     getAllCity(province_id).then((data) => {
@@ -98,14 +133,18 @@ export default function Register() {
 
   const handleCancel = () => {
     setIsModalOpen(false);
+    setCurrentStep(0);
   };
+
   useEffect(() => {
     if (isMapTouched) {
       handleCityCheck();
     }
   }, [isMapTouched, latLng, selectedCity, cityName]);
+
   const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     const payload = form.getFieldsValue();
     addUser({
       ...payload,
@@ -132,76 +171,160 @@ export default function Register() {
           type: "error",
           description: e?.response?.data?.message,
         });
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   };
+
+  const handleSendOtp = () => {
+    const mobile = form.getFieldValue("mobile");
+    if (!mobile || !/^09\d{9}$/.test(mobile)) {
+      message.error("لطفا شماره موبایل معتبر وارد کنید");
+      return;
+    }
+
+    setIsLoading(true);
+    sendOtp(mobile)
+      .then((res) => {
+        if (res.status === 200) {
+          message.success("کد تأیید پیامک شد");
+          setIsModalOpen(true);
+          setOtpCountdown(120); // 2 minutes countdown
+          setCurrentStep(1);
+        } else {
+          message.error("خطا در ارسال کد");
+        }
+      })
+      .catch(() => {
+        message.error("خطا در ارسال کد");
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
   useEffect(() => {
     getAllProvinces().then((data) => {
       setProvinces(data.data);
     });
     getLocation();
   }, []);
+
+  const steps = [
+    {
+      title: "اطلاعات شخصی",
+      icon: <UserOutlined />,
+    },
+    {
+      title: "تأیید شماره",
+      icon: <SafetyCertificateOutlined />,
+    },
+  ];
+
+  const UserTypeCard = ({
+    title,
+    description,
+    icon,
+    isSelected,
+    onClick,
+  }: any) => (
+    <Card
+      className={`cursor-pointer transition-all duration-300 border-2 ${
+        isSelected
+          ? "border-blue-500 bg-blue-50 shadow-lg"
+          : "border-gray-200 hover:border-gray-300 hover:shadow-md"
+      }`}
+      onClick={onClick}
+    >
+      <div className="text-center">
+        <div className="text-2xl mb-3 text-blue-500">{icon}</div>
+        <h3 className="font-semibold text-gray-800 mb-2">{title}</h3>
+        <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+      </div>
+    </Card>
+  );
+
   return (
-    <div className="flex items-center relative overflow-hidden pt-[90px] min-h-[calc(100vh-90px)] justify-center min-h-[calc(100vh-50px)] bg-gray-50 px-4">
+    <div className="flex items-center relative overflow-hidden pt-[90px] min-h-[calc(100vh-90px)] justify-center bg-gray-50 px-4 py-8">
       <div className="absolute w-[100vw] left-[0px] top-[0px] h-[100vh] opacity-20">
         <img
           src={"/images/middle-wallpaper.jpg"}
           className="w-full h-full object-cover min-h-[100%]"
         />
       </div>
-      <div className="flex bg-[#fff] relative z-[20] mt-[30px] mb-[30px] flex-col md:flex-row bg-white rounded-[5px] shadow-lg overflow-hidden max-w-[1000px] w-full">
-        {/* Left Image Section */}
-        <div className="w-full p-8 md:p-12 flex flex-col justify-center">
-          <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8">
-            ثبت نام
-          </h2>
+
+      <div className="flex bg-[#fff] relative z-[20] flex-col md:flex-row bg-white rounded-[12px] shadow-xl overflow-hidden max-w-[1000px] w-full">
+        {/* Left Image Section - Kept same as original */}
+        <div
+          className="hidden md:block md:w-2/5 bg-cover bg-center"
+          style={{ backgroundImage: "url(/images/middle-wallpaper.jpg)" }}
+        ></div>
+
+        {/* Right Form Section */}
+        <div className="w-full md:w-3/5 p-6 md:p-8 flex flex-col justify-center">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+              ثبت نام در سامانه
+            </h2>
+            <p className="text-gray-600">لطفا اطلاعات خود را وارد کنید</p>
+          </div>
+
+          <Steps
+            current={currentStep}
+            items={steps}
+            className="mb-8"
+            responsive={false}
+          />
 
           <Form
             form={form}
             layout={"vertical"}
-            className="w-full mx-auto p-[0px_5px]"
+            className="w-full mx-auto"
+            size="large"
           >
-            <div className="flex gap-[15px]">
-              <div className="flex-1">
-                <div className="flex w-full mb-[20px] bg-[#fff] p-[10px] rounded-[8px] border-[1px] border-[#f0f0f0] relative overflow-hidden">
-                  <div
-                    className={`bg-[rgb(37,99,235)] transition-all w-[50%] h-[42px] rounded-[8px] absolute top-[0px] ${
-                      registerType === 0 ? "right-[0px]" : "right-[50%]"
-                    }`}
-                  />
-                  <div
-                    onClick={() => setRegisterType(0)}
-                    className={`flex-1 relative z-[2] cursor-pointer text-center ${
-                      registerType === 0 ? "text-[#fff]" : "text-[#000]"
-                    }`}
-                  >
-                    فروشنده هستم
-                  </div>
-                  <div
-                    onClick={() => setRegisterType(1)}
-                    className={`flex-1 relative z-[2] cursor-pointer text-center ${
-                      registerType === 1 ? "text-[#fff]" : "text-[#000]"
-                    }`}
-                  >
-                    خریدار هستم
-                  </div>
-                </div>
+            {/* User Type Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                نوع حساب
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <UserTypeCard
+                  type={0}
+                  title="فروشنده"
+                  description="برای ثبت محصولات و ایجاد غرفه فروش"
+                  icon={<ShopOutlined />}
+                  isSelected={registerType === 0}
+                  onClick={() => setRegisterType(0)}
+                />
+                <UserTypeCard
+                  type={1}
+                  title="خریدار"
+                  description="برای جستجو و خرید محصولات"
+                  icon={<CustomerServiceOutlined />}
+                  isSelected={registerType === 1}
+                  onClick={() => setRegisterType(1)}
+                />
               </div>
             </div>
-            {form.getFieldValue("customer_type") == "0" && (
-              <div className="mt-[0px] mb-[20px]">
+
+            {registerType === 0 && (
+              <div className="mb-6">
                 <Alert
                   message="بعد از ثبت نام میتوانید تنظیمات مربوط به غرفه را در پروفایل خود انجام دهید"
                   type="info"
                   showIcon
+                  className="rounded-lg"
                 />
               </div>
             )}
-            <div className="flex gap-[15px]">
-              <div className="flex-1">
+
+            {/* Personal Information */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Form.Item
                   name="first_name"
                   label="نام"
-                  className="rtl"
                   rules={[
                     { required: true, message: "نام اجباری است" },
                     {
@@ -211,17 +334,15 @@ export default function Register() {
                   ]}
                 >
                   <Input
-                    type="text"
+                    prefix={<UserOutlined className="text-gray-400" />}
                     placeholder="مثال: محمد"
-                    className="h-[40px]"
+                    className="rounded-lg"
                   />
                 </Form.Item>
-              </div>
-              <div className="flex-1">
+
                 <Form.Item
                   name="last_name"
                   label="نام خانوادگی"
-                  className="rtl"
                   rules={[
                     { required: true, message: "نام خانوادگی اجباری است" },
                     {
@@ -231,20 +352,17 @@ export default function Register() {
                   ]}
                 >
                   <Input
-                    name="last_name"
-                    type="text"
+                    prefix={<UserOutlined className="text-gray-400" />}
                     placeholder="مثال: محمدی"
-                    className="h-[40px]"
+                    className="rounded-lg"
                   />
                 </Form.Item>
               </div>
-            </div>
-            <div className="flex  gap-[15px]">
-              <div className="flex-1">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Form.Item
                   name="telephone"
                   label="شماره تلفن ثابت"
-                  className="rtl"
                   rules={[
                     {
                       pattern: /^\d{0,}$/,
@@ -253,26 +371,22 @@ export default function Register() {
                   ]}
                 >
                   <Input
-                    type="text"
                     placeholder="مثال: 021221122"
-                    className="h-[40px]"
+                    className="rounded-lg"
                     onChange={(e) => {
                       const persianToEnglish = (str: string) =>
                         str.replace(/[\u06F0-\u06F9]/g, (d) =>
                           String.fromCharCode(d.charCodeAt(0) - 1728)
                         );
-
                       const converted = persianToEnglish(e.target.value);
                       form.setFieldsValue({ telephone: converted });
                     }}
                   />
                 </Form.Item>
-              </div>
-              <div className="flex-1">
+
                 <Form.Item
                   name="mobile"
                   label="شماره موبایل"
-                  className="rtl"
                   rules={[
                     { required: true, message: "شماره موبایل اجباری است" },
                     {
@@ -282,31 +396,28 @@ export default function Register() {
                   ]}
                 >
                   <Input
-                    type="text"
                     placeholder="09123456789"
-                    className="h-[40px]"
+                    className="rounded-lg"
                     onChange={(e) => {
                       const persianToEnglish = (str: string) =>
                         str.replace(/[\u06F0-\u06F9]/g, (d) =>
                           String.fromCharCode(d.charCodeAt(0) - 1728)
                         );
                       const converted = persianToEnglish(e.target.value);
-                      // set the converted value back into the form
                       form.setFieldValue("mobile", converted);
                     }}
                   />
                 </Form.Item>
               </div>
-            </div>
-            <div className="flex  gap-[15px]">
-              <div className="flex-1">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Form.Item
                   name="province"
                   label="استان"
-                  className="rtl"
                   rules={[{ required: true, message: "استان اجباری است" }]}
                 >
                   <Select
+                    placeholder="انتخاب استان"
                     onChange={(provinceId: string) => {
                       form.setFieldValue("city", "");
                       if (provinceId) {
@@ -315,84 +426,78 @@ export default function Register() {
                         setCities([]);
                       }
                     }}
-                    className="h-[40px]"
+                    className="rounded-lg"
                   >
-                    <option value={""}> </option>
                     {provinces.map((province) => (
-                      <Select.Option value={province.id}>
+                      <Select.Option key={province.id} value={province.id}>
                         {province.name}
                       </Select.Option>
                     ))}
                   </Select>
                 </Form.Item>
-              </div>
-              <div className="flex-1">
+
                 <Form.Item
                   name="city"
                   label="شهر"
-                  className="rtl"
                   rules={[{ required: true, message: "شهر اجباری است" }]}
                 >
                   <Select
                     disabled={cities.length === 0}
-                    className="h-[40px]"
+                    placeholder={
+                      cities.length === 0
+                        ? "ابتدا استان انتخاب کنید"
+                        : "انتخاب شهر"
+                    }
+                    className="rounded-lg"
                     onChange={(c: string) => {
                       const cit = cities.find((el) => el.id == c);
                       setLatLng({ lat: cit.lat, lng: cit.lng });
                       setSelectedCity(c);
                     }}
                   >
-                    <Select.Option value={""}> </Select.Option>
                     {cities.map((city) => (
-                      <Select.Option value={city.id}>{city.name}</Select.Option>
+                      <Select.Option key={city.id} value={city.id}>
+                        {city.name}
+                      </Select.Option>
                     ))}
                   </Select>
                 </Form.Item>
               </div>
+
+              <Form.Item
+                name="address"
+                label="آدرس"
+                rules={[{ required: true, message: "آدرس اجباری است" }]}
+              >
+                <TextArea
+                  placeholder="مثال: تهران - پاسداران ..."
+                  rows={3}
+                  style={{ resize: "none" }}
+                  className="rounded-lg"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="postalCode"
+                label="کد پستی"
+                rules={[
+                  {
+                    pattern: /^\d{5,}$/,
+                    message: "کد پستی صحیح نمیباشد",
+                  },
+                ]}
+              >
+                <Input placeholder="مثال: 1111111111" className="rounded-lg" />
+              </Form.Item>
             </div>
-            <div className="flex  gap-[15px]">
-              <div className="flex-1">
-                <Form.Item
-                  name="address"
-                  label="آدرس "
-                  className="rtl"
-                  rules={[{ required: true, message: "آدرس اجباری است" }]}
-                >
-                  <TextArea
-                    name="address"
-                    placeholder="مثال : تهران - پاسداران ..."
-                    rows={5}
-                    style={{ resize: "none" }}
-                  ></TextArea>
-                </Form.Item>
-              </div>
-            </div>
-            <div className="flex  gap-[15px]">
-              <div className="flex-1">
-                <Form.Item
-                  name="postalCode"
-                  label="کد پستی"
-                  className="rtl"
-                  rules={[
-                    {
-                      pattern: /^\d{5,}$/,
-                      message: "کد پستی صحیح نمیباشد",
-                    },
-                  ]}
-                >
-                  <Input
-                    name="postalCode"
-                    placeholder="مثال: 1111111111"
-                    className="h-[40px]"
-                  />
-                </Form.Item>
-              </div>
-            </div>
-            <div className="flex gap-[15px] h-[450px] overflow-hidden mb-[30px]">
-              <div className="flex-1">
-                <label className="text-[13px] text-[#444] block">
-                  آدرس روی نقشه
-                </label>
+
+            {/* Map Section */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                <EnvironmentOutlined className="ml-1" />
+                موقعیت روی نقشه
+              </label>
+              <div className="h-[300px] rounded-lg overflow-hidden border border-gray-200">
                 <Wrapper
                   apiKey={"AIzaSyAtOnE4vyEvfJxG268WbsUlK9EphptwyWo"}
                   render={render}
@@ -409,7 +514,21 @@ export default function Register() {
                   />
                 </Wrapper>
               </div>
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-xs text-gray-500">
+                  موقعیت خود را روی نقشه مشخص کنید
+                </span>
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={getLocation}
+                  icon={<EnvironmentOutlined />}
+                >
+                  موقعیت فعلی
+                </Button>
+              </div>
             </div>
+
             <Form.Item>
               <ConfigProvider
                 theme={{
@@ -419,65 +538,81 @@ export default function Register() {
                 }}
               >
                 <Button
-                  onClick={() => {
-                    const mobile = form.getFieldValue("mobile");
-                    sendOtp(mobile)
-                      .then((res) => {
-                        if (res.status === 200) {
-                          value.setNotif({
-                            type: "success",
-                            description: "کد پیامک شد",
-                          });
-                          setIsModalOpen(true);
-                        } else {
-                          value.setNotif({
-                            type: "error",
-                            description: "خطا در ارسال کد",
-                          });
-                        }
-                      })
-                      .catch(() => {
-                        value.setNotif({
-                          type: "error",
-                          description: "خطا در ارسال کد",
-                        });
-                      });
-                  }}
-                  htmlType="submit"
-                  className="w-full h-[40px]"
+                  onClick={handleSendOtp}
+                  htmlType="button"
+                  className="w-full h-[45px] rounded-lg font-semibold"
                   type="primary"
-                  disabled={!isSubmittable || !isMapTouched}
+                  disabled={!isSubmittable || !isMapTouched || isLoading}
+                  loading={isLoading}
+                  size="large"
                 >
-                  ثبت نام
+                  {isLoading ? "در حال ارسال کد..." : "ارسال کد تأیید"}
                 </Button>
               </ConfigProvider>
             </Form.Item>
           </Form>
         </div>
       </div>
-      <Modal open={isModalOpen} onOk={handleSubmit} onCancel={handleCancel}>
-        <div className="flex  gap-[15px] overflow-hidden">
-          <div className="flex-1">
-            <label className="text-[13px] text-[#444] block mb-[10px]">
-              پیامک وارد شده را وارد نمایید
-            </label>
-            <div>
-              <Flex
-                gap="middle"
-                className="w-full ltr"
-                align="flex-start"
-                vertical
-              >
-                <InputOTP
-                  length={5}
-                  autoSubmit={form}
-                  value={otp}
-                  onChange={setOtp}
-                  inputType="numeric"
-                />
-              </Flex>
-            </div>
+
+      {/* OTP Modal */}
+      <Modal
+        open={isModalOpen}
+        onCancel={handleCancel}
+        footer={null}
+        centered
+        title={
+          <div className="text-center">
+            <SafetyCertificateOutlined className="text-blue-500 text-xl mr-2" />
+            تأیید شماره موبایل
           </div>
+        }
+        className="rounded-lg"
+      >
+        <div className="text-center mb-6">
+          <p className="text-gray-600 mb-4">
+            کد تأیید به شماره <strong>{form.getFieldValue("mobile")}</strong>{" "}
+            ارسال شد
+          </p>
+
+          <Flex justify="center" className="mb-4">
+            <InputOTP
+              length={5}
+              value={otp}
+              onChange={setOtp}
+              inputType="numeric"
+              autoFocus
+              size="large"
+              inputClassName="!w-12 !h-12 text-lg font-semibold"
+            />
+          </Flex>
+
+          {otpCountdown > 0 ? (
+            <p className="text-orange-500 text-sm">
+              {Math.floor(otpCountdown / 60)}:
+              {String(otpCountdown % 60).padStart(2, "0")}
+              زمان باقیمانده
+            </p>
+          ) : (
+            <Button type="link" onClick={handleSendOtp} className="p-0">
+              ارسال مجدد کد
+            </Button>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <Button onClick={handleCancel} className="flex-1" size="large">
+            بازگشت
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            type="primary"
+            className="flex-1"
+            size="large"
+            loading={isLoading}
+            disabled={otp.join("").length !== 5}
+          >
+            تأیید و ثبت نام
+          </Button>
         </div>
       </Modal>
     </div>

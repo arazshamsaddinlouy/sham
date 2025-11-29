@@ -13,6 +13,7 @@ import {
   Space,
   Alert,
   Typography,
+  Grid,
 } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { Status, Wrapper } from "@googlemaps/react-wrapper";
@@ -44,6 +45,7 @@ import {
 } from "../../services/branch.service";
 
 const { Title, Text } = Typography;
+const { useBreakpoint } = Grid;
 
 interface Branch {
   id: string;
@@ -98,6 +100,7 @@ export default function Branches() {
   const [form] = Form.useForm();
   const values = Form.useWatch([], form);
   const value: any = useContext(ShamContext);
+  const screens = useBreakpoint();
 
   // Handle branch location view
   const handleBranchLocation = (id: string) => {
@@ -112,15 +115,49 @@ export default function Branches() {
       .finally(() => setLoading(false));
   };
 
-  // Table columns
+  // Mobile-friendly table columns
   const columns: TableColumnsType<Branch> = [
     {
       title: "نام غرفه",
       dataIndex: "name",
-      render: (name: string) => (
-        <div className="flex items-center gap-2">
-          <BiStore className="text-blue-500" />
-          <Text strong>{name}</Text>
+      render: (name: string, record: Branch) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <BiStore className="text-blue-500 text-sm" />
+            <Text strong className="text-xs sm:text-sm">
+              {name}
+            </Text>
+          </div>
+          {screens.xs && (
+            <div className="flex flex-col gap-1 mt-1">
+              <div className="flex items-center gap-1 text-gray-500 text-xs">
+                <BiUser className="text-xs" />
+                <span>
+                  {record.first_name} {record.last_name}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-gray-500 text-xs">
+                <BiPhone className="text-xs" />
+                <span>{record.phone_number}</span>
+              </div>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {(record.categories || []).slice(0, 2).map((cat) => (
+                  <Tag
+                    key={cat.id}
+                    color="blue"
+                    className="text-xs rounded-full px-1 py-0"
+                  >
+                    {cat.title}
+                  </Tag>
+                ))}
+                {(record.categories || []).length > 2 && (
+                  <Tag className="text-xs rounded-full px-1 py-0">
+                    +{(record.categories || []).length - 2}
+                  </Tag>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       ),
     },
@@ -130,18 +167,19 @@ export default function Branches() {
       render: (_: any, record: Branch) => (
         <div className="flex items-center gap-1 text-gray-600">
           <BiUser className="text-sm" />
-          <span>
+          <span className="text-xs sm:text-sm">
             {record.first_name} {record.last_name}
           </span>
         </div>
       ),
+      responsive: ["sm"],
     },
     {
       title: "دسته‌بندی",
       dataIndex: "categories",
       render: (categories: Array<{ id: string; title: string }>) => (
         <div className="flex flex-wrap gap-1">
-          {(categories || []).map((cat) => (
+          {(categories || []).slice(0, 3).map((cat) => (
             <Tag
               key={cat.id}
               color="blue"
@@ -150,8 +188,14 @@ export default function Branches() {
               {cat.title}
             </Tag>
           ))}
+          {(categories || []).length > 3 && (
+            <Tag className="text-xs rounded-full px-2 py-1">
+              +{(categories || []).length - 3}
+            </Tag>
+          )}
         </div>
       ),
+      responsive: ["md"],
     },
     {
       title: "تماس",
@@ -159,33 +203,36 @@ export default function Branches() {
       render: (phone: string) => (
         <div className="flex items-center gap-1 text-gray-600">
           <BiPhone className="text-sm" />
-          <span>{phone}</span>
+          <span className="text-xs sm:text-sm">{phone}</span>
         </div>
       ),
+      responsive: ["lg"],
     },
     {
       title: "آدرس",
       dataIndex: "address",
       render: (address: string) => (
-        <Text className="text-xs" ellipsis={{ tooltip: address }}>
+        <Text className="text-xs sm:text-sm" ellipsis={{ tooltip: address }}>
           {address}
         </Text>
       ),
+      responsive: ["lg"],
     },
     {
       title: "عملیات",
       dataIndex: "actions",
-      width: 300,
+      width: screens.xs ? 120 : 300,
       render: (_: any, record: Branch) => (
-        <Space direction="horizontal" size="small">
+        <Space direction="horizontal" size="small" wrap={screens.xs}>
           <ConfigProvider theme={{ token: { colorPrimary: "#1890ff" } }}>
             <Button
               type="primary"
               size="small"
               icon={<BiPencil />}
               onClick={() => handleEdit(record)}
+              className={screens.xs ? "!text-xs !px-2" : ""}
             >
-              ویرایش
+              {screens.xs ? "" : "ویرایش"}
             </Button>
           </ConfigProvider>
 
@@ -196,8 +243,9 @@ export default function Branches() {
               icon={<BiMap />}
               onClick={() => handleBranchLocation(record.id)}
               loading={loading}
+              className={screens.xs ? "!text-xs !px-2" : ""}
             >
-              مکان
+              {screens.xs ? "" : "مکان"}
             </Button>
           </ConfigProvider>
 
@@ -209,8 +257,13 @@ export default function Branches() {
               cancelText="خیر"
               onConfirm={() => handleDelete(record.id)}
             >
-              <Button type="primary" size="small" icon={<RxCross2 />}>
-                حذف
+              <Button
+                type="primary"
+                size="small"
+                icon={<RxCross2 />}
+                className={screens.xs ? "!text-xs !px-2" : ""}
+              >
+                {screens.xs ? "" : "حذف"}
               </Button>
             </Popconfirm>
           </ConfigProvider>
@@ -357,24 +410,30 @@ export default function Branches() {
   );
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <Card className="mb-6 shadow-sm">
-        <div className="flex justify-between items-center">
-          <div>
-            <Title level={2} className="!mb-2">
+    <div className="p-4 sm:p-6">
+      {/* Header - Responsive */}
+      <Card className="mb-4 sm:mb-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="text-center sm:text-right">
+            <Title
+              level={screens.xs ? 3 : 2}
+              className="!mb-2 !text-lg sm:!text-2xl"
+            >
               <BiStore className="inline mr-2" />
               مدیریت غرفه‌ها
             </Title>
-            <Text type="secondary">مدیریت و تنظیمات غرفه‌های فروشگاهی</Text>
+            <Text type="secondary" className="text-xs sm:text-sm">
+              مدیریت و تنظیمات غرفه‌های فروشگاهی
+            </Text>
           </div>
           <ConfigProvider theme={{ token: { colorPrimary: "#10b981" } }}>
             <Button
               type="primary"
-              size="large"
+              size={screens.xs ? "middle" : "large"}
               icon={<BiPlus />}
               onClick={showModal}
-              className="h-12 px-6"
+              className="w-full sm:w-auto h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base"
+              block={screens.xs}
             >
               افزودن غرفه جدید
             </Button>
@@ -385,10 +444,12 @@ export default function Branches() {
       {/* Branches Table */}
       <Card
         title={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <BiStore />
-            <span>لیست غرفه‌ها</span>
-            <Tag color="blue">{branches.length} غرفه</Tag>
+            <span className="text-sm sm:text-base">لیست غرفه‌ها</span>
+            <Tag color="blue" className="text-xs">
+              {branches.length} غرفه
+            </Tag>
           </div>
         }
         className="shadow-sm"
@@ -399,25 +460,30 @@ export default function Branches() {
           loading={loading}
           pagination={{
             pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
+            showSizeChanger: screens.sm,
+            showQuickJumper: screens.sm,
+            simple: screens.xs,
+            size: screens.xs ? "small" : "default",
           }}
-          scroll={{ x: 1000 }}
+          scroll={{ x: screens.xs ? 600 : 1000 }}
+          size={screens.xs ? "small" : "middle"}
+          className="responsive-table"
         />
       </Card>
 
       {/* Location Modal */}
       <Modal
         open={locationModal}
-        width={800}
+        width={screens.xs ? "95%" : 800}
         onCancel={() => setLocationModal(false)}
         footer={null}
         title={
           <div className="flex items-center gap-2">
             <BiMap className="text-blue-500" />
-            <span>موقعیت غرفه روی نقشه</span>
+            <span className="text-sm sm:text-base">موقعیت غرفه روی نقشه</span>
           </div>
         }
+        className="responsive-modal"
       >
         <Wrapper
           apiKey={"AIzaSyAtOnE4vyEvfJxG268WbsUlK9EphptwyWo"}
@@ -435,14 +501,18 @@ export default function Branches() {
       <Modal
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
-        width={1000}
+        width={screens.xs ? "95%" : screens.sm ? 800 : 1000}
         footer={null}
         title={
           <div className="flex items-center gap-2">
             <BiStore className="text-green-500" />
-            <span>{isEdit ? "ویرایش غرفه" : "افزودن غرفه جدید"}</span>
+            <span className="text-sm sm:text-base">
+              {isEdit ? "ویرایش غرفه" : "افزودن غرفه جدید"}
+            </span>
           </div>
         }
+        className="responsive-modal"
+        style={{ top: screens.xs ? 16 : 20 }}
       >
         <div className="max-h-[70vh] overflow-y-auto pr-2">
           <Form
@@ -453,7 +523,7 @@ export default function Branches() {
           >
             {/* Basic Information */}
             <Card title="اطلاعات اصلی" size="small">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <Form.Item
                   name="first_name"
                   label="نام مسئول"
@@ -465,7 +535,10 @@ export default function Branches() {
                     },
                   ]}
                 >
-                  <Input placeholder="مثال: محمد" size="large" />
+                  <Input
+                    placeholder="مثال: محمد"
+                    size={screens.xs ? "middle" : "large"}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -482,7 +555,10 @@ export default function Branches() {
                     },
                   ]}
                 >
-                  <Input placeholder="مثال: محمدی" size="large" />
+                  <Input
+                    placeholder="مثال: محمدی"
+                    size={screens.xs ? "middle" : "large"}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -490,7 +566,10 @@ export default function Branches() {
                   label="نام غرفه"
                   rules={[{ required: true, message: "نام غرفه اجباری است" }]}
                 >
-                  <Input placeholder="مثال: غرفه میرداماد" size="large" />
+                  <Input
+                    placeholder="مثال: غرفه میرداماد"
+                    size={screens.xs ? "middle" : "large"}
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -503,7 +582,10 @@ export default function Branches() {
                     },
                   ]}
                 >
-                  <Input placeholder="مثال: 021221122" size="large" />
+                  <Input
+                    placeholder="مثال: 021221122"
+                    size={screens.xs ? "middle" : "large"}
+                  />
                 </Form.Item>
               </div>
 
@@ -513,7 +595,7 @@ export default function Branches() {
                 rules={[{ required: true, message: "آدرس اجباری است" }]}
               >
                 <TextArea
-                  rows={3}
+                  rows={screens.xs ? 2 : 3}
                   placeholder="آدرس کامل غرفه را وارد کنید..."
                   className="resize-none"
                 />
@@ -535,19 +617,19 @@ export default function Branches() {
                   onChange={handleCategoryChange}
                   treeData={categories}
                   treeNodeFilterProp="title"
-                  size="large"
+                  size={screens.xs ? "middle" : "large"}
                 />
               </Form.Item>
             </Card>
 
             {/* Social Media */}
             <Card title="شبکه‌های اجتماعی" size="small">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <Form.Item name="instagram" label="اینستاگرام">
                   <Input
                     prefix={<RxInstagramLogo className="text-pink-500" />}
                     placeholder="https://instagram.com/..."
-                    size="large"
+                    size={screens.xs ? "middle" : "large"}
                   />
                 </Form.Item>
 
@@ -555,7 +637,7 @@ export default function Branches() {
                   <Input
                     prefix={<FaWhatsapp className="text-green-500" />}
                     placeholder="09123456789"
-                    size="large"
+                    size={screens.xs ? "middle" : "large"}
                   />
                 </Form.Item>
 
@@ -563,7 +645,7 @@ export default function Branches() {
                   <Input
                     prefix={<RxLinkedinLogo className="text-blue-600" />}
                     placeholder="https://linkedin.com/..."
-                    size="large"
+                    size={screens.xs ? "middle" : "large"}
                   />
                 </Form.Item>
 
@@ -571,7 +653,7 @@ export default function Branches() {
                   <Input
                     prefix={<FaYoutube className="text-red-500" />}
                     placeholder="https://youtube.com/..."
-                    size="large"
+                    size={screens.xs ? "middle" : "large"}
                   />
                 </Form.Item>
 
@@ -579,7 +661,7 @@ export default function Branches() {
                   <Input
                     prefix={<FaFacebook className="text-blue-500" />}
                     placeholder="https://facebook.com/..."
-                    size="large"
+                    size={screens.xs ? "middle" : "large"}
                   />
                 </Form.Item>
 
@@ -587,7 +669,7 @@ export default function Branches() {
                   <Input
                     prefix={<RxTwitterLogo className="text-gray-700" />}
                     placeholder="https://twitter.com/..."
-                    size="large"
+                    size={screens.xs ? "middle" : "large"}
                   />
                 </Form.Item>
               </div>
@@ -600,7 +682,7 @@ export default function Branches() {
                 description="برای انتخاب موقعیت، روی نقشه کلیک کنید"
                 type="info"
                 showIcon
-                className="mb-4"
+                className="mb-4 text-xs sm:text-sm"
               />
               <Wrapper
                 apiKey={"AIzaSyAtOnE4vyEvfJxG268WbsUlK9EphptwyWo"}
@@ -622,10 +704,12 @@ export default function Branches() {
                 <Button
                   htmlType="submit"
                   type="primary"
-                  size="large"
+                  size={screens.xs ? "middle" : "large"}
                   disabled={!submittable || !isMapTouched}
                   block
-                  className="h-12 text-lg"
+                  className={`${
+                    screens.xs ? "h-10 text-base" : "h-12 text-lg"
+                  }`}
                 >
                   {isEdit ? "ویرایش غرفه" : "افزودن غرفه"}
                 </Button>
