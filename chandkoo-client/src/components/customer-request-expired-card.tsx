@@ -163,7 +163,7 @@ export default function CustomerRequestExpireCard({
                 lineHeight: "1.7",
               }}
             >
-              {request.description}
+              {request.inquiry_description}
             </Paragraph>
           </div>
 

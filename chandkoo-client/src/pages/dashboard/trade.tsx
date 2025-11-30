@@ -409,8 +409,8 @@ export default function DashboardTrades() {
     if (screens.xl) return "w-1/5";
     if (screens.lg) return "w-1/4";
     if (screens.md) return "w-1/3";
-    if (screens.sm) return "w-1/2";
-    return "w-1/2";
+    if (screens.sm) return "w-1/1";
+    return "w-1/1";
   };
 
   const tabItems = [

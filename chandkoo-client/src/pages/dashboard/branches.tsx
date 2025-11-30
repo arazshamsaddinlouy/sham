@@ -14,6 +14,7 @@ import {
   Alert,
   Typography,
   Grid,
+  Spin,
 } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { Status, Wrapper } from "@googlemaps/react-wrapper";
@@ -96,6 +97,11 @@ export default function Branches() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [locationLoadingId, setLocationLoadingId] = useState<string | null>(
+    null
+  );
 
   const [form] = Form.useForm();
   const values = Form.useWatch([], form);
@@ -103,16 +109,17 @@ export default function Branches() {
   const screens = useBreakpoint();
 
   // Handle branch location view
-  const handleBranchLocation = (id: string) => {
-    setLoading(true);
-    getBranchLocation(id)
-      .then((data) => {
-        if (data.status === 200) {
-          setLocationLatLng({ lat: data.data.lat, lng: data.data.lng });
-          setLocationModal(true);
-        }
-      })
-      .finally(() => setLoading(false));
+  const handleBranchLocation = async (id: string) => {
+    setLocationLoadingId(id);
+    try {
+      const data = await getBranchLocation(id);
+      if (data.status === 200) {
+        setLocationLatLng({ lat: data.data.lat, lng: data.data.lng });
+        setLocationModal(true);
+      }
+    } finally {
+      setLocationLoadingId(null);
+    }
   };
 
   // Mobile-friendly table columns
@@ -242,7 +249,7 @@ export default function Branches() {
               size="small"
               icon={<BiMap />}
               onClick={() => handleBranchLocation(record.id)}
-              loading={loading}
+              loading={locationLoadingId === record.id}
               className={screens.xs ? "!text-xs !px-2" : ""}
             >
               {screens.xs ? "" : "مکان"}
@@ -271,11 +278,6 @@ export default function Branches() {
       ),
     },
   ];
-
-  // Handle category selection
-  const handleCategoryChange = (newValue: string[]) => {
-    setSelectedCategories(newValue);
-  };
 
   // Fetch branches
   const fetchBranches = () => {
@@ -320,19 +322,22 @@ export default function Branches() {
       .validateFields({ validateOnly: true })
       .then(() => setIsSubmittable(true))
       .catch(() => setIsSubmittable(false));
-  }, [form, values]);
+  }, [form, values, selectedCategories]);
 
   // Handle edit
-  const handleEdit = (record: Branch) => {
-    setIsMapTouched(true);
+  const handleEdit = async (record: Branch) => {
+    setModalLoading(true);
     setIsEdit(record.id);
-    setSelectedCategories(
-      record.categoryId ? record.categoryId.split(",") : []
-    );
 
-    getBranchLocation(record.id).then((data) => {
+    // Convert categoryId string to array for TreeSelect
+    const categoryArray = record.categoryId ? record.categoryId.split(",") : [];
+    setSelectedCategories(categoryArray);
+
+    try {
+      const data = await getBranchLocation(record.id);
       if (data.status === 200) {
         setLatLng({ lat: data.data.lat, lng: data.data.lng });
+        setIsMapTouched(true);
 
         // Set form values with correct field names
         form.setFieldsValue({
@@ -347,10 +352,13 @@ export default function Branches() {
           youtube: record.youtube,
           facebook: record.facebook,
           twitter: record.twitter,
+          categoryId: categoryArray, // Set as array for TreeSelect
         });
         setIsModalOpen(true);
       }
-    });
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   // Handle delete
@@ -367,30 +375,55 @@ export default function Branches() {
   };
 
   // Handle form submit
-  const handleSubmit = () => {
-    form.validateFields().then((values) => {
+  const handleSubmit = async () => {
+    try {
+      setSubmitLoading(true);
+      const values = await form.validateFields();
+
+      // Prepare payload - send categoryId as array
       const payload = {
         ...values,
         lat: latLng.lat,
         lng: latLng.lng,
-        categoryId: selectedCategories.join(","),
+        categoryId: selectedCategories.join(","), // Send as array, backend will handle it
       };
+
+      console.log("Submitting branch data:", payload);
 
       const request = isEdit
         ? editBranch({ ...payload, id: isEdit })
         : addBranch(payload);
 
-      request.then((data) => {
-        if (data.status === 200) {
-          setIsModalOpen(false);
+      const data = await request;
+
+      if (data.status === 200) {
+        setIsModalOpen(false);
+
+        // Force refresh the branches list with a small delay to ensure backend has updated
+        setTimeout(() => {
           fetchBranches();
-          value.setNotif({
-            type: "success",
-            description: `غرفه ${isEdit ? "ویرایش" : "افزوده"} شد`,
-          });
-        }
+        }, 100);
+
+        value.setNotif({
+          type: "success",
+          description: `غرفه ${isEdit ? "ویرایش" : "افزوده"} شد`,
+        });
+
+        // Reset form and states
+        form.resetFields();
+        setSelectedCategories([]);
+        setIsMapTouched(false);
+        setIsEdit(undefined);
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      value.setNotif({
+        type: "error",
+        description: "خطا در ذخیره‌سازی غرفه",
       });
-    });
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   // Show modal for new branch
@@ -401,6 +434,15 @@ export default function Branches() {
     setSelectedCategories([]);
     setIsEdit(undefined);
     setIsModalOpen(true);
+  };
+
+  // Close modal and reset states
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSubmitLoading(false);
+    setModalLoading(false);
+    form.resetFields();
+    setSelectedCategories([]);
   };
 
   const renderMap = (status: Status) => (
@@ -500,7 +542,7 @@ export default function Branches() {
       {/* Add/Edit Branch Modal */}
       <Modal
         open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={handleModalClose}
         width={screens.xs ? "95%" : screens.sm ? 800 : 1000}
         footer={null}
         title={
@@ -513,210 +555,246 @@ export default function Branches() {
         }
         className="responsive-modal"
         style={{ top: screens.xs ? 16 : 20 }}
+        confirmLoading={modalLoading}
       >
-        <div className="max-h-[70vh] overflow-y-auto pr-2">
-          <Form
-            form={form}
-            layout="vertical"
-            className="space-y-4"
-            onFinish={handleSubmit}
-          >
-            {/* Basic Information */}
-            <Card title="اطلاعات اصلی" size="small">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <Spin spinning={modalLoading} tip="در حال بارگذاری...">
+          <div className="max-h-[70vh] overflow-y-auto pr-2">
+            <Form
+              form={form}
+              layout="vertical"
+              className="space-y-4"
+              onFinish={handleSubmit}
+            >
+              {/* Basic Information */}
+              <Card title="اطلاعات اصلی" size="small">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                  <Form.Item
+                    name="first_name"
+                    label="نام مسئول"
+                    rules={[
+                      { required: true, message: "نام مسئول اجباری است" },
+                      {
+                        pattern: /^[\u0600-\u06FF\s]+$/,
+                        message: "نام مسئول صحیح نیست",
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder="مثال: محمد"
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="last_name"
+                    label="نام خانوادگی مسئول"
+                    rules={[
+                      {
+                        required: true,
+                        message: "نام خانوادگی مسئول اجباری است",
+                      },
+                      {
+                        pattern: /^[\u0600-\u06FF\s]+$/,
+                        message: "نام خانوادگی مسئول صحیح نیست",
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder="مثال: محمدی"
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="name"
+                    label="نام غرفه"
+                    rules={[{ required: true, message: "نام غرفه اجباری است" }]}
+                  >
+                    <Input
+                      placeholder="مثال: غرفه میرداماد"
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="telephone"
+                    label="شماره تلفن ثابت"
+                    rules={[
+                      {
+                        pattern: /^\d+$/,
+                        message: "شماره تلفن ثابت فقط شامل رقم باید باشد",
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder="مثال: 021221122"
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+                </div>
+
                 <Form.Item
-                  name="first_name"
-                  label="نام مسئول"
-                  rules={[
-                    { required: true, message: "نام مسئول اجباری است" },
-                    {
-                      pattern: /^[\u0600-\u06FF\s]+$/,
-                      message: "نام مسئول صحیح نیست",
-                    },
-                  ]}
+                  name="address"
+                  label="آدرس"
+                  rules={[{ required: true, message: "آدرس اجباری است" }]}
                 >
-                  <Input
-                    placeholder="مثال: محمد"
-                    size={screens.xs ? "middle" : "large"}
+                  <TextArea
+                    rows={screens.xs ? 2 : 3}
+                    placeholder="آدرس کامل غرفه را وارد کنید..."
+                    className="resize-none"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  name="last_name"
-                  label="نام خانوادگی مسئول"
+                  name="categoryId"
+                  label="دسته‌بندی"
                   rules={[
                     {
                       required: true,
-                      message: "نام خانوادگی مسئول اجباری است",
-                    },
-                    {
-                      pattern: /^[\u0600-\u06FF\s]+$/,
-                      message: "نام خانوادگی مسئول صحیح نیست",
-                    },
-                  ]}
-                >
-                  <Input
-                    placeholder="مثال: محمدی"
-                    size={screens.xs ? "middle" : "large"}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="name"
-                  label="نام غرفه"
-                  rules={[{ required: true, message: "نام غرفه اجباری است" }]}
-                >
-                  <Input
-                    placeholder="مثال: غرفه میرداماد"
-                    size={screens.xs ? "middle" : "large"}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="telephone"
-                  label="شماره تلفن ثابت"
-                  rules={[
-                    {
-                      pattern: /^\d+$/,
-                      message: "شماره تلفن ثابت فقط شامل رقم باید باشد",
+                      message: "دسته‌بندی اجباری است",
+                      validator: () => {
+                        if (
+                          !selectedCategories ||
+                          selectedCategories.length === 0
+                        ) {
+                          return Promise.reject(
+                            new Error("دسته‌بندی اجباری است")
+                          );
+                        }
+                        return Promise.resolve();
+                      },
                     },
                   ]}
                 >
-                  <Input
-                    placeholder="مثال: 021221122"
+                  <TreeSelect
+                    showSearch
+                    treeCheckable={false}
+                    value={
+                      selectedCategories.length > 0
+                        ? selectedCategories[0]
+                        : undefined
+                    }
+                    dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
+                    placeholder="یک دسته‌بندی انتخاب کنید"
+                    allowClear
+                    onChange={(value) => {
+                      if (value) {
+                        setSelectedCategories([value]);
+                      } else {
+                        setSelectedCategories([]);
+                      }
+                    }}
+                    treeData={categories.map((category) => ({
+                      ...category,
+                      disabled: true, // Disable root elements
+                      children: category.children?.map((child) => ({
+                        ...child,
+                        disabled: false, // Enable child elements
+                      })),
+                    }))}
+                    treeNodeFilterProp="title"
                     size={screens.xs ? "middle" : "large"}
                   />
                 </Form.Item>
-              </div>
+              </Card>
 
-              <Form.Item
-                name="address"
-                label="آدرس"
-                rules={[{ required: true, message: "آدرس اجباری است" }]}
-              >
-                <TextArea
-                  rows={screens.xs ? 2 : 3}
-                  placeholder="آدرس کامل غرفه را وارد کنید..."
-                  className="resize-none"
+              {/* Social Media */}
+              <Card title="شبکه‌های اجتماعی" size="small">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                  <Form.Item name="instagram" label="اینستاگرام">
+                    <Input
+                      prefix={<RxInstagramLogo className="text-pink-500" />}
+                      placeholder="https://instagram.com/..."
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+
+                  <Form.Item name="whatsapp" label="واتس‌آپ">
+                    <Input
+                      prefix={<FaWhatsapp className="text-green-500" />}
+                      placeholder="09123456789"
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+
+                  <Form.Item name="linkedin" label="لینکداین">
+                    <Input
+                      prefix={<RxLinkedinLogo className="text-blue-600" />}
+                      placeholder="https://linkedin.com/..."
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+
+                  <Form.Item name="youtube" label="یوتیوب">
+                    <Input
+                      prefix={<FaYoutube className="text-red-500" />}
+                      placeholder="https://youtube.com/..."
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+
+                  <Form.Item name="facebook" label="فیس‌بوک">
+                    <Input
+                      prefix={<FaFacebook className="text-blue-500" />}
+                      placeholder="https://facebook.com/..."
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+
+                  <Form.Item name="twitter" label="توییتر (X)">
+                    <Input
+                      prefix={<RxTwitterLogo className="text-gray-700" />}
+                      placeholder="https://twitter.com/..."
+                      size={screens.xs ? "middle" : "large"}
+                    />
+                  </Form.Item>
+                </div>
+              </Card>
+
+              {/* Location */}
+              <Card title="موقعیت روی نقشه" size="small">
+                <Alert
+                  message="مکان غرفه را روی نقشه مشخص کنید"
+                  description="برای انتخاب موقعیت، روی نقشه کلیک کنید"
+                  type="info"
+                  showIcon
+                  className="mb-4 text-xs sm:text-sm"
                 />
-              </Form.Item>
-
-              <Form.Item
-                name="categoryId"
-                label="دسته‌بندی"
-                rules={[{ required: true, message: "دسته‌بندی اجباری است" }]}
-              >
-                <TreeSelect
-                  multiple
-                  showSearch
-                  treeCheckable
-                  value={selectedCategories}
-                  dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
-                  placeholder="دسته‌بندی‌ها را انتخاب کنید"
-                  allowClear
-                  onChange={handleCategoryChange}
-                  treeData={categories}
-                  treeNodeFilterProp="title"
-                  size={screens.xs ? "middle" : "large"}
-                />
-              </Form.Item>
-            </Card>
-
-            {/* Social Media */}
-            <Card title="شبکه‌های اجتماعی" size="small">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                <Form.Item name="instagram" label="اینستاگرام">
-                  <Input
-                    prefix={<RxInstagramLogo className="text-pink-500" />}
-                    placeholder="https://instagram.com/..."
-                    size={screens.xs ? "middle" : "large"}
-                  />
-                </Form.Item>
-
-                <Form.Item name="whatsapp" label="واتس‌آپ">
-                  <Input
-                    prefix={<FaWhatsapp className="text-green-500" />}
-                    placeholder="09123456789"
-                    size={screens.xs ? "middle" : "large"}
-                  />
-                </Form.Item>
-
-                <Form.Item name="linkedin" label="لینکداین">
-                  <Input
-                    prefix={<RxLinkedinLogo className="text-blue-600" />}
-                    placeholder="https://linkedin.com/..."
-                    size={screens.xs ? "middle" : "large"}
-                  />
-                </Form.Item>
-
-                <Form.Item name="youtube" label="یوتیوب">
-                  <Input
-                    prefix={<FaYoutube className="text-red-500" />}
-                    placeholder="https://youtube.com/..."
-                    size={screens.xs ? "middle" : "large"}
-                  />
-                </Form.Item>
-
-                <Form.Item name="facebook" label="فیس‌بوک">
-                  <Input
-                    prefix={<FaFacebook className="text-blue-500" />}
-                    placeholder="https://facebook.com/..."
-                    size={screens.xs ? "middle" : "large"}
-                  />
-                </Form.Item>
-
-                <Form.Item name="twitter" label="توییتر (X)">
-                  <Input
-                    prefix={<RxTwitterLogo className="text-gray-700" />}
-                    placeholder="https://twitter.com/..."
-                    size={screens.xs ? "middle" : "large"}
-                  />
-                </Form.Item>
-              </div>
-            </Card>
-
-            {/* Location */}
-            <Card title="موقعیت روی نقشه" size="small">
-              <Alert
-                message="مکان غرفه را روی نقشه مشخص کنید"
-                description="برای انتخاب موقعیت، روی نقشه کلیک کنید"
-                type="info"
-                showIcon
-                className="mb-4 text-xs sm:text-sm"
-              />
-              <Wrapper
-                apiKey={"AIzaSyAtOnE4vyEvfJxG268WbsUlK9EphptwyWo"}
-                render={renderMap}
-              >
-                <MapComponent
-                  initialLatLng={latLng}
-                  handleLatLngChange={(lat: number, lng: number) => {
-                    setLatLng({ lat, lng });
-                    setIsMapTouched(true);
-                  }}
-                />
-              </Wrapper>
-            </Card>
-
-            {/* Submit Button */}
-            <Form.Item className="mb-0">
-              <ConfigProvider theme={{ token: { colorPrimary: "#10b981" } }}>
-                <Button
-                  htmlType="submit"
-                  type="primary"
-                  size={screens.xs ? "middle" : "large"}
-                  disabled={!submittable || !isMapTouched}
-                  block
-                  className={`${
-                    screens.xs ? "h-10 text-base" : "h-12 text-lg"
-                  }`}
+                <Wrapper
+                  apiKey={"AIzaSyAtOnE4vyEvfJxG268WbsUlK9EphptwyWo"}
+                  render={renderMap}
                 >
-                  {isEdit ? "ویرایش غرفه" : "افزودن غرفه"}
-                </Button>
-              </ConfigProvider>
-            </Form.Item>
-          </Form>
-        </div>
+                  <MapComponent
+                    initialLatLng={latLng}
+                    handleLatLngChange={(lat: number, lng: number) => {
+                      setLatLng({ lat, lng });
+                      setIsMapTouched(true);
+                    }}
+                  />
+                </Wrapper>
+              </Card>
+
+              {/* Submit Button */}
+              <Form.Item className="mb-0">
+                <ConfigProvider theme={{ token: { colorPrimary: "#10b981" } }}>
+                  <Button
+                    htmlType="submit"
+                    type="primary"
+                    size={screens.xs ? "middle" : "large"}
+                    disabled={!submittable || !isMapTouched}
+                    loading={submitLoading}
+                    block
+                    className={`${
+                      screens.xs ? "h-10 text-base" : "h-12 text-lg"
+                    }`}
+                  >
+                    {isEdit ? "ویرایش غرفه" : "افزودن غرفه"}
+                  </Button>
+                </ConfigProvider>
+              </Form.Item>
+            </Form>
+          </div>
+        </Spin>
       </Modal>
     </div>
   );

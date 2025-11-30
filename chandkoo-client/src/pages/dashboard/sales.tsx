@@ -77,7 +77,7 @@ function SaleCard({
   const isOwner = currentUserId && sale.sellerId === currentUserId;
 
   return (
-    <div className="w-full flex flex-col md:flex-row md:items-start md:justify-between gap-4 p-4 border rounded-lg bg-white">
+    <div className="w-full flex flex-col md:flex-row gap-4 p-4 border rounded-lg bg-white">
       <div className="flex-1 w-full">
         <SaleItem sale={sale} />
       </div>
@@ -242,9 +242,7 @@ function SaleModal({ visible, onCancel, onCreated }: SaleModalProps) {
       onCancel={handleCancel}
       footer={null}
       width={700}
-      centered
-      className="rtl-modal"
-      wrapClassName="max-w-[95%]"
+      style={{ top: 20 }}
     >
       <Form
         form={form}
@@ -503,9 +501,7 @@ function CommentsModal({
       onCancel={onClose}
       footer={null}
       width={600}
-      centered
-      className="rtl-modal"
-      wrapClassName="max-w-[95%]"
+      style={{ top: 20 }}
     >
       <Divider />
       <div className="text-right">
@@ -606,9 +602,7 @@ function AddCommentModal({
       onCancel={onClose}
       footer={null}
       width={500}
-      centered
-      className="rtl-modal"
-      wrapClassName="max-w-[95%]"
+      style={{ top: 20 }}
     >
       <Form
         form={form}

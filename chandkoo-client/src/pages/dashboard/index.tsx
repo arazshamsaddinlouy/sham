@@ -228,7 +228,10 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="flex w-full min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 pt-[0px]">
+    <div
+      id="main-parent"
+      className="flex w-full min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 pt-[0px]"
+    >
       {/* Desktop Sidebar */}
       {!isMobile && (
         <div

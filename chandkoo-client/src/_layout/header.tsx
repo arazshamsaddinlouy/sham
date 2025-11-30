@@ -122,24 +122,25 @@ export default function Header() {
         <div
           className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
           onClick={() => {
-            navigate("/dashboard/branches");
+            navigate("/dashboard/packages");
             setUserMenuOpen(false);
           }}
         >
           <ProductOutlined className="text-green-600 text-lg" />
           <div className="font-medium text-gray-900">خرید اشتراک</div>
         </div>
-
-        <div
-          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
-          onClick={() => {
-            navigate("/dashboard/branches");
-            setUserMenuOpen(false);
-          }}
-        >
-          <PlusOutlined className="text-purple-600 text-lg" />
-          <div className="font-medium text-gray-900">افزودن غرفه</div>
-        </div>
+        {user.customerType == "0" && (
+          <div
+            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+            onClick={() => {
+              navigate("/dashboard/branches");
+              setUserMenuOpen(false);
+            }}
+          >
+            <PlusOutlined className="text-purple-600 text-lg" />
+            <div className="font-medium text-gray-900">افزودن غرفه</div>
+          </div>
+        )}
 
         <div
           className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
@@ -185,72 +186,108 @@ export default function Header() {
   );
 
   const NotificationContent = () => (
-    <div className="w-96 max-h-96 overflow-y-auto">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900 text-lg">اعلان‌ها</h3>
-        <p className="text-gray-500 text-sm">آخرین فعالیت‌های سیستم</p>
+    <div className="w-full max-w-sm sm:max-w-md md:w-96 max-h-96 overflow-y-auto bg-white rounded-lg shadow-lg">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
+              اعلان‌ها
+            </h3>
+            <p className="text-gray-500 text-xs sm:text-sm mt-1">
+              آخرین فعالیت‌های سیستم
+            </p>
+          </div>
+          <Badge count={4} size="small" className="mr-2" />
+        </div>
       </div>
 
-      <div className="p-2 space-y-2">
+      {/* Notifications List */}
+      <div className="p-2 sm:p-3 space-y-2 max-h-64 overflow-y-auto">
         {[
           {
             type: "success",
             message: "فلانی تخمین قیمت ارسال کرد",
             time: "۲ دقیقه پیش",
+            read: false,
           },
           {
             type: "info",
             message: "قلانی پیامی برای شما ارسال کرد",
             time: "۱ ساعت پیش",
+            read: false,
           },
           {
             type: "warning",
             message: "تخمین قیمت فلانی به پایان رسید",
             time: "۲ ساعت پیش",
+            read: true,
           },
           {
             type: "error",
             message: "فعالیت شما در این کارتابل کم بود",
             time: "۱ روز پیش",
+            read: true,
           },
         ].map((notification, index) => (
           <div
             key={index}
-            className={`p-3 rounded-lg border-l-4 ${
+            className={`
+            p-3 rounded-lg border-l-4 transition-all duration-200 hover:shadow-md
+            ${!notification.read ? "bg-white" : "bg-gray-50"}
+            ${
               notification.type === "success"
-                ? "border-l-green-500 bg-green-50"
+                ? "border-l-green-500 hover:border-l-green-600"
                 : notification.type === "info"
-                ? "border-l-blue-500 bg-blue-50"
+                ? "border-l-blue-500 hover:border-l-blue-600"
                 : notification.type === "warning"
-                ? "border-l-amber-500 bg-amber-50"
-                : "border-l-red-500 bg-red-50"
-            }`}
+                ? "border-l-amber-500 hover:border-l-amber-600"
+                : "border-l-red-500 hover:border-l-red-600"
+            }
+          `}
           >
-            <div className="flex justify-between items-start">
-              <p className="text-gray-800 text-sm flex-1">
-                {notification.message}
-              </p>
+            <div className="flex justify-between items-start gap-2">
+              <div className="flex-1 min-w-0">
+                <p
+                  className={`
+                text-gray-800 text-sm leading-5 break-words
+                ${!notification.read ? "font-medium" : "font-normal"}
+              `}
+                >
+                  {notification.message}
+                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-gray-500 text-xs">{notification.time}</p>
+                  {!notification.read && (
+                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
+                  )}
+                </div>
+              </div>
               <Button
                 type="text"
                 size="small"
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <CloseOutlined />
-              </Button>
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1"
+                icon={<CloseOutlined className="text-xs" />}
+              />
             </div>
-            <p className="text-gray-500 text-xs mt-1">{notification.time}</p>
           </div>
         ))}
       </div>
 
-      <div className="p-3 border-t border-gray-200">
-        <Button type="link" block className="text-blue-600">
+      {/* Footer */}
+      <div className="p-3 border-t border-gray-200 bg-gray-50 sticky bottom-0">
+        <Button
+          type="link"
+          block
+          className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+          size="large"
+          onClick={() => navigate("/dashboard/notifications")}
+        >
           مشاهده همه اعلان‌ها
         </Button>
       </div>
     </div>
   );
-
   return (
     <>
       <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-50 shadow-sm">

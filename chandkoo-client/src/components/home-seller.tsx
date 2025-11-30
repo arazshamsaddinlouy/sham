@@ -107,7 +107,7 @@ function HomeSellerItem({ seller }: { seller: any }): JSX.Element {
                 {formatPersianNumber(seller.response_count.toLocaleString())}
               </span>
             </div>
-            <div className="text-xs text-gray-600 mt-1">فروش موفق</div>
+            <div className="text-xs text-gray-600 mt-1">پاسخ استعلام</div>
           </div>
           <div className="bg-blue-50 rounded-lg p-2">
             <div className="flex items-center justify-center gap-1 text-blue-700">

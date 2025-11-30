@@ -963,11 +963,17 @@ export default function Responses() {
                             <div
                               className={`rounded-2xl px-3 py-2 sm:px-4 sm:py-2 ${
                                 message.isMine
-                                  ? "bg-blue-500 text-white rounded-tr-none"
+                                  ? "bg-blue-500 !text-white rounded-tr-none"
                                   : "bg-gray-100 text-gray-800 rounded-tl-none"
                               }`}
                             >
-                              <Text className="text-sm">{message.message}</Text>
+                              <Text
+                                className={`text-sm ${
+                                  message.isMine ? "text-white" : ""
+                                }`}
+                              >
+                                {message.message}
+                              </Text>
                             </div>
 
                             {(message.attachedAudio ||

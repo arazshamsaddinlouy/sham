@@ -13,6 +13,8 @@ import {
   Tag,
   Space,
   Divider,
+  Input,
+  message as antMessage,
 } from "antd";
 import {
   DatePicker as DatePickerJalali,
@@ -24,13 +26,14 @@ import {
   IoImageOutline,
   IoCalendarOutline,
   IoTimeOutline,
+  IoDownload,
 } from "react-icons/io5";
 import {
   AiFillProduct,
   AiOutlineMessage,
   AiOutlineDollar,
 } from "react-icons/ai";
-import { BiMessage } from "react-icons/bi";
+import { BiSend } from "react-icons/bi";
 import { config } from "../services/config.service";
 import { useContext, useEffect, useState } from "react";
 import {
@@ -38,7 +41,6 @@ import {
   addPriceMessageResponse,
 } from "../services/inquiry-response.service";
 import { ShamContext } from "../App";
-import TextArea from "antd/es/input/TextArea";
 import FileUploader from "./file-uploader";
 import ImageUploader from "./image-uploader";
 import { Moment } from "moment";
@@ -190,132 +192,213 @@ export const FormPriceInquiry = ({
   );
 };
 
-export const FormSendMessage = ({
+export const ChatModal = ({
   request,
   refetch,
+  isOpen,
+  onClose,
 }: {
   request: any;
   refetch: Function;
+  isOpen: boolean;
+  onClose: () => void;
 }) => {
   const [form] = Form.useForm();
-  const values = Form.useWatch([], form);
+  const [message, setMessage] = useState<string>("");
   const [file, setFile] = useState<File | null>();
   const [image, setImage] = useState<File | null>();
-  const [isSubmittable, setIsSubmittable] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const value: any = useContext(ShamContext);
   const screens = useBreakpoint();
 
-  useEffect(() => {
-    form
-      .validateFields({ validateOnly: true })
-      .then(() => setIsSubmittable(true))
-      .catch(() => setIsSubmittable(false));
-  }, [form, values]);
+  const isMobile = !screens.md;
+  const isTablet = screens.md && !screens.lg;
 
   const handleSubmit = async () => {
+    if (!message.trim() && !file && !image) {
+      antMessage.warning("لطفا پیام یا فایل پیوستی وارد کنید");
+      return;
+    }
+
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append("message", form.getFieldValue("message"));
+      if (message.trim()) formData.append("message", message.trim());
       formData.append("requestId", request.id);
+      formData.append("isMine", "false");
       if (file) formData.append("audio", file);
       if (image) formData.append("image", image);
 
       const data = await addPriceMessageResponse(formData);
       if (data.status === 200) {
-        value.setNotif({
-          type: "success",
-          description: "پیام با موفقیت ارسال شد",
-        });
-        form.resetFields();
+        value.setNotif({ type: "success", description: "پیام ارسال شد" });
+        refetch();
+        setMessage("");
         setFile(null);
         setImage(null);
-        refetch();
+        form.resetFields();
       } else {
-        value.setNotif({ type: "error", description: "خطا در ارسال پیام" });
+        throw new Error("خطا در ثبت پیام");
       }
     } catch (error) {
-      value.setNotif({ type: "error", description: "خطا در ارسال پیام" });
+      value.setNotif({ type: "error", description: "خطا در ثبت پیام" });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    setMessage("");
+    setFile(null);
+    setImage(null);
+    form.resetFields();
+    onClose();
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-          <AiOutlineMessage className="text-blue-600 text-xl" />
-        </div>
-        <Title level={4} className="!mb-2">
-          ارسال پیام به خریدار
-        </Title>
-        <Text type="secondary">پیام خود را برای خریدار ارسال کنید</Text>
-      </div>
-
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-        className="w-full"
-      >
-        <Form.Item
-          name="message"
-          label="متن پیام"
-          rules={[
-            { required: true, message: "لطفا پیام خود را وارد کنید" },
-            { min: 10, message: "پیام باید حداقل ۱۰ کاراکتر باشد" },
-          ]}
+    <Modal
+      open={isOpen}
+      onCancel={handleCancel}
+      footer={null}
+      width={isMobile ? "95%" : isTablet ? 800 : 1000}
+      centered
+      styles={{
+        body: { padding: isMobile ? "16px" : "24px" },
+      }}
+    >
+      <Form form={form} layout="vertical">
+        <div
+          className="flex flex-col"
+          style={{ height: isMobile ? "70vh" : "60vh" }}
         >
-          <TextArea
-            rows={screens.xs ? 4 : 5}
-            maxLength={500}
-            showCount
-            className="resize-none rounded-lg"
-            placeholder="پیام خود را برای خریدار بنویسید..."
-            size={screens.xs ? "middle" : "large"}
-          />
-        </Form.Item>
+          <Title level={4} className="!mb-4">
+            مکاتبات - {request.title}
+          </Title>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="space-y-3">
-            <Text strong className="text-sm flex items-center gap-2">
-              <IoImageOutline className="text-purple-500" />
-              بارگذاری تصویر (اختیاری)
-            </Text>
-            <ImageUploader handleFile={setImage} />
+          {/* Messages List */}
+          <div className="flex-1 overflow-hidden mb-4">
+            <div className="h-full overflow-y-auto pr-2 space-y-3">
+              {(request.messages || []).map((message: any, index: number) => (
+                <div key={index} className="flex flex-col gap-2">
+                  <div
+                    className={`flex ${
+                      message.isMine ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`flex gap-2 sm:gap-3 max-w-[90%] sm:max-w-[80%] ${
+                        message.isMine ? "flex-row-reverse" : ""
+                      }`}
+                    >
+                      <Avatar
+                        size={isMobile ? "small" : "large"}
+                        className="flex-shrink-0"
+                      >
+                        {message.user?.first_name?.charAt(0) || "ف"}
+                      </Avatar>
+                      <div
+                        className={`flex flex-col ${
+                          message.isMine ? "items-end" : "items-start"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <Text strong className="text-xs sm:text-sm">
+                            {message.isMine ? "شما" : "خریدار"}
+                          </Text>
+                          <Text className="text-xs text-gray-500">
+                            {new Date(message.createdAt).toLocaleTimeString(
+                              "fa-IR"
+                            )}
+                          </Text>
+                        </div>
+                        <div
+                          className={`rounded-2xl px-3 py-2 sm:px-4 sm:py-2 ${
+                            message.isMine
+                              ? "bg-blue-500 text-white rounded-tr-none"
+                              : "bg-gray-100 text-gray-800 rounded-tl-none"
+                          }`}
+                        >
+                          <Text className="text-sm">{message.message}</Text>
+                        </div>
+
+                        {(message.attachedAudio || message.attachedImage) && (
+                          <Space size="small" className="mt-2">
+                            {message.attachedImage && (
+                              <a
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={`${config.BACKEND_IMAGE_URL}/api/${message.attachedImage}`}
+                                className="flex items-center gap-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded transition-colors"
+                              >
+                                <IoDownload />
+                                تصویر
+                              </a>
+                            )}
+                            {message.attachedAudio && (
+                              <a
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={`${config.BACKEND_IMAGE_URL}/${message.attachedAudio}`}
+                                className="flex items-center gap-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded transition-colors"
+                              >
+                                <IoDownload />
+                                فایل صوتی
+                              </a>
+                            )}
+                          </Space>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(!request.messages || request.messages.length === 0) && (
+                <div className="text-center py-8 text-gray-500">
+                  <AiOutlineMessage className="text-4xl mx-auto mb-2 opacity-50" />
+                  <Text>هنوز پیامی ارسال نشده است</Text>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="space-y-3">
-            <Text strong className="text-sm flex items-center gap-2">
-              <BiMessage className="text-orange-500" />
-              بارگذاری فایل صوتی (اختیاری)
-            </Text>
-            <FileUploader handleFile={setFile} />
-          </div>
+
+          {/* Message Input */}
+          <Form.Item className="mb-0">
+            <div className="flex gap-2 flex-col sm:flex-row">
+              <div className="flex gap-2 flex-shrink-0 order-2 sm:order-1">
+                <ImageUploader handleFile={setImage} />
+                <FileUploader handleFile={setFile} />
+              </div>
+              <Input.TextArea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="پیام خود را وارد کنید..."
+                rows={isMobile ? 2 : 3}
+                className="flex-1 resize-none order-1 sm:order-2"
+                size={isMobile ? "small" : "middle"}
+                onPressEnter={(e) => {
+                  if (e.shiftKey) return;
+                  e.preventDefault();
+                  handleSubmit();
+                }}
+              />
+              <Button
+                type="primary"
+                icon={<BiSend className="rotate-180" />}
+                onClick={handleSubmit}
+                loading={loading}
+                disabled={!message.trim() && !file && !image}
+                className="flex-shrink-0 h-auto px-3 sm:px-4 order-3"
+                size={isMobile ? "small" : "middle"}
+              >
+                {isMobile ? "" : "ارسال"}
+              </Button>
+            </div>
+          </Form.Item>
         </div>
-
-        <ConfigProvider theme={{ token: { colorPrimary: "#3b82f6" } }}>
-          <Button
-            htmlType="submit"
-            type="primary"
-            disabled={!isSubmittable || loading || !request.has_message}
-            loading={loading}
-            className="w-full rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 h-12 text-lg"
-            size="large"
-            icon={<AiOutlineMessage />}
-          >
-            {loading ? "در حال ارسال..." : "ارسال پیام"}
-          </Button>
-        </ConfigProvider>
-
-        {!request.has_message && (
-          <div className="text-center text-amber-600 text-sm mt-3 bg-amber-50 py-2 rounded-lg border border-amber-200">
-            امکان ارسال پیام برای این درخواست غیرفعال است
-          </div>
-        )}
       </Form>
-    </div>
+    </Modal>
   );
 };
 
@@ -326,8 +409,8 @@ export default function CustomerRequestCard({
   request: any;
   refetch: Function;
 }) {
-  const [isMessageModalOpen, setIsMessageModalOpen] = useState<boolean>(false);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState<boolean>(false);
+  const [isPriceModalOpen, setIsPriceModalOpen] = useState<boolean>(false);
   const screens = useBreakpoint();
 
   const formatDate = (dateString: string) => {
@@ -353,6 +436,10 @@ export default function CustomerRequestCard({
       border: "1px solid #e2e8f0",
       borderLeft: "4px solid #3b82f6",
     };
+  };
+
+  const getMessageCount = () => {
+    return request.messages?.length || 0;
   };
 
   return (
@@ -391,6 +478,16 @@ export default function CustomerRequestCard({
                   اعتبار تا: {formatDate(request.expiredAt)}
                 </Text>
               </div>
+
+              {/* Messages Preview */}
+              {getMessageCount() > 0 && (
+                <div className="flex items-center gap-2 mt-2 text-blue-600">
+                  <AiOutlineMessage size={screens.xs ? 12 : 14} />
+                  <Text className="text-xs">
+                    {getMessageCount()} پیام ارسال شده
+                  </Text>
+                </div>
+              )}
             </div>
           </div>
 
@@ -461,8 +558,26 @@ export default function CustomerRequestCard({
                   lineHeight: "1.7",
                 }}
               >
-                {request.description}
+                {request.inquiry_description}
               </Paragraph>
+            </div>
+
+            {/* Stats */}
+            <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Tag color="blue" className="m-0">
+                  {request.responseCount || 0} پاسخ
+                </Tag>
+                <Text type="secondary">تعداد پاسخ‌ها</Text>
+              </div>
+              {request.lowestPrice > 0 && (
+                <div className="flex items-center gap-2">
+                  <Tag color="green" className="m-0">
+                    {request.lowestPrice.toLocaleString()} ریال
+                  </Tag>
+                  <Text type="secondary">کمترین قیمت</Text>
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -474,7 +589,7 @@ export default function CustomerRequestCard({
               <Button
                 type="primary"
                 icon={<IoBagCheckOutline />}
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => setIsPriceModalOpen(true)}
                 disabled={request.hasResponse}
                 className={`rounded-lg font-medium ${
                   request.hasResponse
@@ -487,7 +602,7 @@ export default function CustomerRequestCard({
               </Button>
 
               <Badge
-                count={request.messageCount}
+                count={getMessageCount()}
                 overflowCount={99}
                 style={{
                   backgroundColor: "#3b82f6",
@@ -498,19 +613,18 @@ export default function CustomerRequestCard({
               >
                 <Button
                   icon={<AiOutlineMessage />}
-                  onClick={() => setIsMessageModalOpen(true)}
-                  disabled={!request.hasResponse}
-                  type={request.hasResponse ? "default" : "dashed"}
+                  onClick={() => setIsChatModalOpen(true)}
+                  type={getMessageCount() > 0 ? "default" : "dashed"}
                   className={`rounded-lg font-medium ${
                     screens.xs ? "w-full h-10" : "px-6 h-11"
                   } ${
-                    request.hasResponse
+                    getMessageCount() > 0
                       ? "border-blue-300 text-blue-600 hover:border-blue-400 hover:text-blue-700"
                       : "text-gray-400"
                   }`}
                   size="large"
                 >
-                  {screens.xs ? "پیام‌ها" : "مدیریت پیام‌ها"}
+                  {screens.xs ? "پیام‌ها" : "مشاهده پیام‌ها"}
                 </Button>
               </Badge>
             </Space>
@@ -520,8 +634,8 @@ export default function CustomerRequestCard({
 
       {/* Price Inquiry Modal */}
       <Modal
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        open={isPriceModalOpen}
+        onCancel={() => setIsPriceModalOpen(false)}
         footer={null}
         title={null}
         width={screens.xs ? "95vw" : screens.sm ? "90vw" : 700}
@@ -536,23 +650,13 @@ export default function CustomerRequestCard({
         <FormPriceInquiry request={request} refetch={refetch} />
       </Modal>
 
-      {/* Message Modal */}
-      <Modal
-        open={isMessageModalOpen}
-        onCancel={() => setIsMessageModalOpen(false)}
-        footer={null}
-        title={null}
-        width={screens.xs ? "95vw" : screens.sm ? "90vw" : 800}
-        centered
-        styles={{
-          body: {
-            padding: screens.xs ? "20px" : "32px",
-          },
-        }}
-        className="rounded-2xl"
-      >
-        <FormSendMessage request={request} refetch={refetch} />
-      </Modal>
+      {/* Chat Modal */}
+      <ChatModal
+        request={request}
+        refetch={refetch}
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
+      />
     </>
   );
 }

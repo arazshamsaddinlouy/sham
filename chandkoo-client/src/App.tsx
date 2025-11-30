@@ -35,6 +35,8 @@ import MoneyBagCharge from "./pages/dashboard/money-bag-charge";
 import Callback from "./pages/dashboard/callback";
 import PaymentHistory from "./pages/dashboard/payment-history";
 import NotFoundPage from "./pages/not-found";
+import Packages from "./pages/dashboard/packages";
+import AllNotificationsPage from "./pages/dashboard/notifications";
 
 export const ShamContext = createContext({ name: "ShamApp" });
 function App() {
@@ -110,6 +112,11 @@ function App() {
                 <Route path="trades" element={<DashboardTrades />} />
                 <Route path="profile/edit" element={<EditProfile />} />
                 <Route path="customer-request" element={<CustomerRequests />} />
+                <Route path="packages" element={<Packages />} />
+                <Route
+                  path="notifications"
+                  element={<AllNotificationsPage />}
+                />
                 <Route path="branches" element={<Branches />} />
               </Route>
 

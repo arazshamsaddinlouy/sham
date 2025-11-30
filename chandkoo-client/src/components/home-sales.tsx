@@ -23,8 +23,10 @@ export const SaleItem = ({ sale }: { sale: any }) => {
   const hasImage = images.length > 0 && sale.saleType !== "market";
   const discountPercent =
     sale.saleType === "market"
-      ? `${sale.salePercentFrom}% - ${sale.salePercentTo}%`
-      : Math.ceil((Number(sale.salePrice) / sale.primaryPrice) * 100) + "%";
+      ? formatPersianNumber(`${sale.salePercentFrom}% - ${sale.salePercentTo}%`)
+      : formatPersianNumber(
+          100 - Math.ceil((Number(sale.salePrice) / sale.primaryPrice) * 100)
+        ) + "%";
 
   return (
     <>
