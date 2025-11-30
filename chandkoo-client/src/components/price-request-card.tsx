@@ -3,12 +3,61 @@ import { BiShield, BiUser } from "react-icons/bi";
 import { BsBicycle, BsEye, BsClock } from "react-icons/bs";
 import { GiCheckMark, GiPriceTag } from "react-icons/gi";
 import { RxCross2 } from "react-icons/rx";
-import { MdOutlineDescription, MdLockClock } from "react-icons/md";
+import { MdOutlineDescription, MdLockClock, MdColorLens } from "react-icons/md";
 import formatPersianNumber from "../utils/numberPriceFormat";
 import { useNavigate } from "react-router-dom";
 
+// Color mapping for consistent display
+const colorMap = {
+  red: { label: "قرمز", hex: "#FF0000", textColor: "#FFFFFF" },
+  blue: { label: "آبی", hex: "#0000FF", textColor: "#FFFFFF" },
+  green: { label: "سبز", hex: "#008000", textColor: "#FFFFFF" },
+  yellow: { label: "زرد", hex: "#FFFF00", textColor: "#000000" },
+  orange: { label: "نارنجی", hex: "#FFA500", textColor: "#000000" },
+  purple: { label: "بنفش", hex: "#800080", textColor: "#FFFFFF" },
+  pink: { label: "صورتی", hex: "#FFC0CB", textColor: "#000000" },
+  black: { label: "مشکی", hex: "#000000", textColor: "#FFFFFF" },
+  white: { label: "سفید", hex: "#FFFFFF", textColor: "#000000" },
+  gray: { label: "خاکستری", hex: "#808080", textColor: "#FFFFFF" },
+  brown: { label: "قهوه‌ای", hex: "#8B4513", textColor: "#FFFFFF" },
+  gold: { label: "طلایی", hex: "#FFD700", textColor: "#000000" },
+  silver: { label: "نقره‌ای", hex: "#C0C0C0", textColor: "#000000" },
+};
+
 export default function PriceRequestExpireCard({ request }: { request: any }) {
   const navigate = useNavigate();
+
+  // Extract color from description
+  const extractColorInfo = () => {
+    if (!request.inquiry_description) return null;
+
+    const colorMatch = request.inquiry_description.match(/\\ رنگ: (.+)$/);
+    if (colorMatch && colorMatch[1]) {
+      const colorLabel = colorMatch[1].trim();
+      // Find the color by label
+      const colorEntry = Object.entries(colorMap).find(
+        ([, value]) => value.label === colorLabel
+      );
+      if (colorEntry) {
+        return {
+          label: colorLabel,
+          value: colorEntry[0],
+          hex: colorEntry[1].hex,
+          textColor: colorEntry[1].textColor,
+        };
+      }
+    }
+    return null;
+  };
+
+  // Get clean description without color info
+  const getCleanDescription = () => {
+    if (!request.inquiry_description) return "";
+    return request.inquiry_description.replace(/\\\\ رنگ: .+$/, "").trim();
+  };
+
+  const colorInfo = extractColorInfo();
+  const cleanDescription = getCleanDescription();
 
   // Calculate time remaining
   const getTimeRemaining = () => {
@@ -51,6 +100,23 @@ export default function PriceRequestExpireCard({ request }: { request: any }) {
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900 break-words">
                     {request.title}
                   </h2>
+
+                  {/* Color Badge */}
+                  {colorInfo && (
+                    <Tooltip title={`رنگ: ${colorInfo.label}`}>
+                      <div
+                        className="flex items-center gap-2 px-3 py-1 rounded-full border-2 border-white shadow-sm font-semibold text-xs transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: colorInfo.hex,
+                          color: colorInfo.textColor,
+                        }}
+                      >
+                        <MdColorLens size={14} />
+                        <span className="font-bold">{colorInfo.label}</span>
+                      </div>
+                    </Tooltip>
+                  )}
+
                   {request.responseCount > 0 && (
                     <Tag
                       color="blue"
@@ -62,12 +128,12 @@ export default function PriceRequestExpireCard({ request }: { request: any }) {
                   )}
                 </div>
 
-                {request.inquiry_description && (
-                  <Tooltip title={request.inquiry_description}>
+                {cleanDescription && (
+                  <Tooltip title={cleanDescription}>
                     <div className="flex items-start gap-2 text-gray-600 text-sm">
                       <MdOutlineDescription className="text-blue-500 mt-0.5 flex-shrink-0" />
                       <p className="break-words leading-relaxed line-clamp-2">
-                        {request.inquiry_description}
+                        {cleanDescription}
                       </p>
                     </div>
                   </Tooltip>
@@ -118,6 +184,38 @@ export default function PriceRequestExpireCard({ request }: { request: any }) {
           {/* Details Section */}
           <div className="p-4 sm:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+              {/* Color Display - Only show if color exists */}
+              {colorInfo && (
+                <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div
+                      className="p-2 rounded-lg border-2 border-white shadow-sm flex-shrink-0"
+                      style={{ backgroundColor: colorInfo.hex }}
+                    >
+                      <MdColorLens
+                        size={18}
+                        className="sm:w-5 sm:h-5"
+                        style={{ color: colorInfo.textColor }}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-gray-700 font-medium text-sm sm:text-base truncate">
+                        رنگ محصول
+                      </div>
+                      <div
+                        className="font-bold text-xs sm:text-sm truncate px-2 py-1 rounded-full w-fit"
+                        style={{
+                          backgroundColor: colorInfo.hex,
+                          color: colorInfo.textColor,
+                        }}
+                      >
+                        {colorInfo.label}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Guarantee */}
               <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-200">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -197,22 +295,24 @@ export default function PriceRequestExpireCard({ request }: { request: any }) {
                 </div>
               </div>
 
-              {/* Response Count */}
-              <div className="flex items-center justify-between p-3 sm:p-4 bg-purple-50 rounded-xl border border-purple-200">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                  <div className="p-2 rounded-lg bg-purple-100 text-purple-600 flex-shrink-0">
-                    <BiUser size={18} className="sm:w-5 sm:h-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-gray-700 font-medium text-sm sm:text-base truncate">
-                      تعداد پاسخ‌ها
+              {/* Response Count - Only show if we have color to maintain 4 columns */}
+              {!colorInfo && (
+                <div className="flex items-center justify-between p-3 sm:p-4 bg-purple-50 rounded-xl border border-purple-200">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <div className="p-2 rounded-lg bg-purple-100 text-purple-600 flex-shrink-0">
+                      <BiUser size={18} className="sm:w-5 sm:h-5" />
                     </div>
-                    <div className="text-purple-600 font-bold text-xs sm:text-sm truncate">
-                      {formatPersianNumber(request.responseCount)}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-gray-700 font-medium text-sm sm:text-base truncate">
+                        تعداد پاسخ‌ها
+                      </div>
+                      <div className="text-purple-600 font-bold text-xs sm:text-sm truncate">
+                        {formatPersianNumber(request.responseCount)}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Additional Info Footer */}

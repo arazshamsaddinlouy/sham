@@ -34,6 +34,7 @@ import {
   AiOutlineDollar,
 } from "react-icons/ai";
 import { BiSend } from "react-icons/bi";
+import { MdColorLens } from "react-icons/md";
 import { config } from "../services/config.service";
 import { useContext, useEffect, useState } from "react";
 import {
@@ -47,6 +48,23 @@ import { Moment } from "moment";
 
 const { useBreakpoint } = Grid;
 const { Text, Paragraph, Title } = Typography;
+
+// Color mapping for consistent display
+const colorMap = {
+  red: { label: "قرمز", hex: "#FF0000", textColor: "#FFFFFF" },
+  blue: { label: "آبی", hex: "#0000FF", textColor: "#FFFFFF" },
+  green: { label: "سبز", hex: "#008000", textColor: "#FFFFFF" },
+  yellow: { label: "زرد", hex: "#FFFF00", textColor: "#000000" },
+  orange: { label: "نارنجی", hex: "#FFA500", textColor: "#000000" },
+  purple: { label: "بنفش", hex: "#800080", textColor: "#FFFFFF" },
+  pink: { label: "صورتی", hex: "#FFC0CB", textColor: "#000000" },
+  black: { label: "مشکی", hex: "#000000", textColor: "#FFFFFF" },
+  white: { label: "سفید", hex: "#FFFFFF", textColor: "#000000" },
+  gray: { label: "خاکستری", hex: "#808080", textColor: "#FFFFFF" },
+  brown: { label: "قهوه‌ای", hex: "#8B4513", textColor: "#FFFFFF" },
+  gold: { label: "طلایی", hex: "#FFD700", textColor: "#000000" },
+  silver: { label: "نقره‌ای", hex: "#C0C0C0", textColor: "#000000" },
+};
 
 export const FormPriceInquiry = ({
   request,
@@ -413,6 +431,38 @@ export default function CustomerRequestCard({
   const [isPriceModalOpen, setIsPriceModalOpen] = useState<boolean>(false);
   const screens = useBreakpoint();
 
+  // Extract color from description
+  const extractColorInfo = () => {
+    if (!request.inquiry_description) return null;
+
+    const colorMatch = request.inquiry_description.match(/\\ رنگ: (.+)$/);
+    if (colorMatch && colorMatch[1]) {
+      const colorLabel = colorMatch[1].trim();
+      // Find the color by label
+      const colorEntry = Object.entries(colorMap).find(
+        ([, value]) => value.label === colorLabel
+      );
+      if (colorEntry) {
+        return {
+          label: colorLabel,
+          value: colorEntry[0],
+          hex: colorEntry[1].hex,
+          textColor: colorEntry[1].textColor,
+        };
+      }
+    }
+    return null;
+  };
+
+  // Get clean description without color info
+  const getCleanDescription = () => {
+    if (!request.inquiry_description) return "";
+    return request.inquiry_description.replace(/\\\\ رنگ: .+$/, "").trim();
+  };
+
+  const colorInfo = extractColorInfo();
+  const cleanDescription = getCleanDescription();
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fa-IR", {
       year: "numeric",
@@ -464,13 +514,29 @@ export default function CustomerRequestCard({
             </div>
 
             <div className="flex-1 min-w-0">
-              <Title
-                level={screens.xs ? 5 : 4}
-                className="!mb-2 text-gray-800 leading-tight"
-                ellipsis={{ tooltip: request.title }}
-              >
-                {request.title}
-              </Title>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                <Title
+                  level={screens.xs ? 5 : 4}
+                  className="!mb-0 text-gray-800 leading-tight"
+                  ellipsis={{ tooltip: request.title }}
+                >
+                  {request.title}
+                </Title>
+
+                {/* Color Badge */}
+                {colorInfo && (
+                  <div
+                    className="flex items-center gap-2 px-3 py-1 rounded-full border-2 border-white shadow-sm font-semibold text-xs transition-all duration-300 hover:scale-105 flex-shrink-0"
+                    style={{
+                      backgroundColor: colorInfo.hex,
+                      color: colorInfo.textColor,
+                    }}
+                  >
+                    <MdColorLens size={14} />
+                    <span className="font-bold">{colorInfo.label}</span>
+                  </div>
+                )}
+              </div>
 
               <div className="flex items-center gap-2 text-amber-600">
                 <IoTimeOutline size={screens.xs ? 14 : 16} />
@@ -540,27 +606,61 @@ export default function CustomerRequestCard({
 
           {/* Description and Actions */}
           <div className="flex-1 min-w-0 space-y-4">
+            {/* Color Display Card */}
+            {colorInfo && (
+              <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <div
+                    className="p-2 rounded-lg border-2 border-white shadow-sm flex-shrink-0"
+                    style={{ backgroundColor: colorInfo.hex }}
+                  >
+                    <MdColorLens
+                      size={18}
+                      className="sm:w-5 sm:h-5"
+                      style={{ color: colorInfo.textColor }}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-gray-700 font-medium text-sm sm:text-base truncate">
+                      رنگ محصول
+                    </div>
+                    <div
+                      className="font-bold text-xs sm:text-sm truncate px-2 py-1 rounded-full w-fit"
+                      style={{
+                        backgroundColor: colorInfo.hex,
+                        color: colorInfo.textColor,
+                      }}
+                    >
+                      {colorInfo.label}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Description */}
-            <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-              <Paragraph
-                className="text-gray-600 leading-relaxed text-justify"
-                ellipsis={{
-                  rows: screens.xs ? 3 : 4,
-                  expandable: true,
-                  symbol: (expanded) => (
-                    <Tag color="blue" className="cursor-pointer mt-2">
-                      {expanded ? "کمتر" : "بیشتر"}
-                    </Tag>
-                  ),
-                }}
-                style={{
-                  fontSize: screens.xs ? "14px" : "15px",
-                  lineHeight: "1.7",
-                }}
-              >
-                {request.inquiry_description}
-              </Paragraph>
-            </div>
+            {cleanDescription && (
+              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                <Paragraph
+                  className="text-gray-600 leading-relaxed text-justify"
+                  ellipsis={{
+                    rows: screens.xs ? 3 : 4,
+                    expandable: true,
+                    symbol: (expanded) => (
+                      <Tag color="blue" className="cursor-pointer mt-2">
+                        {expanded ? "کمتر" : "بیشتر"}
+                      </Tag>
+                    ),
+                  }}
+                  style={{
+                    fontSize: screens.xs ? "14px" : "15px",
+                    lineHeight: "1.7",
+                  }}
+                >
+                  {cleanDescription}
+                </Paragraph>
+              </div>
+            )}
 
             {/* Stats */}
             <div className="flex flex-wrap gap-4 text-sm">

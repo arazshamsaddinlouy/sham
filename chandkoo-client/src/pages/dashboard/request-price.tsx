@@ -73,7 +73,7 @@ export default function RequestPrice() {
   const [isMessageEnabled, setIsMessageEnabled] = useState<boolean>(true);
   const [deliceryChecked, setDeliveryChecked] = useState<boolean>(true);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [color, setColor] = useState<number | undefined>();
+  const [color, setColor] = useState<string | undefined>();
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
   const [form] = Form.useForm();
@@ -100,14 +100,27 @@ export default function RequestPrice() {
       .catch(() => setIsSubmittable(false));
   }, [form, values]);
 
+  // Function to get color label by value
+  const getColorLabel = (colorValue: string) => {
+    const colorObj = colors.find((c) => c.value === colorValue);
+    return colorObj ? colorObj.label : "";
+  };
+
   const handleSubmit = () => {
     const formData = new FormData();
     const formValues = form.getFieldsValue();
     setLoading(true);
 
+    // Append color to description if color is selected
+    let finalDescription = description || "";
+    if (color) {
+      const colorLabel = getColorLabel(color);
+      finalDescription += ` \\ رنگ: ${colorLabel}`;
+    }
+
     for (let key in formValues) {
       if (key === "description") {
-        formData.append("description", `${description}`);
+        formData.append("description", finalDescription);
       } else if (key === "productCount") {
         formData.append(
           "productCount",
@@ -122,7 +135,7 @@ export default function RequestPrice() {
     if (image) formData.append("image", image);
     if (latLng.lat) formData.append("lat", `${latLng.lat}`);
     if (latLng.lng) formData.append("lng", `${latLng.lng}`);
-    if (color) formData.append("color", `${color}`);
+    if (color) formData.append("color", color);
     formData.append("inquiryLocation", selectedProvince.join(","));
     formData.append("includeDelivery", deliceryChecked ? "true" : "false");
     formData.append("hasGuarantee", hasGuaranteeChecked ? "true" : "false");

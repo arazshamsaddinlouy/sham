@@ -7,15 +7,34 @@ import {
   Typography,
   Space,
   Divider,
+  Tooltip,
 } from "antd";
 import { BiCalendarExclamation } from "react-icons/bi";
 import { BsCurrencyDollar } from "react-icons/bs";
 import { IoImageOutline, IoTimeOutline } from "react-icons/io5";
 import { TbClockOff } from "react-icons/tb";
+import { MdColorLens } from "react-icons/md";
 import { config } from "../services/config.service";
 
 const { useBreakpoint } = Grid;
 const { Text, Paragraph } = Typography;
+
+// Color mapping for consistent display
+const colorMap = {
+  red: { label: "قرمز", hex: "#FF0000", textColor: "#FFFFFF" },
+  blue: { label: "آبی", hex: "#0000FF", textColor: "#FFFFFF" },
+  green: { label: "سبز", hex: "#008000", textColor: "#FFFFFF" },
+  yellow: { label: "زرد", hex: "#FFFF00", textColor: "#000000" },
+  orange: { label: "نارنجی", hex: "#FFA500", textColor: "#000000" },
+  purple: { label: "بنفش", hex: "#800080", textColor: "#FFFFFF" },
+  pink: { label: "صورتی", hex: "#FFC0CB", textColor: "#000000" },
+  black: { label: "مشکی", hex: "#000000", textColor: "#FFFFFF" },
+  white: { label: "سفید", hex: "#FFFFFF", textColor: "#000000" },
+  gray: { label: "خاکستری", hex: "#808080", textColor: "#FFFFFF" },
+  brown: { label: "قهوه‌ای", hex: "#8B4513", textColor: "#FFFFFF" },
+  gold: { label: "طلایی", hex: "#FFD700", textColor: "#000000" },
+  silver: { label: "نقره‌ای", hex: "#C0C0C0", textColor: "#000000" },
+};
 
 export default function CustomerRequestExpireCard({
   request,
@@ -23,6 +42,38 @@ export default function CustomerRequestExpireCard({
   request: any;
 }) {
   const screens = useBreakpoint();
+
+  // Extract color from description
+  const extractColorInfo = () => {
+    if (!request.inquiry_description) return null;
+
+    const colorMatch = request.inquiry_description.match(/\\ رنگ: (.+)$/);
+    if (colorMatch && colorMatch[1]) {
+      const colorLabel = colorMatch[1].trim();
+      // Find the color by label
+      const colorEntry = Object.entries(colorMap).find(
+        ([, value]) => value.label === colorLabel
+      );
+      if (colorEntry) {
+        return {
+          label: colorLabel,
+          value: colorEntry[0],
+          hex: colorEntry[1].hex,
+          textColor: colorEntry[1].textColor,
+        };
+      }
+    }
+    return null;
+  };
+
+  // Get clean description without color info
+  const getCleanDescription = () => {
+    if (!request.inquiry_description) return "";
+    return request.inquiry_description.replace(/\\\\ رنگ: .+$/, "").trim();
+  };
+
+  const colorInfo = extractColorInfo();
+  const cleanDescription = getCleanDescription();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fa-IR", {
@@ -71,13 +122,31 @@ export default function CustomerRequestExpireCard({
           </div>
 
           <div className="flex-1 min-w-0">
-            <Text
-              strong
-              className="text-gray-800 block text-lg lg:text-xl leading-tight mb-2"
-              ellipsis={{ tooltip: request.title }}
-            >
-              {request.title}
-            </Text>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+              <Text
+                strong
+                className="text-gray-800 block text-lg lg:text-xl leading-tight"
+                ellipsis={{ tooltip: request.title }}
+              >
+                {request.title}
+              </Text>
+
+              {/* Color Badge */}
+              {colorInfo && (
+                <Tooltip title={`رنگ: ${colorInfo.label}`}>
+                  <div
+                    className="flex items-center gap-2 px-3 py-1 rounded-full border-2 border-white shadow-sm font-semibold text-xs transition-all duration-300 hover:scale-105 flex-shrink-0"
+                    style={{
+                      backgroundColor: colorInfo.hex,
+                      color: colorInfo.textColor,
+                    }}
+                  >
+                    <MdColorLens size={12} />
+                    <span className="font-bold">{colorInfo.label}</span>
+                  </div>
+                </Tooltip>
+              )}
+            </div>
 
             <div className="flex items-center gap-2 text-amber-600">
               <IoTimeOutline size={screens.xs ? 14 : 16} />
@@ -145,30 +214,68 @@ export default function CustomerRequestExpireCard({
 
         {/* Description Section */}
         <div className="flex-1 min-w-0 space-y-4">
+          {/* Color Display Card */}
+          {colorInfo && (
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div
+                  className="p-2 rounded-lg border-2 border-white shadow-sm flex-shrink-0"
+                  style={{ backgroundColor: colorInfo.hex }}
+                >
+                  <MdColorLens
+                    size={16}
+                    className="sm:w-4 sm:h-4"
+                    style={{ color: colorInfo.textColor }}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-gray-700 font-medium text-sm sm:text-base truncate">
+                    رنگ محصول
+                  </div>
+                  <div
+                    className="font-bold text-xs sm:text-sm truncate px-2 py-1 rounded-full w-fit"
+                    style={{
+                      backgroundColor: colorInfo.hex,
+                      color: colorInfo.textColor,
+                    }}
+                  >
+                    {colorInfo.label}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Description */}
-          <div className="bg-white/80 rounded-xl p-4 border border-gray-100 shadow-sm">
-            <Paragraph
-              className="text-gray-600 leading-relaxed text-justify"
-              ellipsis={{
-                rows: screens.xs ? 3 : 4,
-                expandable: true,
-                symbol: (expanded) => (
-                  <Tag color="orange" className="cursor-pointer mt-2">
-                    {expanded ? "کمتر" : "بیشتر"}
-                  </Tag>
-                ),
-              }}
-              style={{
-                fontSize: screens.xs ? "14px" : "15px",
-                lineHeight: "1.7",
-              }}
-            >
-              {request.inquiry_description}
-            </Paragraph>
-          </div>
+          {cleanDescription && (
+            <div className="bg-white/80 rounded-xl p-4 border border-gray-100 shadow-sm">
+              <Paragraph
+                className="text-gray-600 leading-relaxed text-justify"
+                ellipsis={{
+                  rows: screens.xs ? 3 : 4,
+                  expandable: true,
+                  symbol: (expanded) => (
+                    <Tag color="orange" className="cursor-pointer mt-2">
+                      {expanded ? "کمتر" : "بیشتر"}
+                    </Tag>
+                  ),
+                }}
+                style={{
+                  fontSize: screens.xs ? "14px" : "15px",
+                  lineHeight: "1.7",
+                }}
+              >
+                {cleanDescription}
+              </Paragraph>
+            </div>
+          )}
 
           {/* Info Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div
+            className={`grid ${
+              colorInfo ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+            } gap-3`}
+          >
             {/* Price Card */}
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-2">
@@ -182,20 +289,22 @@ export default function CustomerRequestExpireCard({
               </div>
             </div>
 
-            {/* Status Card */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <TbClockOff className="text-amber-600" />
-                <Text strong className="text-amber-800 text-sm">
-                  وضعیت درخواست
-                </Text>
+            {/* Status Card - Only show if no color to maintain layout */}
+            {!colorInfo && (
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <TbClockOff className="text-amber-600" />
+                  <Text strong className="text-amber-800 text-sm">
+                    وضعیت درخواست
+                  </Text>
+                </div>
+                <div className="text-center">
+                  <Tag color="orange" className="font-bold text-xs">
+                    منقضی شده
+                  </Tag>
+                </div>
               </div>
-              <div className="text-center">
-                <Tag color="orange" className="font-bold text-xs">
-                  منقضی شده
-                </Tag>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -213,6 +322,17 @@ export default function CustomerRequestExpireCard({
                   <Text className="text-gray-600 text-sm">وضعیت:</Text>
                   <Tag color="red">منقضی شده</Tag>
                 </div>
+
+                {colorInfo && (
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <Text className="text-gray-600 text-sm">رنگ:</Text>
+                    <div
+                      className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                      style={{ backgroundColor: colorInfo.hex }}
+                      title={colorInfo.label}
+                    />
+                  </div>
+                )}
 
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <Text className="text-gray-600 text-sm">پاسخ:</Text>
@@ -246,7 +366,11 @@ export default function CustomerRequestExpireCard({
       {/* Mobile Bottom Info */}
       {screens.xs && (
         <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="grid grid-cols-2 gap-3">
+          <div
+            className={`grid ${
+              colorInfo ? "grid-cols-3" : "grid-cols-2"
+            } gap-3`}
+          >
             <div className="text-center">
               <Text strong className="text-gray-600 text-xs block mb-1">
                 قیمت تخمینی
@@ -255,11 +379,27 @@ export default function CustomerRequestExpireCard({
                 {getEstimatedPrice()}
               </Text>
             </div>
+
+            {colorInfo && (
+              <div className="text-center">
+                <Text strong className="text-gray-600 text-xs block mb-1">
+                  رنگ
+                </Text>
+                <div
+                  className="w-6 h-6 rounded-full border-2 border-white shadow-sm mx-auto"
+                  style={{ backgroundColor: colorInfo.hex }}
+                  title={colorInfo.label}
+                />
+              </div>
+            )}
+
             <div className="text-center">
               <Text strong className="text-gray-600 text-xs block mb-1">
                 وضعیت
               </Text>
-              <Tag color="red">منقضی شده</Tag>
+              <Tag color="red" className="text-xs">
+                منقضی شده
+              </Tag>
             </div>
           </div>
         </div>

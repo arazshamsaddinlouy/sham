@@ -95,7 +95,7 @@ export default function Branches() {
   const [isMapTouched, setIsMapTouched] = useState<boolean>(false);
   const [isEdit, setIsEdit] = useState<string>();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -322,16 +322,16 @@ export default function Branches() {
       .validateFields({ validateOnly: true })
       .then(() => setIsSubmittable(true))
       .catch(() => setIsSubmittable(false));
-  }, [form, values, selectedCategories]);
+  }, [form, values, selectedCategory]);
 
   // Handle edit
   const handleEdit = async (record: Branch) => {
     setModalLoading(true);
     setIsEdit(record.id);
 
-    // Convert categoryId string to array for TreeSelect
-    const categoryArray = record.categoryId ? record.categoryId.split(",") : [];
-    setSelectedCategories(categoryArray);
+    // Use the first category ID for single select
+    const categoryId = record.categoryId ? record.categoryId.split(",")[0] : "";
+    setSelectedCategory(categoryId);
 
     try {
       const data = await getBranchLocation(record.id);
@@ -352,7 +352,7 @@ export default function Branches() {
           youtube: record.youtube,
           facebook: record.facebook,
           twitter: record.twitter,
-          categoryId: categoryArray, // Set as array for TreeSelect
+          categoryId: categoryId, // Set as single value for TreeSelect
         });
         setIsModalOpen(true);
       }
@@ -380,12 +380,12 @@ export default function Branches() {
       setSubmitLoading(true);
       const values = await form.validateFields();
 
-      // Prepare payload - send categoryId as array
+      // Prepare payload - send categoryId as single value
       const payload = {
         ...values,
         lat: latLng.lat,
         lng: latLng.lng,
-        categoryId: selectedCategories.join(","), // Send as array, backend will handle it
+        categoryId: selectedCategory, // Send as single value
       };
 
       console.log("Submitting branch data:", payload);
@@ -411,7 +411,7 @@ export default function Branches() {
 
         // Reset form and states
         form.resetFields();
-        setSelectedCategories([]);
+        setSelectedCategory("");
         setIsMapTouched(false);
         setIsEdit(undefined);
       }
@@ -431,7 +431,7 @@ export default function Branches() {
     form.resetFields();
     setLatLng({ lat: 35.6892, lng: 51.389 });
     setIsMapTouched(false);
-    setSelectedCategories([]);
+    setSelectedCategory("");
     setIsEdit(undefined);
     setIsModalOpen(true);
   };
@@ -442,7 +442,7 @@ export default function Branches() {
     setSubmitLoading(false);
     setModalLoading(false);
     form.resetFields();
-    setSelectedCategories([]);
+    setSelectedCategory("");
   };
 
   const renderMap = (status: Status) => (
@@ -652,48 +652,23 @@ export default function Branches() {
                     {
                       required: true,
                       message: "دسته‌بندی اجباری است",
-                      validator: () => {
-                        if (
-                          !selectedCategories ||
-                          selectedCategories.length === 0
-                        ) {
-                          return Promise.reject(
-                            new Error("دسته‌بندی اجباری است")
-                          );
-                        }
-                        return Promise.resolve();
-                      },
                     },
                   ]}
                 >
                   <TreeSelect
                     showSearch
                     treeCheckable={false}
-                    value={
-                      selectedCategories.length > 0
-                        ? selectedCategories[0]
-                        : undefined
-                    }
+                    value={selectedCategory}
                     dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
                     placeholder="یک دسته‌بندی انتخاب کنید"
                     allowClear
                     onChange={(value) => {
-                      if (value) {
-                        setSelectedCategories([value]);
-                      } else {
-                        setSelectedCategories([]);
-                      }
+                      setSelectedCategory(value || "");
                     }}
-                    treeData={categories.map((category) => ({
-                      ...category,
-                      disabled: true, // Disable root elements
-                      children: category.children?.map((child) => ({
-                        ...child,
-                        disabled: false, // Enable child elements
-                      })),
-                    }))}
+                    treeData={categories}
                     treeNodeFilterProp="title"
                     size={screens.xs ? "middle" : "large"}
+                    // Remove disabled property to allow selecting both root and child categories
                   />
                 </Form.Item>
               </Card>
