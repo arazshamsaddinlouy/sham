@@ -122,7 +122,7 @@ export default function SellerPage() {
     seller.facebook;
 
   return (
-    <div className="relative mt-[100px] pb-[100px] min-h-[calc(100vh-50px)] bg-gray-50 flex justify-center items-start px-4 py-8 overflow-hidden">
+    <div className="relative mt-[0px] pb-[100px] min-h-[calc(100vh-50px)] bg-gray-50 flex justify-center items-start px-4 py-8 overflow-hidden">
       {/* Background with wallpaper */}
       <div className="absolute w-[100vw] left-0 top-0 h-[100%] opacity-20">
         <img
